@@ -1,0 +1,149 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   Pamir Construct — design tokens
+   Brand palette extracted from the real logo (#7CC12B green
+   "Pamir peak" mark) and the live site's graphite header.
+   ============================================================ */
+:root {
+  /* Brand */
+  --brand: 124 193 43;        /* #7CC12B — signature Pamir green */
+  --brand-600: 107 170 36;    /* #6BAA24 */
+  --brand-700: 88 141 30;     /* #588D1E */
+
+  /* Neutrals — warm, architectural */
+  --graphite: 42 44 47;       /* #2A2C2F — deep graphite */
+  --graphite-900: 22 23 25;   /* #161719 — near-black sections */
+  --ink: 25 26 28;            /* #191A1C — primary text */
+  --muted: 108 113 118;       /* #6C7176 — secondary text */
+  --sand: 245 243 239;        /* #F5F3EF — warm background */
+  --stone: 234 230 223;       /* #EAE6DF — light stone */
+  --line: 20 22 24;           /* used with low alpha for hairlines */
+
+  --background: 255 255 255;
+  --foreground: var(--ink);
+
+  --header-h: 88px;
+
+  /* Display face reuses the body variable font (Manrope) — one family,
+     distinction comes from weight & scale. Swap here to introduce a serif. */
+  --font-display: var(--font-sans);
+}
+
+* {
+  border-color: rgb(var(--line) / 0.12);
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .animate-fade-up,
+  .animate-bounce {
+    animation: none !important;
+  }
+}
+
+body {
+  background-color: rgb(var(--background));
+  color: rgb(var(--foreground));
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-feature-settings: 'ss01', 'cv01';
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: rgb(var(--brand) / 0.9);
+  color: rgb(var(--graphite-900));
+}
+
+:focus-visible {
+  outline: 2px solid rgb(var(--brand));
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* ============================================================
+   Component utilities
+   ============================================================ */
+@layer components {
+  /* Eyebrow / tracked label used across sections */
+  .eyebrow {
+    @apply inline-flex items-center gap-2.5 text-xs font-semibold uppercase tracking-label text-brand;
+  }
+  .eyebrow::before {
+    content: '';
+    @apply inline-block h-px w-8 bg-brand/70;
+  }
+  .eyebrow--light {
+    @apply text-brand;
+  }
+
+  /* Thin architectural rule */
+  .hairline {
+    @apply h-px w-full bg-line/12;
+  }
+
+  .link-underline {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 0% 1px;
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    transition: background-size 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .link-underline:hover {
+    background-size: 100% 1px;
+  }
+
+  .prose-lead {
+    @apply text-lg leading-relaxed text-muted sm:text-xl;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  /* Reveal-on-scroll mask for images */
+  .mask-reveal {
+    clip-path: inset(0 0 0 0);
+  }
+
+  .grain::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.5;
+    mix-blend-mode: overlay;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size: 3px 3px;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* Number-counter tabular alignment */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
