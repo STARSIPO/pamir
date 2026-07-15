@@ -1,12 +1,24 @@
 import { type Locale, locales } from './config';
 
+export type RouteKey =
+  | 'projects'
+  | 'company'
+  | 'services'
+  | 'faq'
+  | 'contacts'
+  | 'privacy'
+  | 'thankyou';
+
 /**
  * Localized URL path segments per route.
  * The RU segment doubles as the *canonical internal folder name* under
  * src/app/[locale]/… . RO uses localized slugs (per the SEO spec) and is
  * rewritten back to the canonical segment by middleware.
+ *
+ * In static-export mode (GitHub Pages) middleware can't run, so RO falls back
+ * to the canonical segments (`/ro/projects`) — set via NEXT_PUBLIC_STATIC=1.
  */
-export const routeSegments = {
+const LOCALIZED: Record<RouteKey, Record<Locale, string>> = {
   projects: { ru: 'projects', ro: 'proiecte' },
   company: { ru: 'company', ro: 'despre-companie' },
   services: { ru: 'services', ro: 'servicii' },
@@ -14,9 +26,14 @@ export const routeSegments = {
   contacts: { ru: 'contacts', ro: 'contacte' },
   privacy: { ru: 'privacy', ro: 'confidentialitate' },
   thankyou: { ru: 'thank-you', ro: 'multumim' },
-} as const satisfies Record<string, Record<Locale, string>>;
+};
 
-export type RouteKey = keyof typeof routeSegments;
+const STATIC_CANONICAL = Object.fromEntries(
+  (Object.keys(LOCALIZED) as RouteKey[]).map((k) => [k, { ru: LOCALIZED[k].ru, ro: LOCALIZED[k].ru }]),
+) as Record<RouteKey, Record<Locale, string>>;
+
+export const routeSegments: Record<RouteKey, Record<Locale, string>> =
+  process.env.NEXT_PUBLIC_STATIC === '1' ? STATIC_CANONICAL : LOCALIZED;
 
 /** Canonical folder segment (matches the filesystem route). */
 export function canonicalSegment(key: RouteKey): string {

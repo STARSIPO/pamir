@@ -77,6 +77,15 @@ export function LeadForm({
     if (Object.keys(nextErrors).length) return;
 
     setSubmitting(true);
+
+    // Static demo build (GitHub Pages) has no /api backend — succeed gracefully.
+    if (process.env.NEXT_PUBLIC_STATIC === '1') {
+      if (variant === 'lead') router.push(routes.thankyou(locale));
+      else setDone(true);
+      setSubmitting(false);
+      return;
+    }
+
     try {
       const res = await fetch('/api/lead', {
         method: 'POST',
