@@ -7,6 +7,9 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://pamirconstruct.md'
 
 const abs = (path: string) => `${SITE_URL}${path}`;
 
+/** Metadata routes must opt into static generation for `output: 'export'` (Next 16). */
+export const dynamic = 'force-static';
+
 function langMap(key?: RouteKey, slug?: string) {
   const alt = alternates(key, slug);
   return { ru: abs(alt.ru), ro: abs(alt.ro) };

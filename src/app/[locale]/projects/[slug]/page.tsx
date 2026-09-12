@@ -21,11 +21,12 @@ export function generateStaticParams() {
   return locales.flatMap((locale) => projects.map((p) => ({ locale, slug: p.slug })));
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { locale: string; slug: string };
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ locale: string; slug: string }>;
+  }
+): Promise<Metadata> {
+  const params = await props.params;
   const locale = (isLocale(params.locale) ? params.locale : 'ru') as Locale;
   const project = getProject(params.slug);
   if (!project) return {};
@@ -38,7 +39,8 @@ export async function generateMetadata({
   });
 }
 
-export default function ProjectPage({ params }: { params: { locale: string; slug: string } }) {
+export default async function ProjectPage(props: { params: Promise<{ locale: string; slug: string }> }) {
+  const params = await props.params;
   const locale = (isLocale(params.locale) ? params.locale : 'ru') as Locale;
   const dict = getDictionary(locale);
   const project = getProject(params.slug);

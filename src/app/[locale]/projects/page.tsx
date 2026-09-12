@@ -8,11 +8,12 @@ import { Container } from '@/components/ui/Container';
 import { ProjectsExplorer } from '@/components/projects/ProjectsExplorer';
 import { CtaBand } from '@/components/shared/CtaBand';
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { locale: string };
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ locale: string }>;
+  }
+): Promise<Metadata> {
+  const params = await props.params;
   const locale = (isLocale(params.locale) ? params.locale : 'ru') as Locale;
   const dict = getDictionary(locale);
   return buildMetadata({
@@ -23,7 +24,8 @@ export async function generateMetadata({
   });
 }
 
-export default function ProjectsPage({ params }: { params: { locale: string } }) {
+export default async function ProjectsPage(props: { params: Promise<{ locale: string }> }) {
+  const params = await props.params;
   const locale = (isLocale(params.locale) ? params.locale : 'ru') as Locale;
   const dict = getDictionary(locale);
 

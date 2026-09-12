@@ -9,13 +9,15 @@ import { Reveal } from '@/components/ui/Reveal';
 import { ContactInfo } from '@/components/shared/ContactInfo';
 import { LeadForm } from '@/components/forms/LeadForm';
 
-export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const params = await props.params;
   const locale = (isLocale(params.locale) ? params.locale : 'ru') as Locale;
   const dict = getDictionary(locale);
   return buildMetadata({ locale, routeKey: 'contacts', title: dict.contactsPage.title, description: dict.contactsPage.subtitle });
 }
 
-export default function ContactsPage({ params }: { params: { locale: string } }) {
+export default async function ContactsPage(props: { params: Promise<{ locale: string }> }) {
+  const params = await props.params;
   const locale = (isLocale(params.locale) ? params.locale : 'ru') as Locale;
   const dict = getDictionary(locale);
 

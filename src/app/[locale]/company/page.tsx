@@ -14,13 +14,15 @@ import { ProjectsExplorer } from '@/components/projects/ProjectsExplorer';
 import { Quality } from '@/components/home/Quality';
 import { CtaBand } from '@/components/shared/CtaBand';
 
-export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const params = await props.params;
   const locale = (isLocale(params.locale) ? params.locale : 'ru') as Locale;
   const dict = getDictionary(locale);
   return buildMetadata({ locale, routeKey: 'company', title: dict.companyPage.title, description: dict.about.body });
 }
 
-export default function CompanyPage({ params }: { params: { locale: string } }) {
+export default async function CompanyPage(props: { params: Promise<{ locale: string }> }) {
+  const params = await props.params;
   const locale = (isLocale(params.locale) ? params.locale : 'ru') as Locale;
   const dict = getDictionary(locale);
   const completed = projects.filter((p) => p.status === 'completed');

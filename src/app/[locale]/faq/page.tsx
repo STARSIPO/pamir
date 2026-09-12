@@ -8,13 +8,15 @@ import { Section } from '@/components/ui/Section';
 import { Accordion } from '@/components/shared/Accordion';
 import { CtaBand } from '@/components/shared/CtaBand';
 
-export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const params = await props.params;
   const locale = (isLocale(params.locale) ? params.locale : 'ru') as Locale;
   const dict = getDictionary(locale);
   return buildMetadata({ locale, routeKey: 'faq', title: dict.faqPage.title, description: dict.faqPage.subtitle });
 }
 
-export default function FaqPage({ params }: { params: { locale: string } }) {
+export default async function FaqPage(props: { params: Promise<{ locale: string }> }) {
+  const params = await props.params;
   const locale = (isLocale(params.locale) ? params.locale : 'ru') as Locale;
   const dict = getDictionary(locale);
 

@@ -7,7 +7,8 @@ import { routes } from '@/i18n/routing';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 
-export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const params = await props.params;
   const locale = (isLocale(params.locale) ? params.locale : 'ru') as Locale;
   const dict = getDictionary(locale);
   return {
@@ -16,7 +17,8 @@ export async function generateMetadata({ params }: { params: { locale: string } 
   };
 }
 
-export default function ThankYouPage({ params }: { params: { locale: string } }) {
+export default async function ThankYouPage(props: { params: Promise<{ locale: string }> }) {
+  const params = await props.params;
   const locale = (isLocale(params.locale) ? params.locale : 'ru') as Locale;
   const dict = getDictionary(locale);
 

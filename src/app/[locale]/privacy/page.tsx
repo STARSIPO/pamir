@@ -6,7 +6,8 @@ import { privacySections, privacyUpdated } from '@/content/legal';
 import { PageHero } from '@/components/shared/PageHero';
 import { Section } from '@/components/ui/Section';
 
-export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const params = await props.params;
   const locale = (isLocale(params.locale) ? params.locale : 'ru') as Locale;
   const dict = getDictionary(locale);
   return {
@@ -15,7 +16,8 @@ export async function generateMetadata({ params }: { params: { locale: string } 
   };
 }
 
-export default function PrivacyPage({ params }: { params: { locale: string } }) {
+export default async function PrivacyPage(props: { params: Promise<{ locale: string }> }) {
+  const params = await props.params;
   const locale = (isLocale(params.locale) ? params.locale : 'ru') as Locale;
   const dict = getDictionary(locale);
 

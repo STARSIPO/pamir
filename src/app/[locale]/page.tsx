@@ -10,7 +10,8 @@ import { Steps } from '@/components/home/Steps';
 import { LeadSection } from '@/components/home/LeadSection';
 import { ContactMap } from '@/components/home/ContactMap';
 
-export default function HomePage({ params }: { params: { locale: string } }) {
+export default async function HomePage(props: { params: Promise<{ locale: string }> }) {
+  const params = await props.params;
   const locale = (isLocale(params.locale) ? params.locale : 'ru') as Locale;
   const dict = getDictionary(locale);
 

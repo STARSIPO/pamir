@@ -31,3 +31,7 @@ next-env.d.ts
 
 # vercel
 .vercel
+
+# local agent tooling
+/.claude/
+/.claude-flow/
