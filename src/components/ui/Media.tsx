@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { cn } from '@/lib/utils';
+import { asset, cn } from '@/lib/utils';
 
 /**
  * Smart media slot.
@@ -40,7 +40,9 @@ export function Media({
     >
       {src ? (
         <Image
-          src={src}
+          // asset() adds the deployment basePath: next/image skips it under
+          // images.unoptimized, which is the static-export config.
+          src={asset(src)}
           alt={alt}
           fill
           priority={priority}

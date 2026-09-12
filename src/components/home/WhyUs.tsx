@@ -1,31 +1,25 @@
 import type { Locale } from '@/i18n/config';
 import type { Dictionary } from '@/i18n/dictionaries';
 import { Section } from '@/components/ui/Section';
+import { SectionHeading } from '@/components/ui/SectionHeading';
 import { Reveal } from '@/components/ui/Reveal';
 import { Media } from '@/components/ui/Media';
 import { advantages } from '@/content/home';
 
 export function WhyUs({ locale, dict }: { locale: Locale; dict: Dictionary }) {
   return (
-    <Section tone="dark">
+    <Section tone="graphite" className="pb-0">
       <div className="grid gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
         <div>
-          <Reveal>
-            <span className="eyebrow">{dict.why.eyebrow}</span>
-          </Reveal>
-          <Reveal delay={0.05}>
-            <h2 className="mt-5 font-display text-display-lg font-semibold text-white text-balance">
-              {dict.why.title}
-            </h2>
-          </Reveal>
+          <SectionHeading eyebrow={dict.why.eyebrow} title={dict.why.title} tone="light" />
           <Reveal delay={0.1}>
             <div className="mt-10 hidden lg:block">
               <Media
-                src={undefined}
+                src="/photos/interior-living.jpg"
                 alt={dict.why.title}
                 aspect="4 / 3"
-                className="rounded-2xl"
-                label={locale === 'ru' ? 'Архитектура объекта' : 'Arhitectura obiectului'}
+                className="rounded-none"
+                sizes="(max-width: 1024px) 100vw, 40vw"
                 seed={2}
               />
             </div>

@@ -1,11 +1,12 @@
 import { cn } from '@/lib/utils';
 import { Container } from './Container';
 
-type Tone = 'default' | 'sand' | 'dark' | 'graphite';
+type Tone = 'default' | 'sand' | 'stone' | 'dark' | 'graphite';
 
 const toneClass: Record<Tone, string> = {
   default: 'bg-white text-ink',
   sand: 'bg-sand text-ink',
+  stone: 'bg-stone text-ink',
   dark: 'bg-graphite-900 text-white',
   graphite: 'bg-graphite text-white',
 };

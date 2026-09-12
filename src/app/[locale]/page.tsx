@@ -19,9 +19,11 @@ export default async function HomePage(props: { params: Promise<{ locale: string
     <>
       <Hero locale={locale} dict={dict} />
       <AboutBrief locale={locale} dict={dict} />
-      <Stats locale={locale} dict={dict} />
       <FeaturedProjects locale={locale} dict={dict} />
+      {/* WhyUs + Stats share one graphite ground and read as a single
+          proof band, so no other section may sit between them. */}
       <WhyUs locale={locale} dict={dict} />
+      <Stats locale={locale} dict={dict} />
       <Quality locale={locale} dict={dict} />
       <Steps locale={locale} dict={dict} />
       <LeadSection locale={locale} dict={dict} />

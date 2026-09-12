@@ -24,6 +24,23 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/**
+ * Prefix a path to a file in /public with the deployment basePath.
+ *
+ * `next/image` applies basePath itself — except under `images.unoptimized`,
+ * which is exactly the static-export configuration used for GitHub Pages. The
+ * export then emits `src="/photos/x.jpg"` while the file is served from
+ * `/pamir/photos/x.jpg`, so every image 404s. Script and font URLs are
+ * unaffected; only the image src is missed.
+ *
+ * In Node mode NEXT_PUBLIC_BASE_PATH is empty and this is a no-op.
+ */
+export function asset(path: string) {
+  const base = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+  if (!base || !path.startsWith('/') || path.startsWith(`${base}/`)) return path;
+  return `${base}${path}`;
+}
+
 /** Format a raw phone string into a tel: href (strip spaces, keep leading +). */
 export function telHref(phone: string) {
   return 'tel:' + phone.replace(/[^\d+]/g, '');
