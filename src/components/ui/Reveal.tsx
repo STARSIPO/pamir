@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
-import { cn } from '@/lib/utils';
+import { usePrefersReducedMotion } from '@/lib/useReducedMotion';
 
 /**
  * Scroll-in reveal built on CSS transitions (not framer's whileInView, which
@@ -11,6 +11,10 @@ import { cn } from '@/lib/utils';
  * Fail-safe by design: the default state is VISIBLE. JS only *adds* a hidden
  * start state for below-the-fold elements, then transitions them in on scroll.
  * If JS never runs, content simply shows — it can never get stuck invisible.
+ *
+ * Visibility is decided from the IntersectionObserver's first callback rather
+ * than a mount-time getBoundingClientRect(): the rect read forced a synchronous
+ * layout per instance during hydration, and there are ~60 instances.
  */
 type State = 'init' | 'hidden' | 'shown';
 
@@ -29,51 +33,55 @@ export function Reveal({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<State>('init');
+  // will-change is a hint that costs a compositor layer for as long as it is
+  // set, so it is scoped to the animation instead of living on the wrapper.
+  const [animating, setAnimating] = useState(false);
+  const reduce = usePrefersReducedMotion();
 
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    // Reduced motion keeps the element in 'init' — visible, untransformed, and
+    // with no transition to run.
+    if (!el || reduce) return;
 
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setState('shown');
-      return;
-    }
-
-    const rect = el.getBoundingClientRect();
-    // Already in view at mount → show immediately (no hidden detour), so
-    // above-the-fold content is never gated on an animation frame firing.
-    if (rect.top < window.innerHeight && rect.bottom > 0) {
-      setState('shown');
-      return;
-    }
-
-    // Below the fold → hide, then reveal when scrolled into view.
-    setState('hidden');
+    let first = true;
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
           if (e.isIntersecting) {
+            // Already in view on the first callback → show immediately, with no
+            // hidden detour, so above-the-fold content never animates in late.
+            if (!first) setAnimating(true);
             setState('shown');
             if (once) io.disconnect();
+          } else if (first) {
+            setState('hidden');
           } else if (!once) {
             setState('hidden');
           }
         }
+        first = false;
       },
       { threshold: 0.18 },
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [once]);
+  }, [once, reduce]);
 
   const style: CSSProperties = {
     transition: `opacity 0.7s cubic-bezier(0.22,1,0.36,1) ${delay}s, transform 0.7s cubic-bezier(0.22,1,0.36,1) ${delay}s`,
+    ...(animating || state === 'hidden' ? { willChange: 'opacity, transform' } : null),
     ...(state === 'hidden' && { opacity: 0, transform: `translateY(${y}px)` }),
     ...(state === 'shown' && { opacity: 1, transform: 'translateY(0)' }),
   };
 
   return (
-    <div ref={ref} className={cn('will-change-[opacity,transform]', className)} style={style}>
+    <div
+      ref={ref}
+      className={className}
+      style={style}
+      onTransitionEnd={() => setAnimating(false)}
+    >
       {children}
     </div>
   );

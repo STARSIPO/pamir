@@ -27,7 +27,7 @@ export function Stats({ locale, dict }: { locale: Locale; dict: Dictionary }) {
           <Reveal key={i} delay={i * 0.08}>
             <div className="border-t border-white/15 pt-5">
               <div className="font-display text-5xl font-bold text-white sm:text-6xl">
-                <Counter value={s.value} suffix={s.suffix} />
+                <Counter value={s.value} suffix={s.suffix} locale={locale} />
               </div>
               <p className="mt-3 text-sm text-white/55">
                 {s.label[locale]}

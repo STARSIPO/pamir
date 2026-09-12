@@ -8,7 +8,6 @@ import { buildMetadata } from '@/lib/seo';
 import { projects, getProject } from '@/content/projects';
 import { routes } from '@/i18n/routing';
 import { Section } from '@/components/ui/Section';
-import { Container } from '@/components/ui/Container';
 import { Reveal } from '@/components/ui/Reveal';
 import { FeatureIcon } from '@/components/ui/FeatureIcon';
 import { ProjectHero } from '@/components/project/ProjectHero';

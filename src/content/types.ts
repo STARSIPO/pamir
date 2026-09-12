@@ -18,6 +18,14 @@ export interface Advantage {
   note?: Localized;
 }
 
+/**
+ * Sales status of a unit or unit type.
+ *
+ * `unknown` is the honest default: the owner has not confirmed availability,
+ * and inventing "available" would misrepresent stock to a buyer.
+ */
+export type AvailabilityStatus = 'available' | 'reserved' | 'sold' | 'unknown';
+
 export interface Floorplan {
   id: string;
   rooms: number;
@@ -25,9 +33,20 @@ export interface Floorplan {
   area?: number;
   floor?: Localized;
   image?: string;
+  /**
+   * @deprecated Use `status`. Kept so existing content literals stay valid;
+   * `status` wins when both are set. See resolveAvailability().
+   */
   available: boolean;
+  /** Richer replacement for `available`. Falls back to it when absent. */
+  status?: AvailabilityStatus;
   /** true when the drawing itself is a demo placeholder. */
   placeholder?: boolean;
+}
+
+/** Single source of truth for reading a floorplan's status. */
+export function resolveAvailability(f: Pick<Floorplan, 'available' | 'status'>): AvailabilityStatus {
+  return f.status ?? (f.available ? 'available' : 'unknown');
 }
 
 export interface NearbyPlace {

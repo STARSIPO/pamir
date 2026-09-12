@@ -60,9 +60,9 @@ export const projects: Project[] = [
       { icon: 'playground', label: { ru: 'Детская площадка', ro: 'Loc de joacă' } },
     ],
     floorplans: [
-      { id: 'bs2-1r', rooms: 1, floor: TBD, available: true, placeholder: true },
-      { id: 'bs2-2r', rooms: 2, floor: TBD, available: true, placeholder: true },
-      { id: 'bs2-3r', rooms: 3, floor: TBD, available: true, placeholder: true },
+      { id: 'bs2-1r', rooms: 1, floor: TBD, available: false, status: 'unknown', placeholder: true },
+      { id: 'bs2-2r', rooms: 2, floor: TBD, available: false, status: 'unknown', placeholder: true },
+      { id: 'bs2-3r', rooms: 3, floor: TBD, available: false, status: 'unknown', placeholder: true },
     ],
     nearby: [
       { icon: 'school', label: { ru: 'Школы и детские сады', ro: 'Școli și grădinițe' } },
@@ -116,9 +116,9 @@ export const projects: Project[] = [
       { icon: 'playground', label: { ru: 'Детская площадка', ro: 'Loc de joacă' } },
     ],
     floorplans: [
-      { id: 'eco-1r', rooms: 1, floor: TBD, available: true, placeholder: true },
-      { id: 'eco-2r', rooms: 2, floor: TBD, available: true, placeholder: true },
-      { id: 'eco-3r', rooms: 3, floor: TBD, available: true, placeholder: true },
+      { id: 'eco-1r', rooms: 1, floor: TBD, available: false, status: 'unknown', placeholder: true },
+      { id: 'eco-2r', rooms: 2, floor: TBD, available: false, status: 'unknown', placeholder: true },
+      { id: 'eco-3r', rooms: 3, floor: TBD, available: false, status: 'unknown', placeholder: true },
     ],
     nearby: [
       { icon: 'store', label: { ru: 'Магазины рядом', ro: 'Magazine în apropiere' } },

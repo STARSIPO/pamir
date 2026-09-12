@@ -1,6 +1,5 @@
 import { ArrowRight, ArrowDown } from 'lucide-react';
 import Link from 'next/link';
-import type { CSSProperties } from 'react';
 import type { Locale } from '@/i18n/config';
 import type { Dictionary } from '@/i18n/dictionaries';
 import { projects } from '@/content/projects';

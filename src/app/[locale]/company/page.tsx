@@ -6,7 +6,6 @@ import { companyIntro, companyQuote, principles, values } from '@/content/compan
 import { projects } from '@/content/projects';
 import { PageHero } from '@/components/shared/PageHero';
 import { Section } from '@/components/ui/Section';
-import { Container } from '@/components/ui/Container';
 import { Reveal } from '@/components/ui/Reveal';
 import { FeatureIcon } from '@/components/ui/FeatureIcon';
 import { Media } from '@/components/ui/Media';

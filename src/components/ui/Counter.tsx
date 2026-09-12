@@ -1,31 +1,61 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { useInView, useReducedMotion } from 'framer-motion';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { Locale } from '@/i18n/config';
+import { usePrefersReducedMotion } from '@/lib/useReducedMotion';
 
-/** Animated count-up that runs once when scrolled into view. */
+/**
+ * Animated count-up that runs once when scrolled into view.
+ *
+ * Uses a plain IntersectionObserver rather than framer-motion's useInView:
+ * those two hooks were the library's only consumers in the codebase, and no
+ * `motion.*` component is rendered anywhere, so importing them pulled a
+ * dependency in for ~15 lines of platform API.
+ */
 export function Counter({
   value,
   suffix = '',
   duration = 1600,
+  locale,
   className,
 }: {
   value: number;
   suffix?: string;
   duration?: number;
+  locale?: Locale;
   className?: string;
 }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true, amount: 0.4 });
-  const reduce = useReducedMotion();
+  const [inView, setInView] = useState(false);
   const [display, setDisplay] = useState(0);
+  const reduce = usePrefersReducedMotion();
+
+  // Reduced motion is read during render, not written into state from an
+  // effect, so the final number is correct on the very first paint.
+  const shown = reduce ? value : display;
+
+  const format = useMemo(() => new Intl.NumberFormat(locale ?? 'ru'), [locale]);
 
   useEffect(() => {
-    if (!inView) return;
-    if (reduce) {
-      setDisplay(value);
-      return;
-    }
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            setInView(true);
+            io.disconnect();
+          }
+        }
+      },
+      { threshold: 0.4 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!inView || reduce) return;
     let raf = 0;
     let start: number | null = null;
     const tick = (t: number) => {
@@ -47,7 +77,7 @@ export function Counter({
 
   return (
     <span ref={ref} className={className}>
-      <span className="tabular">{display}</span>
+      <span className="tabular">{format.format(shown)}</span>
       {suffix}
     </span>
   );
