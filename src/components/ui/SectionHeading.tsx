@@ -10,6 +10,7 @@ export function SectionHeading({
   tone = 'dark',
   className,
   as: Heading = 'h2',
+  rule = true,
 }: {
   eyebrow?: string;
   title: React.ReactNode;
@@ -18,6 +19,8 @@ export function SectionHeading({
   tone?: 'dark' | 'light';
   className?: string;
   as?: 'h1' | 'h2';
+  /** Brand hairline that draws in under the title as the section enters view. */
+  rule?: boolean;
 }) {
   return (
     <div
@@ -42,6 +45,15 @@ export function SectionHeading({
           {splitWords(title)}
         </Heading>
       </Reveal>
+      {rule && (
+        <span
+          aria-hidden="true"
+          className={cn(
+            'rule-draw mt-6 block h-px w-16 bg-brand/70',
+            align === 'center' && 'rule-draw-center mx-auto',
+          )}
+        />
+      )}
       {subtitle && (
         <Reveal delay={0.1}>
           <p

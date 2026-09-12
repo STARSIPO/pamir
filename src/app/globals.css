@@ -99,9 +99,16 @@ body {
     @apply text-brand;
   }
 
-  /* Thin architectural rule */
+  /* Thin architectural rule.
+     The colour is written out rather than `@apply bg-line/12`: that @apply
+     fails to resolve (Tailwind 3 reports "the `bg-line/12` class does not
+     exist" even though the same class generates fine from a content scan).
+     The rule was unused, so the error stayed dormant until any scanned file
+     merely contained the word "hairline" and caused this block to be
+     emitted. */
   .hairline {
-    @apply h-px w-full bg-line/12;
+    @apply h-px w-full;
+    background-color: rgb(var(--line) / 0.12);
   }
 
   .link-underline {
@@ -159,6 +166,26 @@ body {
     text-wrap: pretty;
   }
 
+  /* Hairline that draws left-to-right under a section heading.
+     NOTE: no `--` in these class names. Tailwind 3's candidate extractor
+     chokes on a BEM-style `rule-draw--center` and then reports an unrelated
+     @apply in the components layer as missing. */
+  .rule-draw {
+    transform: scaleX(1);
+    transform-origin: left center;
+  }
+
+  .rule-draw-center {
+    transform-origin: center;
+  }
+
+  /* Image that wipes up from its own bottom edge. Never put this on an LCP
+     element: a fully clipped box has no visible area, so it is not an LCP
+     candidate until it paints. Gallery and below-fold imagery only. */
+  .mask-rise {
+    clip-path: inset(0 0 0 0);
+  }
+
   /* Reveal-on-scroll mask for images */
   .mask-reveal {
     clip-path: inset(0 0 0 0);
@@ -187,4 +214,51 @@ body {
 /* Number-counter tabular alignment */
 .tabular {
   font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   Scroll-driven layer (L2).
+
+   Native CSS scroll-driven animations: 0 KB of JS, run off the compositor,
+   and usable inside Server Components because there is no client boundary.
+   Firefox still ships `animation-timeline` behind a flag, so this is a
+   progressive enhancement and never load-bearing — each class declares its
+   FINAL state in @layer utilities above, and this block only animates the
+   way in. No support, or reduced motion: the page renders as it ends up.
+
+   Kept outside @layer utilities on purpose; Tailwind 3's layer processing
+   does not handle a nested @supports/@media block cleanly.
+   ============================================================ */
+@keyframes rule-draw {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes mask-rise {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .rule-draw {
+      animation: rule-draw linear both;
+      animation-timeline: view();
+      animation-range: entry 20% cover 30%;
+    }
+
+    .mask-rise {
+      animation: mask-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 5% cover 28%;
+    }
+  }
 }

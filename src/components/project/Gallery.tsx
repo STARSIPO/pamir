@@ -65,7 +65,10 @@ export function Gallery({
             key={i}
             onClick={() => setOpen(i)}
             className={cn(
-              'group relative overflow-hidden rounded-xl',
+              // mask-rise wipes the tile up from its bottom edge as it enters
+              // view. Safe here: the gallery sits well below the project hero,
+              // so no LCP candidate is ever clipped.
+              'mask-rise group relative overflow-hidden rounded-xl',
               i === 0 && 'col-span-2 row-span-2 md:col-span-2 md:row-span-2',
             )}
             aria-label={`${name} — ${i + 1}`}
