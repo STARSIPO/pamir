@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { splitWords } from '@/lib/text';
 import { Reveal } from './Reveal';
 
 export function SectionHeading({
@@ -31,14 +32,14 @@ export function SectionHeading({
           <span className={cn('eyebrow', align === 'center' && 'justify-center')}>{eyebrow}</span>
         </Reveal>
       )}
-      <Reveal delay={0.05}>
+      <Reveal delay={0.05} stagger={typeof title === 'string'}>
         <Heading
           className={cn(
             'mt-5 font-display text-display-lg font-semibold text-balance',
             tone === 'light' ? 'text-white' : 'text-ink',
           )}
         >
-          {title}
+          {splitWords(title)}
         </Heading>
       </Reveal>
       {subtitle && (

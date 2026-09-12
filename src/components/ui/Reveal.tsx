@@ -24,12 +24,19 @@ export function Reveal({
   y = 22,
   className,
   once = true,
+  stagger = false,
 }: {
   children: ReactNode;
   delay?: number;
   y?: number;
   className?: string;
   once?: boolean;
+  /**
+   * Reveal `.word` children individually instead of fading the block.
+   * The wrapper only publishes `data-reveal`; the ladder lives in globals.css
+   * so no per-word JS or style object is created.
+   */
+  stagger?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<State>('init');
@@ -68,18 +75,23 @@ export function Reveal({
     return () => io.disconnect();
   }, [once, reduce]);
 
-  const style: CSSProperties = {
-    transition: `opacity 0.7s cubic-bezier(0.22,1,0.36,1) ${delay}s, transform 0.7s cubic-bezier(0.22,1,0.36,1) ${delay}s`,
-    ...(animating || state === 'hidden' ? { willChange: 'opacity, transform' } : null),
-    ...(state === 'hidden' && { opacity: 0, transform: `translateY(${y}px)` }),
-    ...(state === 'shown' && { opacity: 1, transform: 'translateY(0)' }),
-  };
+  const style: CSSProperties = stagger
+    ? {}
+    : {
+        transition: `opacity 0.7s cubic-bezier(0.22,1,0.36,1) ${delay}s, transform 0.7s cubic-bezier(0.22,1,0.36,1) ${delay}s`,
+        ...(animating || state === 'hidden' ? { willChange: 'opacity, transform' } : null),
+        ...(state === 'hidden' && { opacity: 0, transform: `translateY(${y}px)` }),
+        ...(state === 'shown' && { opacity: 1, transform: 'translateY(0)' }),
+      };
 
   return (
     <div
       ref={ref}
       className={className}
       style={style}
+      // 'init' publishes no attribute at all, so words stay visible when JS
+      // never runs or reduced motion short-circuits the observer.
+      data-reveal={stagger && state !== 'init' ? state : undefined}
       onTransitionEnd={() => setAnimating(false)}
     >
       {children}

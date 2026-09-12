@@ -27,6 +27,10 @@
 
   --header-h: 88px;
 
+  /* Single motion curve for the whole site — mirrors `ease-premium` in
+     tailwind.config.ts so hand-written CSS and utilities cannot drift apart. */
+  --ease-premium: cubic-bezier(0.22, 1, 0.36, 1);
+
   /* Display face reuses the body variable font (Manrope) — one family,
      distinction comes from weight & scale. Swap here to introduce a serif. */
   --font-display: var(--font-sans);
@@ -48,6 +52,12 @@ html {
   .animate-fade-up,
   .animate-bounce {
     animation: none !important;
+  }
+  /* Word-staggered headings: land on the final state with no delay ladder. */
+  [data-reveal] .word {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
   }
 }
 
@@ -107,6 +117,37 @@ body {
 
   .prose-lead {
     @apply text-lg leading-relaxed text-muted sm:text-xl;
+  }
+
+  /* ------------------------------------------------------------------
+     Word-staggered heading reveal.
+
+     Words are split on the SERVER (see splitWords in src/lib/text.ts), so
+     the full heading is in the delivered HTML: crawlers and screen readers
+     see ordinary text, and there is no reflow when the webfont swaps in.
+     Splitting by word, never by character — the site is RU/RO and
+     character-splitting Cyrillic or ș/ț/ă/î/â breaks graphemes.
+
+     The default state is VISIBLE, matching Reveal: if JS never sets
+     data-reveal, headings simply show.
+     ------------------------------------------------------------------ */
+  .word {
+    display: inline-block;
+    /* Keeps descenders from being clipped while the word is translated. */
+    padding-bottom: 0.06em;
+  }
+
+  [data-reveal='hidden'] .word {
+    opacity: 0;
+    transform: translateY(0.38em);
+  }
+
+  [data-reveal='shown'] .word {
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+      opacity 0.7s var(--ease-premium) calc(var(--i, 0) * 40ms),
+      transform 0.7s var(--ease-premium) calc(var(--i, 0) * 40ms);
   }
 }
 

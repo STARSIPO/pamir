@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, Phone } from 'lucide-react';
@@ -23,18 +23,31 @@ export function Header({ locale, dict }: { locale: Locale; dict: Dictionary }) {
 
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
+  // A sentinel pinned 20px down the document replaces a scroll listener: the
+  // header state is a boolean, so it needs a threshold crossing, not a
+  // position stream. Keeps the main thread free of per-frame scroll work.
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    const el = sentinelRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => setScrolled(!entry.isIntersecting),
+      { threshold: 0 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
   }, []);
 
   const solid = scrolled || !overHero;
 
   return (
     <>
+      <div
+        ref={sentinelRef}
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-5 h-px"
+      />
       <header
         className={cn(
           'fixed inset-x-0 top-0 z-50 transition-all duration-500 ease-premium',
