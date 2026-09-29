@@ -1,16 +1,15 @@
 import type { Metadata } from 'next';
-import { ArrowRight, Check } from 'lucide-react';
-import Link from 'next/link';
 import { isLocale, type Locale } from '@/i18n/config';
 import { getDictionary } from '@/i18n/dictionaries';
 import { buildMetadata } from '@/lib/seo';
+import { cn } from '@/lib/utils';
 import { services } from '@/content/services';
-import { routes } from '@/i18n/routing';
 import { PageHero } from '@/components/shared/PageHero';
 import { Section } from '@/components/ui/Section';
 import { Reveal } from '@/components/ui/Reveal';
-import { FeatureIcon } from '@/components/ui/FeatureIcon';
 import { CtaBand } from '@/components/shared/CtaBand';
+
+const pad = (n: number) => String(n).padStart(2, '0');
 
 export async function generateMetadata(props: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const params = await props.params;
@@ -19,6 +18,19 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
   return buildMetadata({ locale, routeKey: 'services', title: dict.servicesPage.title, description: dict.servicesPage.subtitle });
 }
 
+/**
+ * Services as a numbered schedule — one large row per service, divided by
+ * hairlines, like the room schedule on a drawing sheet.
+ *
+ *   01   Строительство жилых           Полный цикл возведения…
+ *        комплексов                    ─────────────────────────
+ *                                      Монолитно-каркасное…
+ *   ───────────────────────────────────────────────────────────
+ *   02        Генеральный подряд       Управление проектом…
+ *
+ * On wide screens the title column steps in on every other row, so the list
+ * reads with a slow rhythm instead of as a table.
+ */
 export default async function ServicesPage(props: { params: Promise<{ locale: string }> }) {
   const params = await props.params;
   const locale = (isLocale(params.locale) ? params.locale : 'ru') as Locale;
@@ -28,39 +40,50 @@ export default async function ServicesPage(props: { params: Promise<{ locale: st
     <>
       <PageHero eyebrow={dict.servicesPage.eyebrow} title={dict.servicesPage.title} subtitle={dict.servicesPage.subtitle} />
 
-      <Section tone="default">
-        <div className="grid gap-6 lg:grid-cols-2">
-          {services.map((s, i) => (
-            <Reveal key={s.slug} delay={(i % 2) * 0.06}>
-              <article className="flex h-full flex-col rounded-2xl border border-line/10 bg-white p-8 transition-shadow duration-500 hover:shadow-card">
-                <div className="flex items-start gap-4">
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand/12 text-brand-700">
-                    <FeatureIcon name={s.icon} />
-                  </span>
-                  <div>
-                    <h2 className="font-display text-xl font-semibold text-ink">{s.title[locale]}</h2>
-                    <p className="mt-2 leading-relaxed text-muted">{s.summary[locale]}</p>
-                  </div>
+      <Section spacing="none" className="pb-section">
+        <ol className="border-b border-line/15">
+          {services.map((s, i) => {
+            const stepped = i % 2 === 1;
+            return (
+              <li key={s.slug} className="border-t border-line/15">
+                <div className="grid gap-y-6 py-12 md:grid-cols-12 md:gap-x-gutter md:py-16 lg:py-20">
+                  <Reveal className="md:col-span-1">
+                    <span className="label tabular block text-muted md:pt-3">{pad(i + 1)}</span>
+                  </Reveal>
+
+                  <Reveal
+                    delay={0.04}
+                    className={cn(
+                      'md:col-span-5 md:col-start-2',
+                      stepped ? 'lg:col-span-5 lg:col-start-4' : 'lg:col-span-6 lg:col-start-2',
+                    )}
+                  >
+                    <h2 className="font-display text-display-md font-light text-balance text-ink">{s.title[locale]}</h2>
+                  </Reveal>
+
+                  <Reveal delay={0.12} className="md:col-span-6 md:col-start-7 lg:col-span-4 lg:col-start-9">
+                    <p className="text-pretty text-base leading-relaxed text-muted md:pt-2 md:text-[1.0625rem]">
+                      {s.summary[locale]}
+                    </p>
+                    {s.points.length > 0 && (
+                      <ul className="mt-8 border-t border-line/15 md:mt-10">
+                        {s.points.map((pt, j) => (
+                          <li
+                            key={j}
+                            className="flex gap-4 border-b border-line/15 py-3.5 text-[0.95rem] leading-snug text-ink last:border-b-0 last:pb-0"
+                          >
+                            <span aria-hidden="true" className="mt-[0.6em] h-px w-3 shrink-0 bg-accent" />
+                            {pt[locale]}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </Reveal>
                 </div>
-                <ul className="mt-5 space-y-2 border-t border-line/10 pt-5">
-                  {s.points.map((pt, j) => (
-                    <li key={j} className="flex items-start gap-2.5 text-sm text-ink">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
-                      {pt[locale]}
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href={routes.contacts(locale)}
-                  className="mt-6 inline-flex items-center gap-1.5 self-start text-sm font-semibold text-ink link-underline"
-                >
-                  {dict.common.getConsultation}
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </article>
-            </Reveal>
-          ))}
-        </div>
+              </li>
+            );
+          })}
+        </ol>
       </Section>
 
       <CtaBand locale={locale} dict={dict} title={dict.servicesPage.ctaTitle} subtitle={dict.lead.subtitle} />

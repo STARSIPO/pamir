@@ -7,41 +7,71 @@ import { Media } from '@/components/ui/Media';
 import { FeatureIcon } from '@/components/ui/FeatureIcon';
 import { qualityFeatures } from '@/content/home';
 
+/**
+ * Construction quality — the part of a building a facade does not show.
+ * Used on the homepage (after 03 Advantages) and on the company page.
+ *
+ *   КАЧЕСТВО СТРОИТЕЛЬСТВА ─────────────────────────────────────────
+ *
+ *   Внимание к тому, что
+ *   не видно на фасаде
+ *
+ *   ┌──────────────────┐            Инженерные решения и материалы …
+ *   │                  │
+ *   │   tall photo     │            ── ⌁ ───────────  ── ♨ ───────────
+ *   │   (atmosphere)   │            Сейсмостойкие     Автономное
+ *   │                  │            конструкции       отопление
+ *   │                  │            … 8 items, 2 columns, hairlines
+ *   └──────────────────┘
+ *
+ * The photograph is a stock construction site: atmosphere only, so it never
+ * carries a project caption. On lg the lead text aligns to the photo's top
+ * edge and the list to its bottom edge; below lg everything stacks and the
+ * list opens to four columns on tablets.
+ */
 export function Quality({ locale, dict }: { locale: Locale; dict: Dictionary }) {
   return (
-    <Section tone="stone">
-      <div className="grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:items-start lg:gap-16">
-        <SectionHeading
-          eyebrow={dict.quality.eyebrow}
-          title={dict.quality.title}
-          subtitle={dict.quality.subtitle}
-        />
+    <Section tone="alt" id="quality">
+      <SectionHeading eyebrow={dict.quality.eyebrow} title={dict.quality.title} size="lg" />
 
-        {/* Letterbox band — a fixed, wide crop is what makes photos of
-            different shapes sit together as a set. */}
-        <Reveal delay={0.1}>
+      <div className="mt-12 grid gap-y-12 md:mt-16 lg:mt-24 lg:grid-cols-12 lg:grid-rows-[auto_1fr] lg:gap-x-gutter">
+        <Reveal delay={0.08} className="lg:col-span-5 lg:col-start-8 lg:row-start-1">
+          <p className="max-w-[44ch] text-pretty text-lead text-muted">{dict.quality.subtitle}</p>
+        </Reveal>
+
+        {/* lg: 4:5 is the frame's minimum height; self-stretch lets it grow
+            with the text column so both bottom edges always align. */}
+        <Reveal
+          variant="mask"
+          className="relative aspect-[4/3] md:aspect-[16/10] lg:col-span-6 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:aspect-[4/5] lg:self-stretch lg:justify-self-stretch"
+        >
+          {/* Stock photo, atmosphere only: the theme grading still applies on
+              the <img>; the frame mutes it further so the site's own project
+              photographs stay the loudest images on the page. */}
           <Media
             src="/photos/quality-site.jpg"
-            alt={dict.quality.title}
-            aspect="16 / 9"
-            className="rounded-none"
-            sizes="(max-width: 1024px) 100vw, 55vw"
+            alt={dict.quality.eyebrow}
+            fill
+            position="82% 50%"
+            className="saturate-[.55]"
+            sizes="(max-width: 1024px) 100vw, 45vw"
             seed={4}
           />
         </Reveal>
-      </div>
 
-      <div className="mt-14 grid grid-cols-2 gap-px overflow-hidden border border-line/10 bg-line/10 lg:grid-cols-4">
-        {qualityFeatures.map((f, i) => (
-          <Reveal key={f.icon + i} delay={(i % 4) * 0.06}>
-            <div className="flex h-full flex-col gap-4 bg-stone p-6 transition-colors hover:bg-white sm:p-8">
-              <span className="flex h-12 w-12 items-center justify-center bg-brand/15 text-brand-700">
-                <FeatureIcon name={f.icon} />
-              </span>
-              <span className="text-[0.95rem] font-medium leading-snug text-ink">{f.label[locale]}</span>
-            </div>
-          </Reveal>
-        ))}
+        <ul className="grid grid-cols-2 gap-x-gutter md:grid-cols-4 lg:col-span-5 lg:col-start-8 lg:row-start-2 lg:grid-cols-2 lg:self-end">
+          {qualityFeatures.map((f, i) => (
+            <Reveal
+              as="li"
+              key={f.icon}
+              delay={(i % 4) * 0.06}
+              className="flex flex-col gap-5 border-t border-line/15 pb-8 pt-5 md:pb-10 md:pt-6"
+            >
+              <FeatureIcon name={f.icon} strokeWidth={1.25} className="h-5 w-5 text-muted" />
+              <span className="text-pretty text-base leading-snug text-ink md:text-[1.0625rem]">{f.label[locale]}</span>
+            </Reveal>
+          ))}
+        </ul>
       </div>
     </Section>
   );

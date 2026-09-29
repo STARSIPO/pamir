@@ -5,10 +5,22 @@ yet available**. Everything below is clearly flagged in code and easy to replace
 Nothing here is invented data shown as fact — unconfirmed values render as
 “Уточняется / Se precizează”, and all images are branded `DEMO` placeholders.
 
-## 1. Images (all currently branded placeholders)
+## 1. Images
 
-The `<Media>` component (`src/components/ui/Media.tsx`) shows a branded
-architectural placeholder tagged **DEMO** whenever no `src` is set. To replace:
+**Project covers now use Pamir Construct's own renders and photos**, taken from the
+legacy pamirconstruct.md site (`public/photos/projects/`, sources in
+`docs/IMAGE-CREDITS.md`). Still needed from the owner:
+
+- **High-resolution originals of the renders** (≥ 2560 px wide, no logo overlays or
+  watermarks). The legacy files are 1080–1280 px, which is soft on full-bleed hero
+  slots on large screens.
+- A render or photo of **Botanic Star 2, blocks 3–4** without the logo panel (the
+  current cover is a crop that loses the left wing of the building).
+- Current construction photos for Eco House and Botanic Star 2 (blocks 3–4) for the
+  project galleries (both galleries are empty or minimal today).
+
+The `<Media>` component (`src/components/ui/Media.tsx`) still shows a quiet
+placeholder tagged **DEMO** whenever no `src` is set (floor plans). To replace:
 
 1. Drop real files into `public/` (e.g. `public/projects/botanic-star-2-blocks-3-4/cover.jpg`).
 2. Set the path in the content file:
@@ -18,9 +30,10 @@ architectural placeholder tagged **DEMO** whenever no `src` is set. To replace:
      respective components (`src/components/home/*`, `company/page.tsx`).
 3. `next/image` then serves optimized AVIF/WebP automatically.
 
-**Logo:** rebuilt faithfully as SVG (`src/components/brand/Logo.tsx`,
-`public/favicon.svg`) from the original green “Pamir peak + skyline” mark.
-Replace with the official vector if the brand archive provides one.
+**Logo:** rebuilt as SVG (`src/components/brand/Logo.tsx`, `public/favicon.svg`)
+from the original “Pamir peak + skyline” mark, now single-colour (`currentColor`)
+so it follows the active theme. Replace with the official vector if the brand
+archive provides one.
 
 ## 2. Facts to confirm with the owner
 

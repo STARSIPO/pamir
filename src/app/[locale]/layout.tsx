@@ -6,6 +6,7 @@ import { alternates } from '@/i18n/routing';
 import { contact, companyLegalName } from '@/content/site';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
+import { SmoothScroll } from '@/components/layout/SmoothScroll';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://pamirconstruct.md';
 
@@ -79,10 +80,11 @@ export default async function LocaleLayout(
     <div lang={localeHtmlLang[locale]}>
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:rounded-full focus:bg-ink focus:px-4 focus:py-2 focus:text-sm focus:text-white"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:bg-ink focus:px-4 focus:py-2 focus:text-sm focus:text-canvas"
       >
         {dict.common.learnMore}
       </a>
+      <SmoothScroll />
       <Header locale={locale} dict={dict} />
       <main id="main">{children}</main>
       <Footer locale={locale} dict={dict} />

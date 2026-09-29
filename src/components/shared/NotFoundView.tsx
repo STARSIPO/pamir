@@ -1,30 +1,89 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { defaultLocale, isLocale, type Locale } from '@/i18n/config';
+import { usePathname } from 'next/navigation';
+import { defaultLocale, isLocale, localeHtmlLang, type Locale } from '@/i18n/config';
 import { getDictionary } from '@/i18n/dictionaries';
 import { routes } from '@/i18n/routing';
+import { contact, companyLegalName } from '@/content/site';
+import { cn, currentYear, telHref } from '@/lib/utils';
+import { splitWords } from '@/lib/text';
+import { Logo } from '@/components/brand/Logo';
+import { Button } from '@/components/ui/Button';
+import { Reveal } from '@/components/ui/Reveal';
 
-export function NotFoundView() {
-  const pathname = usePathname();
+/**
+ * 404 in the site's language: a "404" label on a hairline, a very large light
+ * title, one line of explanation, two actions.
+ *
+ * `standalone` — for app/not-found.tsx, which renders in the root layout only
+ * (no header, no footer): the view then brings its own logo bar, <main> and a
+ * closing hairline row, so an unknown URL still lands on a finished page.
+ * The locale comes from the first path segment; unknown → default locale.
+ */
+export function NotFoundView({ standalone = false }: { standalone?: boolean }) {
+  const pathname = usePathname() ?? '';
   const seg = pathname.split('/').filter(Boolean)[0];
   const locale: Locale = seg && isLocale(seg) ? seg : defaultLocale;
   const dict = getDictionary(locale);
 
-  return (
-    <section className="flex min-h-[70vh] items-center bg-sand">
-      <div className="container py-24 text-center">
-        <p className="font-display text-[7rem] font-extrabold leading-none text-brand">404</p>
-        <h1 className="mt-4 font-display text-display-md font-semibold text-ink">{dict.notFound.title}</h1>
-        <p className="mx-auto mt-4 max-w-md text-lg text-muted">{dict.notFound.subtitle}</p>
-        <Link
-          href={routes.home(locale)}
-          className="mt-8 inline-flex h-14 items-center justify-center rounded-full bg-brand px-7 font-semibold text-graphite-900 transition-colors hover:bg-brand-600"
+  const body = (
+    <section className={cn('flex flex-col bg-canvas text-ink', standalone ? 'flex-1' : 'min-h-[78svh]')}>
+      <div className="container flex flex-1 flex-col justify-center py-section-sm">
+        <div className="flex items-center gap-4">
+          <Reveal className="label shrink-0 tabular text-muted">404</Reveal>
+          <span aria-hidden="true" className="rule-draw h-px flex-1 bg-line/15" />
+        </div>
+
+        <div className="mt-12 grid gap-y-10 md:mt-16 lg:grid-cols-12 lg:items-end lg:gap-x-gutter">
+          <Reveal stagger className="lg:col-span-8">
+            <h1 className="font-display text-display-xl font-light text-balance">{splitWords(dict.notFound.title)}</h1>
+          </Reveal>
+          <Reveal delay={0.12} className="lg:col-span-4 lg:pb-3">
+            <p className="max-w-md text-pretty text-base leading-relaxed text-muted md:text-[1.0625rem]">
+              {dict.notFound.subtitle}
+            </p>
+          </Reveal>
+        </div>
+
+        <Reveal
+          delay={0.2}
+          className="mt-14 flex flex-col items-start gap-6 border-t border-line/15 pt-10 sm:flex-row sm:items-center sm:gap-10 md:mt-20"
         >
-          {dict.notFound.backHome}
-        </Link>
+          <Button href={routes.home(locale)} variant="primary" size="lg" arrow>
+            {dict.notFound.backHome}
+          </Button>
+          <Button href={routes.projects(locale)} variant="ghost" arrow>
+            {dict.common.viewProjects}
+          </Button>
+        </Reveal>
       </div>
     </section>
+  );
+
+  if (!standalone) return body;
+
+  return (
+    <div lang={localeHtmlLang[locale]} className="flex min-h-svh flex-col bg-canvas text-ink">
+      <header className="container flex h-[88px] shrink-0 items-center justify-between">
+        <Link href={routes.home(locale)} aria-label={companyLegalName} className="-m-2 p-2">
+          <Logo />
+        </Link>
+        <a href={telHref(contact.primaryPhone)} className="link-line hidden text-sm tabular sm:inline-block">
+          {contact.primaryPhone}
+        </a>
+      </header>
+      <main id="main" className="flex flex-1 flex-col">
+        {body}
+      </main>
+      <footer className="container shrink-0">
+        <div className="flex flex-col gap-2 border-t border-line/15 py-6 text-muted sm:flex-row sm:items-center sm:justify-between">
+          <p className="label">
+            © {currentYear()} {companyLegalName}
+          </p>
+          <p className="label">{dict.footer.rights}</p>
+        </div>
+      </footer>
+    </div>
   );
 }

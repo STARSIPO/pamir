@@ -1,25 +1,53 @@
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type Variant = 'primary' | 'outline' | 'ghost' | 'light' | 'outlineLight';
+/**
+ * Buttons are rectangles with a tracked uppercase label and a thin arrow.
+ * No radius, no shadow — the hover is a fill change and a 4px arrow shift.
+ *
+ *  primary       solid ink → accent on hover. The one strong action per view.
+ *  outline       hairline border → fills with ink on hover.
+ *  ghost         text + arrow with a standing underline. Secondary actions.
+ *  inverse       for the dark band (CTA, footer): solid band-fg.
+ *  light         on photographs: solid white.
+ *  outlineLight  on photographs: white hairline.
+ */
+type Variant = 'primary' | 'outline' | 'ghost' | 'inverse' | 'light' | 'outlineLight';
 type Size = 'md' | 'lg';
 
 const base =
-  'group inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all duration-300 ease-premium focus-visible:outline-none disabled:opacity-60 disabled:pointer-events-none';
+  'group relative inline-flex items-center justify-center gap-3 whitespace-nowrap text-[0.75rem] font-medium uppercase tracking-[0.14em] transition-[background-color,color,border-color] duration-500 ease-premium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent focus-visible:ring-offset-4 focus-visible:ring-offset-transparent disabled:pointer-events-none disabled:opacity-50';
 
 const variants: Record<Variant, string> = {
-  primary: 'bg-brand text-graphite-900 hover:bg-brand-600 hover:shadow-float',
-  outline: 'border border-line/25 text-ink hover:border-ink hover:bg-ink hover:text-white',
-  ghost: 'text-ink hover:text-brand-700',
-  light: 'bg-white text-graphite-900 hover:bg-stone',
-  outlineLight: 'border border-white/30 text-white hover:bg-white hover:text-graphite-900',
+  primary: 'bg-ink text-canvas hover:bg-accent hover:text-on-accent',
+  outline: 'border border-ink/25 text-ink hover:border-ink hover:bg-ink hover:text-canvas',
+  ghost: 'text-ink',
+  inverse: 'bg-band-fg text-band hover:bg-accent hover:text-on-accent',
+  light: 'bg-white text-[#111] hover:bg-accent hover:text-on-accent',
+  outlineLight: 'border border-white/40 text-white hover:border-white hover:bg-white hover:text-[#111]',
 };
 
 const sizes: Record<Size, string> = {
-  md: 'h-11 px-5 text-sm',
-  lg: 'h-14 px-7 text-[0.95rem]',
+  md: 'h-12 px-6',
+  lg: 'h-14 px-8',
 };
+
+/** Thin long arrow, drawn to sit on the label's x-height. */
+export function Arrow({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 12"
+      fill="none"
+      aria-hidden="true"
+      className={cn(
+        'h-3 w-6 shrink-0 transition-transform duration-500 ease-premium group-hover:translate-x-1',
+        className,
+      )}
+    >
+      <path d="M0 6h22M17 1l5 5-5 5" stroke="currentColor" strokeWidth="1.2" />
+    </svg>
+  );
+}
 
 interface CommonProps {
   variant?: Variant;
@@ -35,24 +63,28 @@ type AnchorProps = CommonProps & { href: string } & React.AnchorHTMLAttributes<H
 
 export function Button(props: ButtonProps | AnchorProps) {
   const { variant = 'primary', size = 'md', arrow = false, className, children } = props;
-  const classes = cn(base, variants[variant], sizes[size], className);
+  const ghost = variant === 'ghost';
+  const classes = cn(base, variants[variant], !ghost && sizes[size], ghost && 'h-auto px-0 py-1', className);
 
   const inner = (
     <>
-      {children}
-      {arrow && (
-        <ArrowRight className="h-4 w-4 transition-transform duration-300 ease-premium group-hover:translate-x-1" />
-      )}
+      <span className={cn(ghost && 'link-rule pb-1')}>{children}</span>
+      {arrow && <Arrow />}
     </>
   );
 
   if ('href' in props && props.href !== undefined) {
     const { href, variant: _v, size: _s, arrow: _a, className: _c, children: _ch, ...rest } =
       props as AnchorProps;
-    const external = href.startsWith('http');
+    const external = /^(https?:|tel:|mailto:)/.test(href);
     if (external) {
       return (
-        <a href={href} className={classes} target="_blank" rel="noopener noreferrer" {...rest}>
+        <a
+          href={href}
+          className={classes}
+          {...(href.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : null)}
+          {...rest}
+        >
           {inner}
         </a>
       );
@@ -70,5 +102,23 @@ export function Button(props: ButtonProps | AnchorProps) {
     <button className={classes} {...rest}>
       {inner}
     </button>
+  );
+}
+
+/**
+ * The "View project →" line used inside cards. Not a link itself — the card is
+ * the link — so it renders a span and reacts to the card's `group` hover.
+ */
+export function ArrowLabel({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-3 text-[0.75rem] font-medium uppercase tracking-[0.14em]',
+        className,
+      )}
+    >
+      <span className="link-rule pb-1">{children}</span>
+      <Arrow />
+    </span>
   );
 }

@@ -1,38 +1,62 @@
 import type { Locale } from '@/i18n/config';
 import type { Dictionary } from '@/i18n/dictionaries';
+import type { Project } from '@/content/types';
 import { Section } from '@/components/ui/Section';
 import { SectionHeading } from '@/components/ui/SectionHeading';
-import { Reveal } from '@/components/ui/Reveal';
 import { Button } from '@/components/ui/Button';
-import { ProjectsExplorer } from '@/components/projects/ProjectsExplorer';
-import { getFeaturedProjects } from '@/content/projects';
+import { getProject } from '@/content/projects';
 import { routes } from '@/i18n/routing';
+import { ProjectFeature } from './ProjectFeature';
+
+/**
+ * The two projects under construction, curated. Everything else lives in the
+ * Spotlight and "More projects" further down, so the homepage shows the whole
+ * catalogue once, without the filter UI of /projects.
+ */
+export const FEATURED_SLUGS = ['botanic-star-2-blocks-3-4', 'eco-house'] as const;
+
+/**
+ * Per-row frame. Landscape first, portrait second: two rows of the same shape
+ * would read as a template. Eco House's cover is a tall render, which suits
+ * the portrait slot.
+ */
+const ROWS: { aspect: string; position?: string }[] = [
+  { aspect: '5 / 4', position: '40% 50%' },
+  { aspect: '4 / 5', position: '50% 50%' },
+];
 
 export function FeaturedProjects({ locale, dict }: { locale: Locale; dict: Dictionary }) {
-  // Three, not all six, and no filter chips: the homepage was rendering the
-  // entire /projects page inline — same cards, same all/construction/completed
-  // filters — so "смотреть все проекты" led somewhere the visitor had already
-  // been. A teaser has to leave something behind the link.
-  const featured = getFeaturedProjects().slice(0, 3);
+  const featured = FEATURED_SLUGS.map((slug) => getProject(slug)).filter((p): p is Project => !!p);
 
   return (
-    <Section tone="default">
-      <div className="mb-12 flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
-        <div className="max-w-2xl">
-          <SectionHeading
-            eyebrow={dict.featured.eyebrow}
-            title={dict.featured.title}
-            subtitle={dict.featured.subtitle}
-          />
-        </div>
-        <Reveal delay={0.1}>
-          <Button href={routes.projects(locale)} variant="ghost" arrow className="shrink-0">
+    <Section tone="canvas">
+      <SectionHeading
+        index="02"
+        eyebrow={dict.featured.eyebrow}
+        title={dict.featured.title}
+        subtitle={dict.featured.subtitle}
+        action={
+          <Button href={routes.projects(locale)} variant="ghost" arrow className="self-start">
             {dict.featured.cta}
           </Button>
-        </Reveal>
-      </div>
+        }
+      />
 
-      <ProjectsExplorer projects={featured} locale={locale} dict={dict} />
+      <div className="mt-section-sm flex flex-col gap-y-section">
+        {featured.map((project, i) => (
+          <ProjectFeature
+            key={project.slug}
+            project={project}
+            locale={locale}
+            dict={dict}
+            index={i}
+            total={featured.length}
+            reverse={i % 2 === 1}
+            aspect={ROWS[i % ROWS.length].aspect}
+            position={ROWS[i % ROWS.length].position}
+          />
+        ))}
+      </div>
     </Section>
   );
 }

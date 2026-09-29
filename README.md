@@ -7,10 +7,29 @@ SEO — built on Next.js.
 
 ## Stack
 
-- **Next.js 14** (App Router) · **React 18** · **TypeScript**
-- **Tailwind CSS** with a brand design-token system
-- **framer-motion** (interactions), CSS transitions (content reveals)
-- **zod** (form validation) · `next/font` (Manrope)
+- **Next.js 16** (App Router) · **React 19** · **TypeScript**
+- **Tailwind CSS** on a themed design-token system (CSS variables)
+- CSS transitions + IntersectionObserver reveals, **Lenis** smooth scrolling
+- **zod** (form validation) · `next/font` (Inter Tight display, Inter text)
+
+## Themes
+
+Three complete colour themes. Switch the whole site by changing **one line** in
+`src/config/theme.ts`:
+
+```ts
+export const SITE_THEME: ThemeName = 'warm'; // 'warm' | 'dark' | 'stone'
+```
+
+| Theme | Name | Palette |
+|---|---|---|
+| `warm` | Variant 1 — Warm Architectural (default) | #F2EFE9 · #E5E0D7 · #171717 · #6A6863 · accent #9A8264 |
+| `dark` | Variant 2 — Premium Dark | #111210 · #1B1C19 · #F4F1EA · #AAA79F · accent #B39A73 / #70614D |
+| `stone` | Variant 3 — Modern Stone | #E9E9E5 · #D5D6D0 · #161816 · #696D68 · accent #59665B |
+
+Preview any theme without rebuilding: add `?theme=dark` (or `warm`, `stone`) to a
+URL; it sticks for the browser session, `?theme=reset` clears it.
+Design rules live in **`docs/DESIGN-SYSTEM.md`**.
 
 ## Getting started
 
@@ -24,9 +43,11 @@ Scripts: `dev`, `build`, `start`, `lint`, `typecheck`.
 
 ## Brand
 
-Palette extracted from the real logo & site — signature green `#7CC12B` +
-graphite `#2A2C2F`. Tokens live in `src/app/globals.css` and `tailwind.config.ts`.
-The logo is a self-contained SVG (`src/components/brand/Logo.tsx`).
+Architectural minimalism: large light Inter Tight headlines, hairlines, square
+geometry, a lot of whitespace, the developer's own renders and photos. Tokens
+live in `src/app/globals.css` (per theme) and `tailwind.config.ts` (semantic
+names: `canvas`, `ink`, `muted`, `accent`, `band`…). The logo is a single-colour
+SVG (`src/components/brand/Logo.tsx`) that follows `currentColor`.
 
 ## Internationalisation
 

@@ -1,34 +1,29 @@
 import { cn } from '@/lib/utils';
 
 /**
- * Pamir Construct logo, rebuilt as crisp SVG from the original raster mark:
- * a green "Pamir peak" (mountain/shield) enclosing a city skyline — the meaning
- * is preserved (Pamir = mountains, Construct = the city being built).
- * The green mark is constant; the wordmark inherits `currentColor` so it works
- * on both light and dark headers.
+ * Pamir Construct logo.
+ *
+ * The mark keeps the original idea — a Pamir peak with the city being built
+ * inside it — but is drawn as a single-colour glyph: the skyline is knocked
+ * out of the peak (evenodd holes), so the whole logo follows `currentColor` and
+ * works on every theme and over photographs without a second version.
  */
-
 export function LogoMark({ className }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 48 44"
-      className={cn('h-9 w-auto', className)}
+      className={cn('h-8 w-auto', className)}
       role="img"
       aria-hidden="true"
       focusable="false"
     >
+      {/* One path, evenodd: the skyline rectangles are holes in the peak. No
+          mask or id, so any number of logos can share a page. */}
       <path
-        d="M21.9 5.6a2.4 2.4 0 0 1 4.2 0l16.5 28.9a2.4 2.4 0 0 1-2.1 3.6H7.5a2.4 2.4 0 0 1-2.1-3.6L21.9 5.6Z"
-        fill="rgb(124 193 43)"
+        fillRule="evenodd"
+        fill="currentColor"
+        d="M22.3 4.9a2 2 0 0 1 3.4 0l17.3 30.3a2 2 0 0 1-1.7 3H6.7a2 2 0 0 1-1.7-3L22.3 4.9Z M15.6 28.4h3v6.4h-3z M19.4 24.2h3.4v10.6h-3.4z M23.6 20.6h3.4v14.2h-3.4z M27.8 26h3v8.8h-3z M24.7 17.4h1.2v3.2h-1.2z"
       />
-      {/* city skyline inside the peak */}
-      <g fill="#ffffff">
-        <rect x="15.6" y="28.4" width="3" height="6.4" rx="0.3" />
-        <rect x="19.4" y="24.2" width="3.4" height="10.6" rx="0.3" />
-        <rect x="23.6" y="20.6" width="3.4" height="14.2" rx="0.3" />
-        <rect x="27.8" y="26" width="3" height="8.8" rx="0.3" />
-        <rect x="24.7" y="17.4" width="1.2" height="3.4" rx="0.4" />
-      </g>
     </svg>
   );
 }
@@ -41,14 +36,12 @@ export function Logo({
   showWordmark?: boolean;
 }) {
   return (
-    <span className={cn('inline-flex items-center gap-2.5', className)}>
+    <span className={cn('inline-flex items-center gap-3', className)}>
       <LogoMark />
       {showWordmark && (
-        <span className="flex flex-col leading-none">
-          <span className="text-[1.18rem] font-extrabold uppercase tracking-tight">
-            Pamir
-          </span>
-          <span className="text-[0.6rem] font-semibold uppercase tracking-[0.34em] text-current/70">
+        <span className="flex flex-col font-display leading-none">
+          <span className="text-[1.05rem] font-medium uppercase tracking-[0.28em]">Pamir</span>
+          <span className="mt-1 text-[0.56rem] font-normal uppercase tracking-[0.42em] opacity-70">
             Construct
           </span>
         </span>

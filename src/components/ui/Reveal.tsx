@@ -1,54 +1,62 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { CSSProperties, ReactNode } from 'react';
+import type { CSSProperties, ElementType, ReactNode } from 'react';
 import { usePrefersReducedMotion } from '@/lib/useReducedMotion';
 
 /**
- * Scroll-in reveal built on CSS transitions (not framer's whileInView, which
- * proved unreliable for on-mount-visible elements during SSR hydration).
+ * Scroll-in reveal built on CSS transitions.
  *
  * Fail-safe by design: the default state is VISIBLE. JS only *adds* a hidden
  * start state for below-the-fold elements, then transitions them in on scroll.
  * If JS never runs, content simply shows — it can never get stuck invisible.
  *
- * Visibility is decided from the IntersectionObserver's first callback rather
- * than a mount-time getBoundingClientRect(): the rect read forced a synchronous
- * layout per instance during hydration, and there are ~60 instances.
+ * Variants
+ *  - `fade`  (default) — fade-up by `y` px. Text, rows, small blocks.
+ *  - `mask`  — the frame opens from its bottom edge while the image inside
+ *              settles from a slight zoom. Photos only; never the LCP image.
+ *  - `stagger` — like fade, but `.word` children (see splitWords) arrive one
+ *              by one. The ladder lives in globals.css.
+ *
+ * Visibility is decided from the IntersectionObserver's first callback: an
+ * element already on screen at mount is shown immediately, with no detour
+ * through the hidden state, so above-the-fold content never animates in late.
  */
 type State = 'init' | 'hidden' | 'shown';
 
 export function Reveal({
   children,
   delay = 0,
-  y = 22,
+  y = 28,
   className,
+  style: styleProp,
   once = true,
   stagger = false,
+  variant = 'fade',
+  as: Tag = 'div',
+  threshold = 0.15,
 }: {
   children: ReactNode;
+  /** Seconds. Use small ladders (0.08 steps) for siblings. */
   delay?: number;
   y?: number;
   className?: string;
+  style?: CSSProperties;
   once?: boolean;
-  /**
-   * Reveal `.word` children individually instead of fading the block.
-   * The wrapper only publishes `data-reveal`; the ladder lives in globals.css
-   * so no per-word JS or style object is created.
-   */
   stagger?: boolean;
+  variant?: 'fade' | 'mask';
+  as?: ElementType;
+  threshold?: number;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLElement>(null);
   const [state, setState] = useState<State>('init');
-  // will-change is a hint that costs a compositor layer for as long as it is
-  // set, so it is scoped to the animation instead of living on the wrapper.
+  // will-change costs a compositor layer for as long as it is set, so it is
+  // scoped to the animation instead of living on the wrapper.
   const [animating, setAnimating] = useState(false);
   const reduce = usePrefersReducedMotion();
 
   useEffect(() => {
     const el = ref.current;
-    // Reduced motion keeps the element in 'init' — visible, untransformed, and
-    // with no transition to run.
     if (!el || reduce) return;
 
     let first = true;
@@ -56,45 +64,49 @@ export function Reveal({
       (entries) => {
         for (const e of entries) {
           if (e.isIntersecting) {
-            // Already in view on the first callback → show immediately, with no
-            // hidden detour, so above-the-fold content never animates in late.
             if (!first) setAnimating(true);
             setState('shown');
             if (once) io.disconnect();
-          } else if (first) {
-            setState('hidden');
-          } else if (!once) {
+          } else if (first || !once) {
             setState('hidden');
           }
         }
         first = false;
       },
-      { threshold: 0.18 },
+      { threshold, rootMargin: '0px 0px -6% 0px' },
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [once, reduce]);
+  }, [once, reduce, threshold]);
 
-  const style: CSSProperties = stagger
-    ? {}
-    : {
-        transition: `opacity 0.7s cubic-bezier(0.22,1,0.36,1) ${delay}s, transform 0.7s cubic-bezier(0.22,1,0.36,1) ${delay}s`,
-        ...(animating || state === 'hidden' ? { willChange: 'opacity, transform' } : null),
-        ...(state === 'hidden' && { opacity: 0, transform: `translateY(${y}px)` }),
-        ...(state === 'shown' && { opacity: 1, transform: 'translateY(0)' }),
-      };
+  let style: CSSProperties = { ...styleProp };
+  let data: Record<string, string | undefined> = {};
+
+  if (variant === 'mask') {
+    data = { 'data-mask': state === 'init' ? undefined : state };
+    if (delay) style = { ...style, transitionDelay: `${delay}s` };
+  } else if (stagger) {
+    data = { 'data-reveal': state === 'init' ? undefined : state };
+  } else {
+    const t = `opacity 0.9s cubic-bezier(0.22,1,0.36,1) ${delay}s, transform 0.9s cubic-bezier(0.22,1,0.36,1) ${delay}s`;
+    style = {
+      ...style,
+      transition: t,
+      ...(animating || state === 'hidden' ? { willChange: 'opacity, transform' } : null),
+      ...(state === 'hidden' && { opacity: 0, transform: `translate3d(0, ${y}px, 0)` }),
+      ...(state === 'shown' && { opacity: 1, transform: 'translate3d(0, 0, 0)' }),
+    };
+  }
 
   return (
-    <div
+    <Tag
       ref={ref}
       className={className}
       style={style}
-      // 'init' publishes no attribute at all, so words stay visible when JS
-      // never runs or reduced motion short-circuits the observer.
-      data-reveal={stagger && state !== 'init' ? state : undefined}
-      onTransitionEnd={() => setAnimating(false)}
+      {...data}
+      onTransitionEnd={animating ? () => setAnimating(false) : undefined}
     >
       {children}
-    </div>
+    </Tag>
   );
 }

@@ -6,43 +6,69 @@ import { locales, localeNames, type Locale } from '@/i18n/config';
 import { parsePathname, switchLocalePath } from '@/i18n/routing';
 import { cn } from '@/lib/utils';
 
+/**
+ * RU / RO — two tracked labels and a thin slash. No pills, no flags.
+ *
+ * The current language is full strength; the other recedes and comes forward
+ * on hover. Each link is a 44px-high target so the switcher is usable beside
+ * the menu button on a phone.
+ *
+ * tone
+ *   auto  — follows currentColor (the header: white over the hero, ink when solid)
+ *   light — on photographs
+ *   dark  — on canvas
+ *   band  — on the contrast band (footer)
+ */
+type Tone = 'auto' | 'light' | 'dark' | 'band';
+
+const toneClass: Record<Tone, string> = {
+  auto: '',
+  light: 'text-white',
+  dark: 'text-ink',
+  band: 'text-band-fg',
+};
+
 export function LanguageSwitcher({
   current,
   tone = 'auto',
+  label,
   className,
 }: {
   current: Locale;
-  tone?: 'auto' | 'light' | 'dark';
+  tone?: Tone;
+  /** Accessible name of the group, e.g. dict.footer.langLabel. */
+  label?: string;
   className?: string;
 }) {
   const pathname = usePathname();
   const parsed = parsePathname(pathname);
 
-  const inactive =
-    tone === 'light'
-      ? 'text-white/55 hover:text-white'
-      : tone === 'dark'
-        ? 'text-muted hover:text-ink'
-        : 'text-current/55 hover:text-current';
-
   return (
-    <div className={cn('flex items-center gap-1 text-sm font-semibold', className)}>
-      {locales.map((l, i) => (
-        <span key={l} className="flex items-center">
-          {i > 0 && <span className="px-1 text-current/25">/</span>}
-          <Link
-            href={switchLocalePath(l, parsed)}
-            hrefLang={l}
-            aria-current={l === current ? 'true' : undefined}
-            className={cn(
-              'transition-colors',
-              l === current ? 'text-current' : inactive,
+    <div role="group" aria-label={label} className={cn('label flex items-center', toneClass[tone], className)}>
+      {locales.map((l, i) => {
+        const active = l === current;
+        return (
+          <span key={l} className="flex items-center">
+            {i > 0 && (
+              <span aria-hidden="true" className="opacity-30">
+                /
+              </span>
             )}
-          >
-            {localeNames[l]}
-          </Link>
-        </span>
-      ))}
+            <Link
+              href={switchLocalePath(l, parsed)}
+              hrefLang={l}
+              lang={l}
+              aria-current={active ? 'true' : undefined}
+              className={cn(
+                'inline-flex h-11 min-w-[2.5rem] items-center justify-center transition-opacity duration-500 ease-premium',
+                active ? 'opacity-100' : 'opacity-65 hover:opacity-100',
+              )}
+            >
+              {localeNames[l]}
+            </Link>
+          </span>
+        );
+      })}
     </div>
   );
 }

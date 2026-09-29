@@ -1,14 +1,14 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowRight, Navigation } from 'lucide-react';
 import { locales, isLocale, type Locale } from '@/i18n/config';
 import { getDictionary } from '@/i18n/dictionaries';
 import { buildMetadata } from '@/lib/seo';
 import { projects, getProject } from '@/content/projects';
 import { routes } from '@/i18n/routing';
 import { Section } from '@/components/ui/Section';
+import { SectionHeading } from '@/components/ui/SectionHeading';
 import { Reveal } from '@/components/ui/Reveal';
+import { Button } from '@/components/ui/Button';
 import { FeatureIcon } from '@/components/ui/FeatureIcon';
 import { ProjectHero } from '@/components/project/ProjectHero';
 import { Gallery } from '@/components/project/Gallery';
@@ -38,6 +38,21 @@ export async function generateMetadata(
   });
 }
 
+const pad = (n: number) => String(n).padStart(2, '0');
+
+/**
+ * Project page. One idea per section, a lot of air between them, and the
+ * same opener everywhere: an index on a hairline, then the content.
+ *
+ *   Hero (full-bleed photograph, huge name)
+ *   01 About      statement + specs as a hairline table
+ *   02 Advantages hairline grid, thin icons
+ *   03 Gallery    editorial image grid + lightbox        (only with photos)
+ *   04 Plans      drawings in 1px frames                 (only with plans)
+ *   05 Location   district, nearby list, route, map
+ *   06 More       two projects, asymmetric
+ *   Lead          contrast band, runs into the footer
+ */
 export default async function ProjectPage(props: { params: Promise<{ locale: string; slug: string }> }) {
   const params = await props.params;
   const locale = (isLocale(params.locale) ? params.locale : 'ru') as Locale;
@@ -45,175 +60,267 @@ export default async function ProjectPage(props: { params: Promise<{ locale: str
   const project = getProject(params.slug);
   if (!project) notFound();
 
-  const others = projects.filter((p) => p.slug !== project.slug).slice(0, 3);
+  const d = dict.projectDetail;
+  const name = project.name[locale];
+  const renderCaption = project.coverKind === 'render' ? dict.design.render : undefined;
+
+  // The hero already shows its picture full-bleed; repeating it as the first
+  // gallery frame reads as filler.
+  const heroSrc = project.hero ?? project.cover;
+  const gallery = project.gallery.filter((src) => src !== heroSrc);
+
+  // The next two projects in catalogue order (wrapping), so every page links
+  // onward to different neighbours.
+  const at = projects.findIndex((p) => p.slug === project.slug);
+  const others = [1, 2]
+    .map((k) => projects[(at + k) % projects.length])
+    .filter((p, i, list) => p.slug !== project.slug && list.indexOf(p) === i);
+
   const mapEmbed = project.mapQuery
     ? `https://www.google.com/maps?q=${encodeURIComponent(project.mapQuery)}&z=15&output=embed`
     : null;
   const mapDir = project.mapQuery
     ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(project.mapQuery)}`
     : null;
+  const hasLocation = !!(mapEmbed || project.address || project.nearby.length > 0);
+
+  // Section numbers follow what is actually on the page.
+  const order = [
+    'about',
+    project.advantages.length > 0 && 'advantages',
+    gallery.length > 0 && 'gallery',
+    project.floorplans.length > 0 && 'floorplans',
+    hasLocation && 'location',
+    others.length > 0 && 'more',
+  ].filter(Boolean) as string[];
+  const num = (key: string) => pad(order.indexOf(key) + 1);
+
+  const [statement, ...rest] = project.description;
 
   return (
     <>
       <ProjectHero project={project} locale={locale} dict={dict} />
 
-      {/* About + specs */}
-      <Section tone="default">
-        <div className="grid gap-12 lg:grid-cols-[1.3fr_1fr] lg:gap-20">
-          <div>
-            <Reveal>
-              <span className="eyebrow">{dict.projectDetail.aboutTitle}</span>
-            </Reveal>
-            <div className="mt-6 space-y-5">
-              {project.description.map((p, i) => (
-                <Reveal key={i} delay={i * 0.06}>
-                  <p className="max-w-prose text-lg leading-relaxed text-muted text-pretty">{p[locale]}</p>
-                </Reveal>
-              ))}
-            </div>
+      {/* 01 — About: the first paragraph as a statement, specs beside it. */}
+      <Section id="about">
+        <LabelRow index={num('about')}>{d.aboutTitle}</LabelRow>
+        <div className="mt-12 grid gap-16 md:mt-20 lg:grid-cols-12 lg:gap-gutter">
+          <div className="lg:col-span-7">
+            {statement && (
+              <Reveal>
+                <p className="font-display text-display-md font-light text-pretty text-ink">{statement[locale]}</p>
+              </Reveal>
+            )}
+            {rest.length > 0 && (
+              <div className="mt-10 space-y-6 md:mt-14 md:pl-[14.3%]">
+                {rest.map((p, i) => (
+                  <Reveal key={i} delay={0.08 * (i + 1)}>
+                    <p className="max-w-[58ch] text-pretty text-base leading-relaxed text-muted md:text-[1.0625rem]">
+                      {p[locale]}
+                    </p>
+                  </Reveal>
+                ))}
+              </div>
+            )}
           </div>
 
-          <Reveal delay={0.1}>
-            <div className="rounded-2xl border border-line/12 bg-sand p-7">
-              <h2 className="font-display text-lg font-semibold text-ink">{dict.projectDetail.specsTitle}</h2>
-              <dl className="mt-5 divide-y divide-line/10">
+          {project.specs.length > 0 && (
+            <Reveal delay={0.12} className="lg:col-span-4 lg:col-start-9">
+              <h3 className="label text-muted">{d.specsTitle}</h3>
+              <dl className="mt-6 border-b border-line/15">
                 {project.specs.map((s) => (
-                  <div key={s.key} className="flex items-baseline justify-between gap-4 py-3">
+                  <div key={s.key} className="flex items-baseline justify-between gap-6 border-t border-line/15 py-4 md:py-5">
                     <dt className="text-sm text-muted">{s.label[locale]}</dt>
-                    <dd className="text-right font-medium text-ink">{s.value[locale]}</dd>
+                    <dd className="text-right text-base text-ink md:text-[1.0625rem]">{s.value[locale]}</dd>
                   </div>
                 ))}
               </dl>
-            </div>
-          </Reveal>
+            </Reveal>
+          )}
         </div>
       </Section>
 
-      {/* Advantages */}
+      {/* 02 — Advantages: a hairline grid, thin icons, nothing boxed. */}
       {project.advantages.length > 0 && (
-        <Section tone="sand">
-          <Reveal>
-            <span className="eyebrow">{dict.projectDetail.advantagesTitle}</span>
-          </Reveal>
-          <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-4">
+        <Section id="advantages" spacing="sm" className="pb-section">
+          <SectionHeading index={num('advantages')} title={d.advantagesTitle} size="lg" />
+          <ul className="mt-14 grid grid-cols-2 gap-x-gutter gap-y-12 md:mt-20 md:grid-cols-3 lg:grid-cols-4">
             {project.advantages.map((a, i) => (
-              <Reveal key={a.icon + i} delay={(i % 4) * 0.06}>
-                <div className="flex h-full flex-col gap-4 rounded-2xl border border-line/10 bg-white p-6">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand/12 text-brand-700">
-                    <FeatureIcon name={a.icon} />
-                  </span>
-                  <span className="text-[0.95rem] font-medium leading-snug text-ink">{a.label[locale]}</span>
+              <Reveal
+                as="li"
+                key={a.icon + i}
+                delay={(i % 4) * 0.08}
+                className="flex min-h-[10.5rem] flex-col justify-between gap-10 border-t border-line/15 pt-5 md:min-h-[13rem]"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <span className="label tabular text-muted">{pad(i + 1)}</span>
+                  <FeatureIcon name={a.icon} strokeWidth={1.25} className="h-6 w-6 text-muted" />
+                </div>
+                <div>
+                  <p className="font-display text-display-sm font-light text-balance text-ink">{a.label[locale]}</p>
+                  {a.note && <p className="mt-2 text-sm text-muted">{a.note[locale]}</p>}
                 </div>
               </Reveal>
             ))}
+          </ul>
+        </Section>
+      )}
+
+      {/* 03 — Gallery, only when there are photographs beyond the hero. */}
+      {gallery.length > 0 && (
+        <Section id="gallery" spacing="sm" className="pb-section">
+          <SectionHeading
+            index={num('gallery')}
+            title={d.galleryTitle}
+            size="lg"
+            action={
+              <span className="label tabular text-muted">
+                {pad(gallery.length)} {dict.design.photos}
+              </span>
+            }
+          />
+          <div className="mt-14 md:mt-20">
+            <Gallery
+              images={gallery}
+              name={name}
+              caption={renderCaption}
+              labels={{ close: dict.common.close, title: d.galleryTitle }}
+            />
           </div>
         </Section>
       )}
 
-      {/* Gallery */}
-      <Section tone="default" id="gallery">
-        <Reveal>
-          <span className="eyebrow">{dict.projectDetail.galleryTitle}</span>
-        </Reveal>
-        <div className="mt-8">
-          <Gallery images={project.gallery} name={project.name[locale]} locale={locale} />
-        </div>
-      </Section>
-
-      {/* Floorplans */}
+      {/* 04 — Floorplans, as drawings on paper plates. */}
       {project.floorplans.length > 0 && (
-        <Section tone="sand" id="floorplans">
-          <div className="max-w-2xl">
-            <Reveal>
-              <span className="eyebrow">{dict.projectDetail.floorplansTitle}</span>
-            </Reveal>
-            <Reveal delay={0.05}>
-              <p className="mt-4 text-lg text-muted">{dict.projectDetail.floorplansSubtitle}</p>
-            </Reveal>
-          </div>
-          <div className="mt-10">
-            <Floorplans floorplans={project.floorplans} name={project.name[locale]} locale={locale} dict={dict} />
+        <Section id="floorplans" tone="alt">
+          <SectionHeading index={num('floorplans')} title={d.floorplansTitle} subtitle={d.floorplansSubtitle} size="lg" />
+          <div className="mt-14 md:mt-20">
+            <Floorplans floorplans={project.floorplans} name={name} locale={locale} dict={dict} />
           </div>
         </Section>
       )}
 
-      {/* Location */}
-      {mapEmbed && (
-        <Section tone="default" id="location">
-          <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
-            <div>
+      {/* 05 — Location. Only confirmed facts: no invented distances. */}
+      {hasLocation && (
+        <Section id="location">
+          <LabelRow index={num('location')}>{d.locationTitle}</LabelRow>
+          <div className="mt-12 grid gap-14 md:mt-20 lg:grid-cols-12 lg:gap-gutter">
+            <div className="flex flex-col lg:col-span-5">
               <Reveal>
-                <span className="eyebrow">{dict.projectDetail.locationTitle}</span>
+                <p className="font-display text-display-lg font-light text-balance text-ink">{project.district[locale]}</p>
+                {project.address && <p className="mt-4 text-lead text-muted">{project.address[locale]}</p>}
               </Reveal>
-              <Reveal delay={0.05}>
-                <h2 className="mt-5 font-display text-display-md font-semibold text-ink">
-                  {project.district[locale]}
-                  {project.address && <span className="text-muted">, {project.address[locale]}</span>}
-                </h2>
-              </Reveal>
+
               {project.nearby.length > 0 && (
-                <>
-                  <p className="mt-8 text-xs font-semibold uppercase tracking-label text-brand-700">
-                    {dict.projectDetail.nearbyTitle}
-                  </p>
-                  <ul className="mt-4 grid grid-cols-2 gap-3">
+                <div className="mt-14 md:mt-20">
+                  <Reveal as="h3" className="label text-muted">
+                    {d.nearbyTitle}
+                  </Reveal>
+                  <ul className="mt-6 border-b border-line/15">
                     {project.nearby.map((n, i) => (
-                      <Reveal key={n.icon + i} delay={(i % 4) * 0.05}>
-                        <li className="flex items-center gap-3 rounded-xl border border-line/10 bg-sand px-4 py-3">
-                          <FeatureIcon name={n.icon} className="h-5 w-5 text-brand-700" />
-                          <span className="text-sm text-ink">
-                            {n.label[locale]}
-                            {n.distance && <span className="text-muted"> · {n.distance[locale]}</span>}
-                          </span>
-                        </li>
+                      <Reveal
+                        as="li"
+                        key={n.icon + i}
+                        delay={i * 0.06}
+                        className="flex min-h-16 items-center gap-5 border-t border-line/15 py-4"
+                      >
+                        <FeatureIcon name={n.icon} strokeWidth={1.25} className="h-5 w-5 shrink-0 text-muted" />
+                        <span className="flex-1 text-base text-ink md:text-[1.0625rem]">{n.label[locale]}</span>
+                        {n.distance && <span className="label tabular text-muted">{n.distance[locale]}</span>}
                       </Reveal>
                     ))}
                   </ul>
-                </>
+                </div>
               )}
+
               {mapDir && (
-                <a
-                  href={mapDir}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-ink link-underline"
-                >
-                  <Navigation className="h-4 w-4 text-brand" />
-                  {dict.contactBlock.routeCta}
-                </a>
+                <Reveal delay={0.1} className="mt-10">
+                  <Button href={mapDir} variant="ghost" arrow className="min-h-11">
+                    {dict.contactBlock.routeCta}
+                  </Button>
+                </Reveal>
               )}
             </div>
-            <div className="overflow-hidden rounded-2xl border border-line/10" style={{ aspectRatio: '4 / 3' }}>
-              <iframe
-                title={project.name[locale]}
-                src={mapEmbed}
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                className="h-full w-full"
-              />
-            </div>
+
+            {mapEmbed && (
+              <Reveal
+                delay={0.1}
+                className="relative aspect-square overflow-hidden border border-line/15 bg-canvas-alt md:aspect-[16/10] lg:col-span-6 lg:col-start-7 lg:aspect-auto lg:min-h-[34rem]"
+              >
+                <iframe
+                  title={`${d.locationTitle} — ${name}`}
+                  src={mapEmbed}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  className="absolute inset-0 h-full w-full grayscale contrast-[1.05] [[data-theme=dark]_&]:invert [[data-theme=dark]_&]:contrast-[0.9]"
+                />
+              </Reveal>
+            )}
           </div>
         </Section>
       )}
 
-      {/* Lead / final CTA */}
-      <LeadSection locale={locale} dict={dict} projectName={project.name[locale]} id="lead" />
+      {/* 06 — More projects: two, never a row of small cards. */}
+      {others.length > 0 && (
+        <Section id="more" spacing="sm" className="pb-section">
+          <SectionHeading
+            index={num('more')}
+            title={d.otherProjects}
+            size="lg"
+            action={
+              <Button href={routes.projects(locale)} variant="ghost" arrow className="min-h-11 self-start lg:self-auto">
+                {dict.common.viewAllProjects}
+              </Button>
+            }
+          />
+          <div className="grid-12 mt-14 gap-y-20 md:mt-20">
+            <ProjectCard
+              project={others[0]}
+              locale={locale}
+              dict={dict}
+              index={0}
+              aspect="4 / 3"
+              size="lg"
+              sizes="(max-width: 1024px) 100vw, 58vw"
+              className="col-span-4 md:col-span-12 lg:col-span-7"
+            />
+            {others[1] && (
+              <ProjectCard
+                project={others[1]}
+                locale={locale}
+                dict={dict}
+                index={1}
+                aspect="4 / 5"
+                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 66vw, 42vw"
+                className="col-span-4 md:col-span-8 md:col-start-5 lg:col-span-5 lg:col-start-8 lg:mt-[clamp(8rem,16vw,16rem)]"
+              />
+            )}
+          </div>
+        </Section>
+      )}
 
-      {/* Other projects */}
-      <Section tone="sand">
-        <div className="mb-10 flex items-end justify-between">
-          <h2 className="font-display text-display-md font-semibold text-ink">{dict.projectDetail.otherProjects}</h2>
-          <Link href={routes.projects(locale)} className="hidden items-center gap-1.5 text-sm font-semibold text-ink link-underline sm:inline-flex">
-            {dict.common.viewAllProjects}
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {others.map((p, i) => (
-            <ProjectCard key={p.slug} project={p} locale={locale} dict={dict} index={i} />
-          ))}
-        </div>
-      </Section>
+      {/* Lead — last, on the band, so it runs straight into the footer. */}
+      <LeadSection locale={locale} dict={dict} projectName={name} id="lead" />
     </>
+  );
+}
+
+/**
+ * Section opener when the content itself carries the display type:
+ *   01 — О ПРОЕКТЕ ──────────────────────────────
+ * The label is the section's h2; the index is decoration.
+ */
+function LabelRow({ index, children }: { index: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-4">
+      <Reveal as="h2" className="label flex shrink-0 items-center gap-3 text-muted">
+        <span aria-hidden="true" className="tabular">
+          {index}
+        </span>
+        <span aria-hidden="true">—</span>
+        <span>{children}</span>
+      </Reveal>
+      <span aria-hidden="true" className="rule-draw h-px flex-1 bg-line/15" />
+    </div>
   );
 }

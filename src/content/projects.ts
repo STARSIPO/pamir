@@ -8,7 +8,9 @@ import type { Project } from './types';
  * DATA POLICY: confirmed facts only. Anything unverified is set to a neutral
  * "уточняется / se precizează" value AND listed in `unconfirmed` for follow-up.
  * Descriptions are rewritten professionally — NOT copied from the old site.
- * Images are undefined → the <Media> component renders a branded placeholder.
+ * Images are the developer's own renders and photos, taken from the legacy
+ * pamirconstruct.md site (see docs/IMAGE-CREDITS.md). `coverKind: 'render'`
+ * makes the UI caption the picture as a visualisation, never as a photo.
  */
 
 const TBD = { ru: 'Уточняется', ro: 'Se precizează' };
@@ -25,7 +27,8 @@ export const projects: Project[] = [
     district: { ru: 'Ботаника', ro: 'Botanica' },
     address: { ru: 'ул. Гика Водэ, 3', ro: 'str. Ghica Vodă, 3' },
     featured: true,
-    cover: undefined,
+    cover: '/photos/projects/botanic-star-2-blocks-3-4/cover.jpg',
+    coverKind: 'render',
     gallery: [],
     excerpt: {
       ru: 'Завершающие блоки квартала Botanic Star 2 с закрытым двором, подземной парковкой и автономным отоплением.',
@@ -88,8 +91,12 @@ export const projects: Project[] = [
     district: { ru: 'Телецентр', ro: 'Telecentru' },
     address: undefined,
     featured: true,
-    cover: undefined,
-    gallery: [],
+    cover: '/photos/projects/eco-house/cover.jpg',
+    hero: '/photos/projects/eco-house/hero.jpg',
+    coverKind: 'render',
+    gallery: [
+      '/photos/projects/eco-house/hero.jpg',
+    ],
     excerpt: {
       ru: 'Комплекс комфорт-класса с автономным отоплением, тёплыми полами, подземной парковкой и озеленённым двором.',
       ro: 'Complex de clasă confort cu încălzire autonomă, pardoseli calde, parcare subterană și curte verde.',
@@ -138,7 +145,8 @@ export const projects: Project[] = [
     status: 'completed',
     district: { ru: 'Ботаника', ro: 'Botanica' },
     address: undefined,
-    cover: undefined,
+    cover: '/photos/projects/botanic-star-2-block-2/cover.jpg',
+    coverKind: 'render',
     gallery: [],
     excerpt: {
       ru: 'Сданный блок квартала Botanic Star 2 в обжитом зелёном районе Ботаника.',
@@ -178,8 +186,12 @@ export const projects: Project[] = [
     status: 'completed',
     district: { ru: 'Ботаника', ro: 'Botanica' },
     address: undefined,
-    cover: undefined,
-    gallery: [],
+    cover: '/photos/projects/botanic-star-2-block-1/cover.jpg',
+    hero: '/photos/projects/botanic-star-2-block-1/cover.jpg',
+    coverKind: 'render',
+    gallery: [
+      '/photos/projects/company/about.jpg',
+    ],
     excerpt: {
       ru: 'Первый сданный блок квартала Botanic Star 2 в секторе Ботаника.',
       ro: 'Primul bloc finalizat al cvartalului Botanic Star 2, în sectorul Botanica.',
@@ -217,8 +229,14 @@ export const projects: Project[] = [
     status: 'completed',
     district: { ru: 'Ботаника', ro: 'Botanica' },
     address: undefined,
-    cover: undefined,
-    gallery: [],
+    cover: '/photos/projects/botanic-star/cover.jpg',
+    coverKind: 'photo',
+    gallery: [
+      '/photos/projects/botanic-star/gallery-1.jpg',
+      '/photos/projects/botanic-star/gallery-2.jpg',
+      '/photos/projects/botanic-star/gallery-3.jpg',
+      '/photos/projects/botanic-star/gallery-4.jpg',
+    ],
     excerpt: {
       ru: 'Первый комплекс линейки Botanic — сданный дом в центре сектора Ботаника.',
       ro: 'Primul complex din linia Botanic — bloc finalizat în centrul sectorului Botanica.',
@@ -243,7 +261,7 @@ export const projects: Project[] = [
       { icon: 'transport', label: { ru: 'Транспорт', ro: 'Transport' } },
     ],
     mapQuery: 'Botanica, Chișinău, Moldova',
-    unconfirmed: ['Год сдачи, адрес и характеристики — уточнить.', 'Фотографии — добавить.'],
+    unconfirmed: ['Год сдачи, адрес и характеристики — уточнить.', 'Фотографии — добавить из архива (сейчас используются снимки со старого сайта).'],
   },
   {
     slug: 'botanic-park',
@@ -252,8 +270,12 @@ export const projects: Project[] = [
     status: 'completed',
     district: { ru: 'Ботаника', ro: 'Botanica' },
     address: undefined,
-    cover: undefined,
-    gallery: [],
+    cover: '/photos/projects/botanic-park/cover.jpg',
+    coverKind: 'photo',
+    gallery: [
+      '/photos/projects/botanic-park/gallery-1.jpg',
+      '/photos/projects/botanic-park/gallery-2.jpg',
+    ],
     excerpt: {
       ru: 'Сданный комплекс с собственной инфраструктурой: детская площадка, супермаркет, парковка, детский сад.',
       ro: 'Complex finalizat cu infrastructură proprie: loc de joacă, supermarket, parcare, grădiniță.',

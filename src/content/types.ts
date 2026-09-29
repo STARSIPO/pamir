@@ -64,8 +64,15 @@ export interface Project {
   status: ProjectStatus;
   district: Localized;
   address?: Localized;
-  /** Cover/hero image path in /public. Undefined → branded placeholder. */
+  /** Cover image path in /public. Undefined → branded placeholder. */
   cover?: string;
+  /** Wide image for full-bleed slots (hero, feature band). Falls back to cover. */
+  hero?: string;
+  /**
+   * What the cover is. Renders are captioned "Визуализация / Vizualizare" so a
+   * buyer never mistakes a visualisation of an unbuilt block for a photo.
+   */
+  coverKind?: 'render' | 'photo';
   gallery: string[];
   excerpt: Localized;
   description: Localized[];

@@ -35,3 +35,7 @@ next-env.d.ts
 # local agent tooling
 /.claude/
 /.claude-flow/
+
+# Raw photos pulled from pamirconstruct.md (~15 MB). Web copies live in
+# public/photos/projects; see docs/IMAGE-CREDITS.md to re-fetch.
+/assets/photos-src/

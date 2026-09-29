@@ -2,71 +2,93 @@ import { cn } from '@/lib/utils';
 import { splitWords } from '@/lib/text';
 import { Reveal } from './Reveal';
 
+/**
+ * Section opener used across the site.
+ *
+ *   02 — ПРОЕКТЫ ─────────────────────────────────────────   (label + hairline)
+ *
+ *   Избранные жилые                              short supporting text,
+ *   комплексы                                    or an action link
+ *
+ * `index` is the section number ("02"); `eyebrow` its name. The hairline draws
+ * in as the section enters view. The title arrives word by word.
+ * `tone="light"` is for the contrast band (text-band-fg).
+ */
 export function SectionHeading({
+  index,
   eyebrow,
   title,
   subtitle,
+  action,
   align = 'left',
   tone = 'dark',
+  size = 'xl',
   className,
   as: Heading = 'h2',
   rule = true,
 }: {
+  index?: string;
   eyebrow?: string;
   title: React.ReactNode;
   subtitle?: React.ReactNode;
+  /** Right-aligned slot beside the title (a link, a button). */
+  action?: React.ReactNode;
   align?: 'left' | 'center';
   tone?: 'dark' | 'light';
+  size?: 'xl' | 'lg' | 'md';
   className?: string;
-  as?: 'h1' | 'h2';
-  /** Brand hairline that draws in under the title as the section enters view. */
+  as?: 'h1' | 'h2' | 'h3';
   rule?: boolean;
 }) {
+  const light = tone === 'light';
+  const muted = light ? 'text-band-muted' : 'text-muted';
+  const center = align === 'center';
+
   return (
-    <div
-      className={cn(
-        'max-w-3xl',
-        align === 'center' && 'mx-auto text-center',
-        className,
-      )}
-    >
-      {eyebrow && (
-        <Reveal>
-          <span className={cn('eyebrow', align === 'center' && 'justify-center')}>{eyebrow}</span>
-        </Reveal>
-      )}
-      <Reveal delay={0.05} stagger={typeof title === 'string'}>
-        <Heading
-          className={cn(
-            'mt-5 font-display text-display-lg font-semibold text-balance',
-            tone === 'light' ? 'text-white' : 'text-ink',
+    <div className={cn(center && 'text-center', className)}>
+      {(eyebrow || index) && (
+        <div className={cn('flex items-center gap-4', center && 'justify-center')}>
+          <Reveal className={cn('label flex shrink-0 items-center gap-3', muted)}>
+            {index && <span className="tabular">{index}</span>}
+            {index && eyebrow && <span aria-hidden="true">—</span>}
+            {eyebrow && <span>{eyebrow}</span>}
+          </Reveal>
+          {rule && !center && (
+            <span
+              aria-hidden="true"
+              className={cn('rule-draw h-px flex-1', light ? 'bg-band-fg/15' : 'bg-line/15')}
+            />
           )}
-        >
-          {splitWords(title)}
-        </Heading>
-      </Reveal>
-      {rule && (
-        <span
-          aria-hidden="true"
-          className={cn(
-            'rule-draw mt-6 block h-px w-16 bg-brand/70',
-            align === 'center' && 'rule-draw-center mx-auto',
-          )}
-        />
+        </div>
       )}
-      {subtitle && (
-        <Reveal delay={0.1}>
-          <p
+
+      <div
+        className={cn(
+          'mt-8 flex flex-col gap-8 md:mt-12',
+          !center && (subtitle || action) && 'lg:flex-row lg:items-end lg:justify-between lg:gap-16',
+        )}
+      >
+        <Reveal stagger={typeof title === 'string'} className={cn(!center && 'lg:max-w-[16ch] xl:max-w-[18ch]', center && 'mx-auto max-w-[18ch]')}>
+          <Heading
             className={cn(
-              'mt-5 max-w-2xl text-lg leading-relaxed text-pretty',
-              align === 'center' && 'mx-auto',
-              tone === 'light' ? 'text-white/70' : 'text-muted',
+              'font-display font-light text-balance',
+              size === 'xl' && 'text-display-xl',
+              size === 'lg' && 'text-display-lg',
+              size === 'md' && 'text-display-md',
+              light ? 'text-band-fg' : 'text-ink',
             )}
           >
-            {subtitle}
-          </p>
+            {splitWords(title)}
+          </Heading>
         </Reveal>
-      )}
+
+        {(subtitle || action) && (
+          <Reveal delay={0.12} className={cn('flex flex-col gap-6 lg:max-w-sm lg:pb-3', center && 'mx-auto items-center')}>
+            {subtitle && <p className={cn('text-pretty text-base leading-relaxed md:text-[1.0625rem]', muted)}>{subtitle}</p>}
+            {action}
+          </Reveal>
+        )}
+      </div>
     </div>
   );
 }

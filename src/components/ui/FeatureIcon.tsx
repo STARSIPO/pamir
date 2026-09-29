@@ -58,10 +58,14 @@ const map: Record<string, LucideIcon> = {
   clock: Clock,
 };
 
+/**
+ * Thin line icon. The stroke is deliberately light (1.25) so icons read as
+ * drawing annotations next to the light display type, never as UI chrome.
+ */
 export function FeatureIcon({
   name,
   className,
-  strokeWidth = 1.5,
+  strokeWidth = 1.25,
 }: {
   name: string;
   className?: string;

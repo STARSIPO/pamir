@@ -1,8 +1,14 @@
 import { cn } from '@/lib/utils';
+import { splitWords } from '@/lib/text';
 import { Container } from '@/components/ui/Container';
 import { Reveal } from '@/components/ui/Reveal';
 
-/** Compact hero for inner pages (sits below the solid header). */
+/**
+ * Opening block for inner pages (below the solid header). Typography only:
+ * a label row with a hairline, a very large light title, and a short lead
+ * set to the right on wide screens. `children` lands under the lead (filters,
+ * a button).
+ */
 export function PageHero({
   eyebrow,
   title,
@@ -13,41 +19,34 @@ export function PageHero({
   eyebrow?: string;
   title: string;
   subtitle?: string;
+  /** 'dark' renders on the contrast band. */
   tone?: 'sand' | 'dark';
   children?: React.ReactNode;
 }) {
+  const dark = tone === 'dark';
   return (
-    <section className={cn('relative', tone === 'dark' ? 'bg-graphite-900 text-white' : 'bg-sand')}>
-      <Container className="py-16 sm:py-20 lg:py-24">
-        <div className="max-w-3xl">
-          {eyebrow && (
-            <Reveal>
-              <span className="eyebrow">{eyebrow}</span>
-            </Reveal>
-          )}
-          <Reveal delay={0.05}>
-            <h1
-              className={cn(
-                'mt-5 font-display text-display-xl font-semibold text-balance',
-                tone === 'dark' ? 'text-white' : 'text-ink',
-              )}
-            >
-              {title}
-            </h1>
+    <section className={cn('relative', dark ? 'bg-band text-band-fg' : 'bg-canvas text-ink')}>
+      <Container className="pb-section-sm pt-[clamp(3.5rem,8vw,7.5rem)]">
+        {eyebrow && (
+          <div className="flex items-center gap-4">
+            <Reveal className={cn('label shrink-0', dark ? 'text-band-muted' : 'text-muted')}>{eyebrow}</Reveal>
+            <span aria-hidden="true" className={cn('rule-draw h-px flex-1', dark ? 'bg-band-fg/15' : 'bg-line/15')} />
+          </div>
+        )}
+        <div className="mt-10 grid gap-10 md:mt-14 lg:grid-cols-12 lg:items-end lg:gap-gutter">
+          <Reveal stagger className="lg:col-span-8">
+            <h1 className="font-display text-display-xl font-light text-balance">{splitWords(title)}</h1>
           </Reveal>
-          {subtitle && (
-            <Reveal delay={0.1}>
-              <p
-                className={cn(
-                  'mt-5 max-w-2xl text-lg leading-relaxed text-pretty',
-                  tone === 'dark' ? 'text-white/70' : 'text-muted',
-                )}
-              >
-                {subtitle}
-              </p>
+          {(subtitle || children) && (
+            <Reveal delay={0.12} className="lg:col-span-4 lg:pb-3">
+              {subtitle && (
+                <p className={cn('max-w-md text-pretty text-base leading-relaxed md:text-[1.0625rem]', dark ? 'text-band-muted' : 'text-muted')}>
+                  {subtitle}
+                </p>
+              )}
+              {children && <div className={cn(subtitle && 'mt-8')}>{children}</div>}
             </Reveal>
           )}
-          {children && <div className="mt-8">{children}</div>}
         </div>
       </Container>
     </section>

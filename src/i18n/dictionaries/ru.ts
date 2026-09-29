@@ -215,6 +215,27 @@ export const ru = {
     privacy: 'Политика конфиденциальности',
     langLabel: 'Язык',
   },
+  /** Strings introduced by the architectural redesign (2026-09). */
+  design: {
+    render: 'Визуализация',
+    photo: 'Фото',
+    onImage: 'На изображении',
+    spotlightEyebrow: 'Проект в фокусе',
+    moreEyebrow: 'Другие проекты',
+    moreTitle: 'Дома, в которых уже живут',
+    moreSubtitle: 'Сданные комплексы Pamir Construct в секторе Ботаника.',
+    companyEyebrow: 'Компания',
+    numbersEyebrow: 'Преимущества',
+    contactEyebrow: 'Связаться',
+    projectsCount: 'проектов',
+    menuTitle: 'Навигация',
+    call: 'Позвонить',
+    backToTop: 'Наверх',
+    index: 'Индекс',
+    allProjectsShort: 'Все',
+    viewGallery: 'Смотреть галерею',
+    photos: 'фото',
+  },
 };
 
 export type Dictionary = typeof ru;
