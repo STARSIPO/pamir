@@ -113,7 +113,7 @@ export const SITE_THEME: ThemeName = 'warm'; // 'warm' | 'dark' | 'stone'
 | `ui/Button → ArrowLabel` | «Смотреть проект →» внутри карточки-ссылки (span, реагирует на `group-hover`) |
 | `ui/Button → Arrow` | тонкая стрелка |
 | `ui/StatusBadge` | квадрат + метка статуса (`currentColor`) |
-| `projects/ProjectCard` | большая карточка проекта: фото + статус·район + крупное имя + «Смотреть проект →». `aspect`, `size` md/lg, `sizes` |
+| `projects/ProjectRow` | проект в рамке: фото одного кадра слева, статус·район, крупное имя, описание, подтверждённые характеристики, «Доступно · от €» (если есть подбор) и «Смотреть проект →». Используется во всех списках проектов ровной колонкой (каталог, «О компании», главная «04», «Другие проекты»); `rowSizes(cover)` — `sizes` под кадр |
 | `shared/PageHero` | открытие внутренних страниц (label + линия, H1 display-xl light, лид справа: 7/5 на `lg`, 8/4 с `xl`) |
 | `shared/CtaBand` | финальный CTA внутренних страниц на `band` |
 | `brand/Logo` | монохромный, `currentColor` |

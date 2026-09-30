@@ -7,7 +7,7 @@ import { PageHero } from '@/components/shared/PageHero';
 import { Section } from '@/components/ui/Section';
 import { ProjectsExplorer } from '@/components/projects/ProjectsExplorer';
 import { CtaBand } from '@/components/shared/CtaBand';
-import { listInventories, stats } from '@/lib/inventory/repository';
+import { catalogueAvailability } from '@/lib/inventory/availability';
 
 export async function generateMetadata(
   props: {
@@ -37,12 +37,7 @@ export default async function ProjectsPage(props: { params: Promise<{ locale: st
   const params = await props.params;
   const locale = (isLocale(params.locale) ? params.locale : 'ru') as Locale;
   const dict = getDictionary(locale);
-  const availability = Object.fromEntries(
-    listInventories().map((inv) => {
-      const s = stats(inv.apartments);
-      return [inv.projectSlug, { available: s.available, priceFrom: s.priceFrom }];
-    }),
-  );
+  const availability = catalogueAvailability();
 
   return (
     <>

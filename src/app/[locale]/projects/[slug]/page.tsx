@@ -5,7 +5,6 @@ import { locales, isLocale, type Locale } from '@/i18n/config';
 import { getDictionary } from '@/i18n/dictionaries';
 import { buildMetadata } from '@/lib/seo';
 import { projects, getProject } from '@/content/projects';
-import { getStats } from '@/content/home';
 import { routes } from '@/i18n/routing';
 import { Section } from '@/components/ui/Section';
 import { SectionHeading } from '@/components/ui/SectionHeading';
@@ -16,7 +15,8 @@ import { ProjectHero } from '@/components/project/ProjectHero';
 import { Gallery } from '@/components/project/Gallery';
 import { Floorplans } from '@/components/project/Floorplans';
 import { Media } from '@/components/ui/Media';
-import { ProjectCard } from '@/components/projects/ProjectCard';
+import { ProjectRow, rowSizes } from '@/components/projects/ProjectRow';
+import { catalogueAvailability } from '@/lib/inventory/availability';
 import { LeadSection } from '@/components/home/LeadSection';
 import { SelectorTeaser } from '@/components/inventory/selector/SelectorTeaser';
 import { DemoNotice } from '@/components/inventory/DemoNotice';
@@ -184,8 +184,7 @@ export default async function ProjectPage(props: { params: Promise<{ locale: str
   const others = [1, 2]
     .map((k) => projects[(at + k) % projects.length])
     .filter((p, i, list) => p.slug !== project.slug && list.indexOf(p) === i);
-  // Counts derived from the project list; the demo placeholders stay out.
-  const portfolioStats = getStats().filter((s) => !s.placeholder);
+  const availability = catalogueAvailability();
 
   const mapEmbed = project.mapQuery
     ? `https://www.google.com/maps?q=${encodeURIComponent(project.mapQuery)}&z=15&output=embed`
@@ -524,7 +523,7 @@ export default async function ProjectPage(props: { params: Promise<{ locale: str
         </Section>
       )}
 
-      {/* 07 — More projects: two, never a row of small cards. */}
+      {/* 07 — More projects: framed rows, like every project list on the site. */}
       {others.length > 0 && (
         <Section id="more" spacing="sm" className="pb-section">
           <SectionHeading
@@ -538,59 +537,22 @@ export default async function ProjectPage(props: { params: Promise<{ locale: str
               </Button>
             }
           />
-          <div className="grid-12 mt-14 gap-y-20 md:mt-20">
-            <ProjectCard
-              project={others[0]}
-              locale={locale}
-              dict={dict}
-              index={0}
-              aspect="4 / 3"
-              size="lg"
-              sizes="(max-width: 1024px) 100vw, 58vw"
-              className="col-span-4 md:col-span-12 lg:col-span-7 lg:col-start-1 lg:row-start-1 lg:self-start"
-            />
-            {others[1] && (
-              <ProjectCard
-                project={others[1]}
-                locale={locale}
-                dict={dict}
-                index={1}
-                aspect="4 / 5"
-                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 66vw, 42vw"
-                className="col-span-4 md:col-span-8 md:col-start-5 lg:col-span-5 lg:col-start-8 lg:row-span-2 lg:row-start-1 lg:mt-[clamp(8rem,16vw,16rem)] lg:self-start"
-              />
-            )}
-            {/* The room the offset right card leaves under the left one (at
-                md, beside it): a line on the portfolio and the two counts
-                derived from the catalogue — never the placeholder stats.
-                At lg the note has a row of its own under the left card while
-                the right card spans both rows: where the offset leaves room
-                the note ends level with the right card's last line, and where
-                it does not (a two-line name, widths near 1024) the row gap
-                still keeps it clear of the card's link. self-start keeps both
-                cards' link boxes from stretching over the empty rows. */}
-            {others.length === 2 && (
-              <Reveal
-                delay={0.1}
-                className="hidden md:col-span-4 md:col-start-1 md:row-start-2 md:block md:self-end lg:col-span-5 lg:col-start-1 lg:row-start-2 lg:max-w-[26rem]"
-              >
-                <p className="text-pretty text-base leading-relaxed text-muted md:text-[1.0625rem]">
-                  {typo(dict.featured.subtitle)}
-                </p>
-                <dl className="mt-6 border-b border-line/15">
-                  {portfolioStats.map((s) => (
-                    <div
-                      key={s.label.ru}
-                      className="flex items-baseline justify-between gap-6 border-t border-line/15 py-3.5"
-                    >
-                      <dt className="text-sm text-muted">{s.label[locale]}</dt>
-                      <dd className="font-display text-display-sm font-light tabular text-ink">{pad(s.value)}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </Reveal>
-            )}
-          </div>
+          {/* One even column of framed rows — the same ProjectRow as the
+              catalogue and the homepage (client's request, 2026-09-30). */}
+          <ul role="list" className="mt-14 grid grid-cols-1 gap-6 md:mt-20 md:auto-rows-fr md:gap-8">
+            {others.map((p, i) => (
+              <li key={p.slug}>
+                <ProjectRow
+                  project={p}
+                  locale={locale}
+                  dict={dict}
+                  index={i}
+                  sizes={rowSizes(p.cover)}
+                  availability={availability[p.slug]}
+                />
+              </li>
+            ))}
+          </ul>
         </Section>
       )}
 

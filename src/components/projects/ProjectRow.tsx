@@ -10,6 +10,39 @@ import { Media } from '@/components/ui/Media';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { ArrowLabel } from '@/components/ui/Button';
 
+/**
+ * Intrinsic size (px) of each cover in /public, as scripts/process-photos.mjs
+ * prints it. Covers are cropped into their frames with object-cover, so a
+ * landscape photo in a narrower frame renders wider than the frame. `sizes`
+ * asks for that rendered width, or the browser picks a file that is too
+ * small and upscales it. Update an entry when a cover is re-cut.
+ */
+const COVER_SIZE: Record<string, readonly [w: number, h: number]> = {
+  '/photos/projects/botanic-star-2-blocks-3-4/cover-v2.jpg': [1300, 1074],
+  '/photos/projects/eco-house/cover.jpg': [1000, 1161],
+  '/photos/projects/botanic-star-2-block-2/cover.jpg': [1400, 1018],
+  '/photos/projects/botanic-star-2-block-1/cover.jpg': [2000, 924],
+  '/photos/projects/botanic-star/cover.jpg': [1200, 1803],
+  '/photos/projects/botanic-park/cover-v2.jpg': [1800, 1059],
+};
+
+/** Frame shapes: 4:3 on phones; from md about 1.3:1 (5 of 12 columns × the row height). */
+const PHONE_FRAME = 4 / 3;
+const ROW_FRAME = 1.3;
+
+/** `sizes` for a row photo: the width the cropped cover is drawn at. */
+export function rowSizes(cover?: string): string {
+  const px = cover ? COVER_SIZE[cover] : undefined;
+  const aspect = px ? px[0] / px[1] : 16 / 9;
+  const k = (frame: number) => Math.max(1, aspect / frame);
+  // 5/12 of the container: ≈ 39vw, capped at the 1680px measure.
+  return [
+    `(min-width: 1680px) ${Math.ceil(650 * k(ROW_FRAME))}px`,
+    `(min-width: 768px) ${Math.ceil(40 * k(ROW_FRAME))}vw`,
+    `${Math.ceil(92 * k(PHONE_FRAME))}vw`,
+  ].join(', ');
+}
+
 /** Availability line for projects that have an apartment selector. */
 export interface RowAvailability {
   available: number;
