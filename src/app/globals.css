@@ -290,19 +290,24 @@ body {
   /* ------------------------------------------------------------------
      Image mask reveal (see <Reveal variant="mask">). The frame opens from
      the bottom edge while the image inside settles from a slight zoom.
+
+     The clip goes on the CHILD, never on the observed wrapper: Chromium
+     applies a target's own clip-path when computing intersections, so a
+     wrapper clipped to nothing never "enters" the viewport — the reveal
+     would never fire and the lazy <img> inside would never load.
      ------------------------------------------------------------------ */
-  [data-mask='hidden'] {
+  [data-mask='hidden'] > * {
     clip-path: inset(100% 0 0 0);
   }
   [data-mask='hidden'] img {
     transform: scale(1.12);
   }
-  [data-mask='shown'] {
+  [data-mask='shown'] > * {
     clip-path: inset(0 0 0 0);
-    transition: clip-path 1.2s var(--ease-arch);
+    transition: clip-path 1.2s var(--ease-arch) var(--mask-delay, 0s);
   }
   [data-mask='shown'] img {
-    transition: transform 1.6s var(--ease-premium);
+    transition: transform 1.6s var(--ease-premium) var(--mask-delay, 0s);
   }
 }
 

@@ -14,7 +14,7 @@ const OUT = 'public/photos/projects';
 const jobs = [
   { src: 'eco-house/cover.jpg', out: 'eco-house/hero.jpg', width: 2000 },
   { src: 'eco-house/cover.jpg', out: 'eco-house/cover.jpg', crop: [200, 0, 620, 720], width: 1000 },
-  { src: 'bs2-34/cover.jpg', out: 'botanic-star-2-blocks-3-4/cover.jpg', crop: [362, 0, 718, 560], width: 1300 },
+  { src: 'bs2-34/cover.jpg', out: 'botanic-star-2-blocks-3-4/cover.jpg', crop: [362, 0, 678, 560], width: 1300 },
   { src: 'bs2-b2/cover-clean.jpg', out: 'botanic-star-2-block-2/cover.jpg', crop: [170, 0, 990, 720], width: 1400 },
   { src: 'bs2-b1/cover.jpg', out: 'botanic-star-2-block-1/cover.jpg', width: 2000 },
   { src: 'about/company.jpg', out: 'company/about.jpg', width: 1600 },

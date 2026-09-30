@@ -84,7 +84,9 @@ export function Reveal({
 
   if (variant === 'mask') {
     data = { 'data-mask': state === 'init' ? undefined : state };
-    if (delay) style = { ...style, transitionDelay: `${delay}s` };
+    // The clip and its transition live on the child (see globals.css), so the
+    // delay travels down as a custom property.
+    if (delay) style = { ...style, ['--mask-delay' as string]: `${delay}s` };
   } else if (stagger) {
     data = { 'data-reveal': state === 'init' ? undefined : state };
   } else {

@@ -51,12 +51,10 @@ export function CompanyBrief({ locale, dict }: { locale: Locale; dict: Dictionar
       </div>
 
       <div className="mt-10 grid gap-y-12 md:mt-14 md:gap-y-16 lg:grid-cols-12 lg:gap-x-gutter">
-        {/* Mask reveal. The clip is drawn on the inner frame, not on the
-            observed element: Chromium's IntersectionObserver honours the
-            target's own clip-path, so a fully clipped target never reports
-            as visible and would stay hidden. */}
-        <Reveal variant="mask" style={{ clipPath: 'none' }} className="lg:col-span-6">
-          <div className="relative aspect-[4/5] transition-[clip-path] duration-1200 ease-arch [clip-path:inset(0_0_0_0)] md:aspect-[3/2] lg:aspect-[4/5] [[data-mask=hidden]_&]:[clip-path:inset(100%_0_0_0)]">
+        {/* Mask reveal: the global [data-mask] rule clips this inner frame,
+            leaving the observed wrapper unclipped (see globals.css). */}
+        <Reveal variant="mask" className="lg:col-span-6">
+          <div className="relative aspect-[4/5] md:aspect-[3/2] lg:aspect-[4/5]">
             <Media
               src={PHOTO}
               alt={alt}
