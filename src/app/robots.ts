@@ -9,7 +9,7 @@ export default function robots(): MetadataRoute.Robots {
   return {
     // /preview/ holds the competing design directions and demo inventory —
     // a decision aid for the client, never a page for buyers.
-    rules: { userAgent: '*', allow: '/', disallow: ['/api/', '/ru/preview/', '/ro/preview/'] },
+    rules: { userAgent: '*', allow: '/', disallow: ['/api/', '/ru/preview/', '/ro/preview/', '/ru/demo/', '/ro/demo/'] },
     sitemap: `${SITE_URL}/sitemap.xml`,
     host: SITE_URL,
   };

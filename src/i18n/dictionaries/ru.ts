@@ -272,6 +272,31 @@ export const ru = {
       },
     },
   },
+  /** /demo — one link to every section and feature, for showing the site. */
+  demoHub: {
+    metaTitle: 'Обзор сайта',
+    eyebrow: 'Обзор сайта',
+    title: 'Весь сайт по одной ссылке',
+    subtitle:
+      'Разделы и новые функции Pamir Construct в том порядке, в каком их удобно смотреть. Данные о квартирах и ценах — демонстрационные.',
+    sections: { site: 'Сайт', selector: 'Выбор квартиры', tools: 'Расчёты и подбор', variants: 'Варианты' },
+    items: {
+      home: { title: 'Главная', text: 'Первый экран, проекты, преимущества, компания, заявка.' },
+      catalog: { title: 'Каталог проектов', text: 'Все жилые комплексы ровной колонкой, фильтр по статусу.' },
+      project: { title: 'Страница проекта', text: 'Botanic Star 2 — блоки 3 и 4: кнопка «Выбрать квартиру», блок выбора, калькулятор.' },
+      selector: { title: 'Шаг 1 — корпус', text: 'Схема комплекса: наведите или нажмите на корпус.' },
+      building: { title: 'Шаг 2 — этаж', text: 'Фасад блока 3: этажи с количеством свободных квартир.' },
+      floor: { title: 'Шаг 3 — квартира', text: 'План 7-го этажа: статусы и карточки квартир.' },
+      apartment: { title: 'Страница квартиры', text: 'Квартира №47: 2D-план с комнатами, цена, скачивание планировки.' },
+      calculator: { title: 'Калькулятор стоимости и рассрочки', text: 'Цена по параметрам и ежемесячный платёж.' },
+      recommend: { title: 'Подбор квартиры', text: 'Бюджет, комнаты, площадь, этаж — и лучшие совпадения.' },
+      company: { title: 'О компании', text: 'История, принципы, качество, сданные объекты.' },
+      themeWarm: { title: 'Тема Warm Architectural', text: 'Светлая тёплая версия того же сайта.' },
+      themeStone: { title: 'Тема Modern Stone', text: 'Светлая каменно-зелёная версия.' },
+      themeDark: { title: 'Тема Premium Dark', text: 'Текущая тема сайта — вернуться к ней.' },
+      otherLocale: { title: 'Румынская версия', text: 'Тот же сайт на румынском языке.' },
+    },
+  },
   /** Apartment selector, calculators, recommendations — see src/i18n/dictionaries/inventory. */
   inventory: inventoryRu,
 };
