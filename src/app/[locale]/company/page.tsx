@@ -4,7 +4,7 @@ import { isLocale, type Locale } from '@/i18n/config';
 import { getDictionary } from '@/i18n/dictionaries';
 import { buildMetadata } from '@/lib/seo';
 import { routes } from '@/i18n/routing';
-import { splitWords } from '@/lib/text';
+import { splitWords, typo } from '@/lib/text';
 import { companyIntro, companyQuote, principles, values } from '@/content/company';
 import { projects } from '@/content/projects';
 import { companyLegalName } from '@/content/site';
@@ -64,7 +64,10 @@ export default async function CompanyPage(props: { params: Promise<{ locale: str
               {dict.companyPage.historyTitle}
             </h2>
           </Reveal>
-          <span aria-hidden="true" className="rule-draw h-px flex-1 bg-line/15" />
+          {/* Static, not rule-draw: on laptop heights this rule sits inside the
+              first viewport, where a scroll-driven draw would rest part-drawn
+              until the page moves. */}
+          <span aria-hidden="true" className="h-px flex-1 bg-line/15" />
         </div>
 
         <div className="mt-12 grid gap-y-10 md:mt-20 md:grid-cols-12 md:gap-x-gutter">
@@ -72,12 +75,12 @@ export default async function CompanyPage(props: { params: Promise<{ locale: str
             {/* A multi-line statement: display-md's 1.08 leading is tuned for one-
                 or two-line names, so the lines get more air here. */}
             <p className="font-display text-display-md font-light leading-[1.2] text-pretty text-ink md:leading-[1.16]">
-              {companyIntro[0][locale]}
+              {typo(companyIntro[0][locale])}
             </p>
           </Reveal>
           {companyIntro.slice(1).map((p, i) => (
             <Reveal key={i} delay={0.08} className="md:col-span-7 md:col-start-6 md:mt-10 lg:col-span-5 lg:col-start-7">
-              <p className="text-lead text-pretty text-muted">{p[locale]}</p>
+              <p className="text-lead text-pretty text-muted">{typo(p[locale])}</p>
             </Reveal>
           ))}
         </div>
@@ -151,9 +154,9 @@ export default async function CompanyPage(props: { params: Promise<{ locale: str
                   <FeatureIcon name={p.icon} className="h-5 w-5" />
                 </div>
                 <h3 className="mt-10 font-display text-display-sm font-light text-balance text-ink md:mt-14">
-                  {p.title[locale]}
+                  {typo(p.title[locale])}
                 </h3>
-                <p className="mt-4 max-w-sm text-pretty text-base leading-relaxed text-muted">{p.text[locale]}</p>
+                <p className="mt-4 max-w-sm text-pretty text-base leading-relaxed text-muted">{typo(p.text[locale])}</p>
               </Reveal>
             ))}
           </ol>
@@ -177,7 +180,7 @@ export default async function CompanyPage(props: { params: Promise<{ locale: str
                 className="flex items-baseline gap-6 border-t border-line/15 py-5 last:border-b md:py-7 md:[&:nth-last-child(2)]:border-b"
               >
                 <span className="label tabular w-6 shrink-0 text-muted">{pad(i + 1)}</span>
-                <span className="font-display text-display-sm font-light text-ink">{v[locale]}</span>
+                <span className="font-display text-display-sm font-light text-ink">{typo(v[locale])}</span>
               </Reveal>
             ))}
           </ul>

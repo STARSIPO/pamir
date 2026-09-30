@@ -22,26 +22,47 @@ export const SITE_THEME: ThemeName = 'warm'; // 'warm' | 'dark' | 'stone'
 `src/app/globals.css`. Для просмотра без пересборки: `?theme=dark` в URL
 (держится на сессию, `?theme=reset` — сброс).
 
+Значения ниже — ровно те, что стоят в `globals.css` (переменная в скобках).
+Меняете тему — меняйте обе стороны.
+
 | Роль (Tailwind) | Warm (V1) | Dark (V2) | Stone (V3) |
 |---|---|---|---|
-| `bg-canvas` основной фон | #F2EFE9 | #111210 | #E9E9E5 |
-| `bg-canvas-alt` доп. фон | #E5E0D7 | #1B1C19 | #D5D6D0 |
-| `bg-surface` плоскости, поля | #FFFFFF | #1B1C19 | #F8F8F5 |
-| `text-ink` основной текст | #171717 | #F4F1EA | #161816 |
-| `text-muted` вторичный | #6A6863 | #AAA79F | #696D68 |
-| `accent` | #9A8264 | #B39A73 | #59665B |
-| `accent-soft` | #C9BBA6 | #70614D | #9CA59C |
-| `accent-strong` (hover) | #7F6A50 | #C8B28E | #46514A |
-| `text-on-accent` | #FFFFFF | #111210 | #F8F8F5 |
-| `bg-band` / `text-band-fg` / `text-band-muted` контрастная полоса (CTA, footer) | #171717 / #F2EFE9 / #A09C94 | #1B1C19 / #F4F1EA / #AAA79F | #161816 / #E9E9E5 / #9A9E98 |
+| `bg-canvas` основной фон (`--canvas`) | #F2EFE9 | #111210 | #E9E9E5 |
+| `bg-canvas-alt` доп. фон (`--canvas-alt`) | #E5E0D7 | #181916 | #D5D6D0 |
+| `bg-surface` плоскости, поля (`--surface`) | #FFFFFF | #1B1C19 | #F8F8F5 |
+| `text-ink` основной текст (`--ink`) | #171717 | #F4F1EA | #161816 |
+| `text-muted` вторичный (`--muted`, AA на canvas и canvas-alt) | #63615C | #AAA79F | #585C57 |
+| `accent` (`--accent`) | #9A8264 | #B39A73 | #59665B |
+| `accent-soft` (`--accent-soft`) | #C9BBA6 | #70614D | #9CA59C |
+| `accent-strong` (hover, `::selection`; `--accent-strong`) | #7F6A50 | #C8B28E | #46514A |
+| `text-on-accent` (`--on-accent`) | #FFFFFF | #111210 | #F8F8F5 |
+| акцент на тёмном фоне (`--accent-on-dark`, без своего класса — см. «Тёмные фоны») | #9A8264 | #B39A73 | #9CA59C |
+| `bg-band` / `text-band-fg` / `text-band-muted` контрастная полоса (CTA, footer) | #171717 / #F2EFE9 / #A09C94 | #21221E / #F4F1EA / #AAA79F | #161816 / #E9E9E5 / #9A9E98 |
+| `text-danger` / `border-danger` ошибки полей на canvas / canvas-alt / surface (`--danger`) | #A23B2A | #E87868 | #9B3A30 |
+| `text-danger-band` / `border-danger-band` ошибки на band (`--danger-on-band`) | #F08C7D | #F08C7D | #F08C7D |
 | `line` (только с альфой: `border-line/15`) | ink | ink | ink |
 | `scrim` (затемнение фото, всегда почти чёрный) | #0E0E0C | #0A0A09 | #0C0E0C |
+| `.img-treat` градинг фото (`--img-filter`) | `saturate(0.8) contrast(1.03) sepia(0.06)` | `saturate(0.76) contrast(1.05) brightness(0.9)` | `saturate(0.72) contrast(1.04)` |
+| `.map-treat` iframe карты (`--map-filter`) | `grayscale(1) contrast(1.05)` | `grayscale(1) invert(0.92) contrast(0.9)` | `grayscale(1) contrast(1.05)` |
+
+Контраст (WCAG): `danger` ≥ 4.7:1 на canvas, canvas-alt и surface во всех темах;
+`danger-band` ≥ 6.7:1 на band; выделение текста (`accent-strong` + `on-accent`)
+5.2:1 / 9.1:1 / 7.8:1.
+
+**Тёмные фоны.** Внутри `.bg-band`, `.bg-scrim`, `.text-white`, `.ground-dark` /
+`[data-ground="dark"]` и `.ground-photo` / `[data-ground="photo"]` переменные
+переназначаются: `--accent` и `--accent-strong` → `--accent-on-dark`,
+`--on-accent` → `--band`, `--danger` → `--danger-on-band`. Кольца фокуса,
+`::selection`, квадраты статуса, hover кнопок и ошибки полей следуют сами, без
+правок в компонентах. Над фото кольцо фокуса белое.
 
 **Правила**
 - В компонентах **нет hex-цветов** и нет `bg-white`/`text-black` для фона/текста страницы.
   Исключение: текст поверх фотографии — `text-white`, `text-white/70` (фото всегда под `scrim`).
 - Акцент — редко: активные состояния, тонкие линии, маленькие квадраты статуса, hover.
   Мелкий текст акцентом не набираем (в Warm контраст 3.2:1). Основная кнопка — `bg-ink`.
+- Ошибки форм — только `danger` (на светлом) / `danger-band` (на band), не `red-*`.
+- Карты (iframe) — всегда с `.map-treat`, фото — `.img-treat` (в `<Media>` по умолчанию).
 - Hairlines: `border-line/15` (на canvas), `border-band-fg/15` (на band), `border-white/20` (на фото).
 - Старые имена (`brand`, `graphite`, `sand`, `stone`) — только алиасы для `/preview`. В новом коде не использовать.
 
@@ -65,6 +86,12 @@ export const SITE_THEME: ThemeName = 'warm'; // 'warm' | 'dark' | 'stone'
 - Заголовки: `font-display font-light text-balance`. Никаких `font-bold`/`font-semibold` в display.
 - Заголовок пословно появляется: `<Reveal stagger>` + `splitWords(title)` (см. `SectionHeading`).
 - Цифры: `tabular`.
+- Текст из словарей и контента выводим через `typo()` (`src/lib/text.ts`; `splitWords` вызывает его сам):
+  тире не начинает строку, короткие предлоги/союзы (RU в, и, с, на, для, или…; RO o, și, în, la, de,
+  al, ale, sau, prin…) привязаны к следующему слову, названия не рвутся — Pamir Construct,
+  Botanic Star 2, Botanic Park, Prima Casă, Eco House. Функция идемпотентна.
+  Имена проектов в крупном кегле — `typesetName()`. Адрес в `content/site.ts` связан неразрывными
+  пробелами вручную.
 
 ## 3. Сетка, отступы, геометрия
 
@@ -79,7 +106,7 @@ export const SITE_THEME: ThemeName = 'warm'; // 'warm' | 'dark' | 'stone'
 | Компонент | Назначение |
 |---|---|
 | `ui/Section` | `tone`: `canvas` · `alt` · `surface` · `band`; `spacing`: `default` · `sm` · `none`; `bleed` |
-| `ui/SectionHeading` | `index="02"`, `eyebrow`, `title`, `subtitle`, `action`, `tone="light"` (для band), `size` xl/lg/md |
+| `ui/SectionHeading` | `index="02"`, `eyebrow`, `title`, `subtitle`, `action`, `tone="light"` (для band), `size` xl/lg/md. С `lg` заголовок в колонках 1–8, `subtitle`/`action` — в 9–12 (общая линия col-9 для всех правых колонок) |
 | `ui/Reveal` | `variant="fade"` (по умолчанию, fade-up), `variant="mask"` (раскрытие фото снизу + доводка зума), `stagger` (пословно), `delay` (сек., шаг 0.08) |
 | `ui/Media` | фото: `aspect`, `fill`, `zoom` (медленный hover-zoom, нужен `group` у ссылки), `caption` («Визуализация»), `position`, `treat` (градинг темы, по умолчанию on), `priority`, `sizes` |
 | `ui/Button` | `primary` · `outline` · `ghost` (текст+стрелка+линия) · `inverse` (на band) · `light` / `outlineLight` (на фото); `arrow`; `size` md/lg |
@@ -87,7 +114,7 @@ export const SITE_THEME: ThemeName = 'warm'; // 'warm' | 'dark' | 'stone'
 | `ui/Button → Arrow` | тонкая стрелка |
 | `ui/StatusBadge` | квадрат + метка статуса (`currentColor`) |
 | `projects/ProjectCard` | большая карточка проекта: фото + статус·район + крупное имя + «Смотреть проект →». `aspect`, `size` md/lg, `sizes` |
-| `shared/PageHero` | открытие внутренних страниц (label + линия, H1 display-xl light, лид справа) |
+| `shared/PageHero` | открытие внутренних страниц (label + линия, H1 display-xl light, лид справа: 7/5 на `lg`, 8/4 с `xl`) |
 | `shared/CtaBand` | финальный CTA внутренних страниц на `band` |
 | `brand/Logo` | монохромный, `currentColor` |
 | `layout/SmoothScroll` | Lenis; оверлеи блокируют скролл через `lockScroll(true/false)` из `@/lib/smooth-scroll` и ставят `data-lenis-prevent` на прокручиваемые контейнеры |
@@ -131,6 +158,10 @@ export const SITE_THEME: ThemeName = 'warm'; // 'warm' | 'dark' | 'stone'
 ## 9. Технические ограничения
 
 - Next 16 App Router, статический экспорт на GitHub Pages (`EXPORT=true`, basePath `/pamir`): никаких серверных API в страницах, пути к файлам из `public` — через `asset()` / `<Media>`.
+- Иконки сайта — файловые конвенции Next: `src/app/icon.svg` (знак цвета canvas на ink) и `src/app/apple-icon.png`
+  (180×180, знак ink на warm canvas). Next сам ставит `<link>` с basePath; ручной блок `icons` в metadata не добавлять.
+- Заменили фото под тем же путём — дайте файлу новое имя (`cover-v2.jpg`): оптимизатор `next/image` кэширует
+  результат по URL, и старый кадр иначе продолжит отдаваться.
 - Server Components по умолчанию; `'use client'` только где нужно состояние/браузер.
 - Все тексты — из словарей/контента. Новые строки: `dict.design.*` (уже добавлены).
 - Исходники в CRLF: правьте файлы инструментами Edit/Write, не `sed` с `\n`.

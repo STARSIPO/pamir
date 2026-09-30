@@ -84,23 +84,32 @@ export function Header({ locale, dict }: { locale: Locale; dict: Dictionary }) {
           {/* Desktop */}
           <div className="hidden items-center lg:flex">
             <nav aria-label={dict.design.menuTitle}>
-              <ul className="flex items-center gap-6 xl:gap-9">
+              <ul className="flex items-center gap-7 xl:gap-9">
                 {primaryNav.map((item) => {
                   const active = parsed?.key === item.route;
                   return (
                     <li key={item.route}>
+                      {/* ::before widens the hit area to at least 44px around
+                          the label (a bare "FAQ" is 25px) without moving the
+                          words: the gaps between them stay even. */}
                       <Link
                         href={routes[item.route](locale)}
                         aria-current={active ? 'page' : undefined}
-                        className="group relative inline-flex h-11 items-center text-[0.8125rem] font-medium"
+                        className={cn(
+                          'group relative inline-flex h-11 items-center text-[0.8125rem] font-medium',
+                          'before:absolute before:inset-y-0 before:left-1/2 before:w-full before:min-w-11 before:-translate-x-1/2',
+                        )}
                       >
                         {/* Over a photo the accent can sink into the sky
-                            (stone's sage), so the marker follows the type. */}
+                            (stone's sage), so the marker follows the type.
+                            6px clear of its word, 18px of the neighbour
+                            (28px gap): it reads as this item's state, not
+                            as a separator between two items. */}
                         {active && (
                           <span
                             aria-hidden="true"
                             className={cn(
-                              'absolute -left-3 top-1/2 h-1 w-1 -translate-y-1/2',
+                              'absolute -left-2.5 top-1/2 h-1 w-1 -translate-y-1/2',
                               'transition-colors duration-500 ease-premium',
                               transparent ? 'bg-current' : 'bg-accent',
                             )}

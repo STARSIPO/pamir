@@ -8,6 +8,7 @@ import { Container } from '@/components/ui/Container';
 import { Media } from '@/components/ui/Media';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Button } from '@/components/ui/Button';
+import { typo } from '@/lib/text';
 import { cn } from '@/lib/utils';
 
 /**
@@ -84,13 +85,20 @@ const typeset = (s: string) => s.replace(/ ([—–]|\d+\b)/g, ' $1');
 const fitPhone =
   'w-full sm:w-auto max-sm:h-auto max-sm:min-h-14 max-sm:whitespace-normal max-sm:px-5 max-sm:py-4 max-sm:text-center max-sm:tracking-[0.12em] max-sm:[text-wrap:balance]';
 
+/**
+ * A soft halo for the small labels over the photograph. The scrims stop short
+ * of the building's upper half, so a label can land on a white façade.
+ */
+const halo = '[text-shadow:0_1px_12px_rgb(0_0_0/0.45)]';
+
 /** Honesty label for renders, set like Media's caption so it holds on any sky. */
-const captionText = 'label text-white/85 [text-shadow:0_1px_12px_rgb(0_0_0/0.45)]';
+const captionText = cn('label text-white/85', halo);
 
 /**
  * Project opening: the building fills the screen, the name sits on the
- * bottom edge in the largest cut of the display face. The transparent header
- * floats over the top, so a short top scrim keeps it legible on bright skies.
+ * bottom edge in the display face (display-xl, as every inner H1). The
+ * transparent header floats over the top, so a short top scrim keeps it
+ * legible on bright skies.
  *
  *   ПРОЕКТЫ / BOTANIC STAR                               ВИЗУАЛИЗАЦИЯ
  *   ■ СДАН
@@ -173,20 +181,25 @@ export function ProjectHero({
           />
         )}
       </div>
+      {/* Pinned to the bottom of the first screen, not of the section: on a
+          short laptop the text column can still outgrow the viewport, and the
+          disclosure must never fall below the fold. Where the section is one
+          screen tall the two are the same line. */}
       {inset && caption && (
         <span
           className={cn(
             captionText,
-            'absolute bottom-[clamp(1.75rem,4.5vw,4.5rem)] right-[var(--edge)] z-10 hidden xl:block',
+            'absolute right-[var(--edge)] top-[calc(max(100svh,620px)-clamp(1.75rem,4.5vw,4.5rem))] z-10 hidden -translate-y-full xl:block',
           )}
         >
           {caption}
         </span>
       )}
 
-      {/* Scrims: a short one under the header; a tall one under the text,
-          dense enough at mid-height to carry the small labels over a white
-          façade; and a wash from the left behind the text column. */}
+      {/* Scrims: a short one under the header; one under the text stack,
+          dense at its foot for the small labels over a white façade and gone
+          by the building's upper half, so the render keeps its daylight; and
+          a light wash from the left behind the text column. */}
       <div
         aria-hidden="true"
         className={cn(
@@ -197,14 +210,14 @@ export function ProjectHero({
       <div
         aria-hidden="true"
         className={cn(
-          'absolute inset-x-0 bottom-0 h-[88%] bg-gradient-to-t from-scrim/90 via-scrim/60 to-transparent',
+          'absolute inset-x-0 bottom-0 h-[62%] bg-gradient-to-t from-scrim/85 via-scrim/40 to-transparent',
           inset && 'xl:hidden',
         )}
       />
       <div
         aria-hidden="true"
         className={cn(
-          'absolute inset-y-0 left-0 hidden w-2/3 bg-gradient-to-r from-scrim/45 via-scrim/15 to-transparent md:block',
+          'absolute inset-y-0 left-0 hidden w-2/3 bg-gradient-to-r from-scrim/35 via-scrim/10 to-transparent lg:block',
           inset && 'xl:hidden',
         )}
       />
@@ -212,10 +225,14 @@ export function ProjectHero({
       <Container className="relative z-10 flex flex-1 flex-col justify-end pb-[clamp(1.75rem,4.5vw,4.5rem)] pt-[calc(var(--header-h)+1.5rem)]">
         <div className={cn(inset && 'xl:w-5/12 xl:pr-16')}>
           {/* On phones the header logo and the back gesture do this job, and
-              the building needs the height more. */}
-          <div className="animate-hero-in max-md:hidden" style={{ animationDelay: '0.15s' }}>
+              the building needs the height more. So does the inset column on
+              a short laptop screen, where the header's «Projects» is marked. */}
+          <div
+            className={cn('animate-hero-in max-md:hidden', inset && 'xl:[@media(max-height:800px)]:hidden')}
+            style={{ animationDelay: '0.15s' }}
+          >
             <nav aria-label={dict.projectsPage.eyebrow} className="min-w-0">
-              <ol className="label flex min-w-0 items-center gap-3 text-white/85">
+              <ol className={cn('label flex min-w-0 items-center gap-3 text-white/85', halo)}>
                 <li className="shrink-0">
                   <Link
                     href={routes.projects(locale)}
@@ -239,14 +256,17 @@ export function ProjectHero({
               <StatusBadge
                 status={project.status}
                 label={statusLabel}
-                className="text-white/90 [text-shadow:0_1px_12px_rgb(0_0_0/0.45)]"
+                className={cn('text-white/90', halo)}
               />
               {caption && <span className={cn(captionText, 'shrink-0', inset && 'xl:hidden')}>{caption}</span>}
             </div>
+            {/* Inner-page H1 at display-xl (the hero cut is the home slogan's).
+                In the inset column it is also capped by the screen's height,
+                so the name, the facts and both actions fit one laptop screen. */}
             <h1
               className={cn(
-                'mt-5 font-display text-hero font-light text-balance text-white md:mt-6',
-                inset && 'xl:text-display-xl',
+                'mt-5 font-display text-display-xl font-light text-balance text-white md:mt-6',
+                inset && 'xl:mt-4 xl:text-[length:clamp(2.5rem,min(6vw,9svh),6.25rem)]',
               )}
             >
               {typeset(name)}
@@ -256,17 +276,18 @@ export function ProjectHero({
           <div
             className={cn(
               'mt-6 grid gap-6 border-t border-white/20 pt-5 animate-hero-in md:mt-12 md:gap-8 md:pt-9 lg:grid-cols-12 lg:items-end lg:gap-gutter',
-              inset && 'xl:mt-10 xl:grid-cols-1 xl:gap-8 xl:pt-8',
+              inset && 'xl:mt-8 xl:grid-cols-1 xl:gap-8 xl:pt-6',
             )}
             style={{ animationDelay: '0.4s' }}
           >
             <div className={cn('lg:col-span-6 xl:col-span-5', inset && 'xl:col-span-1')}>
-              <p className="max-w-[36ch] text-pretty text-lead text-white/80">{project.tagline[locale]}</p>
-              <p className="label mt-4 text-white/70">{place}</p>
+              <p className="max-w-[36ch] text-pretty text-lead text-white/80">{typo(project.tagline[locale])}</p>
+              <p className={cn('label mt-4 text-white/70', halo)}>{place}</p>
             </div>
             <div
               className={cn(
                 'flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center lg:col-span-6 lg:justify-end xl:col-span-7',
+                'lg:max-xl:flex-col lg:max-xl:items-end lg:max-xl:gap-4',
                 inset && 'xl:col-span-1 xl:flex-col xl:items-start xl:justify-start xl:gap-4',
               )}
             >
@@ -275,13 +296,15 @@ export function ProjectHero({
               </Button>
               {hasFloorplans && (
                 <>
-                  {/* One boxed action per view on phones and in the narrow
-                      inset column; the plans link steps down to a text link. */}
+                  {/* One boxed action per view on phones, in the half-width
+                      cell from lg to xl (two boxes there wrap into a ragged
+                      pair) and in the narrow inset column; the plans link
+                      steps down to a text link. */}
                   <Button
                     href="#floorplans"
                     variant="outlineLight"
                     size="lg"
-                    className={cn('max-sm:hidden', inset && 'xl:hidden')}
+                    className={cn('max-sm:hidden lg:max-xl:hidden', inset && 'xl:hidden')}
                   >
                     {dict.projectDetail.viewFloorplans}
                   </Button>
@@ -290,7 +313,7 @@ export function ProjectHero({
                     variant="ghost"
                     arrow
                     className={cn(
-                      'min-h-11 self-start text-white/85 hover:text-white sm:hidden',
+                      'min-h-11 self-start text-white/85 hover:text-white sm:hidden lg:max-xl:inline-flex lg:max-xl:self-end',
                       inset && 'xl:inline-flex',
                     )}
                   >

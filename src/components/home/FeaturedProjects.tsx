@@ -22,20 +22,23 @@ export const FEATURED_SLUGS = ['botanic-star-2-blocks-3-4', 'eco-house'] as cons
  *
  * Its cover is also a crop of the Hero's render, so shown whole it repeats
  * the opening photo two screens later (same corner, same car and passer-by).
- * Row 2 therefore goes in close: scaled 1.35x from the top-right corner, it
+ * Row 2 therefore goes in close: scaled 1.2x from the top-right corner, it
  * keeps the rhythm of the orange loggias and the wing receding into the sky
- * and drops the street, the corner tower the Hero crops to on a phone, and the
- * figures. `[scale:…]` is the standalone CSS property, so it composes with the
- * hover zoom and the mask reveal (both set `transform`); `sizes` grows by the
- * same 1.35 so the enlarged image is not upscaled.
+ * and drops the street corner, the corner tower the Hero crops to on a phone,
+ * and the figures. No closer: the render is only 1000px wide (from a 1280px
+ * original), and at 1.35x it was drawn ~1.9x its size on a 2x laptop screen
+ * and upscaled even at 1x on a 1920 monitor, so the window grid went soft
+ * beside the sharp row above. `[scale:…]` is the standalone CSS property, so
+ * it composes with the hover zoom and the mask reveal (both set `transform`);
+ * `sizes` grows by the same 1.2 so an optimised build would not upscale it.
  */
 const ROWS: { aspect: string; position?: string; imgClassName?: string; sizes?: string }[] = [
   { aspect: '5 / 4', position: '40% 50%' },
   {
     aspect: '4 / 5',
     position: '100% 0%',
-    imgClassName: '[scale:1.35] origin-top-right',
-    sizes: '(max-width: 767px) 135vw, (max-width: 1023px) 90vw, 68vw',
+    imgClassName: '[scale:1.2] origin-top-right',
+    sizes: '(max-width: 767px) 120vw, (max-width: 1023px) 80vw, 60vw',
   },
 ];
 

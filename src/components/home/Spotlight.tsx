@@ -7,6 +7,7 @@ import { Media } from '@/components/ui/Media';
 import { Reveal } from '@/components/ui/Reveal';
 import { Button } from '@/components/ui/Button';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { typo } from '@/lib/text';
 import { splitTied, typesetName } from './ProjectFeature';
 
 /** The one project shown full-bleed between the featured rows and the advantages. */
@@ -54,31 +55,26 @@ export function Spotlight({ locale, dict }: { locale: Locale; dict: Dictionary }
         />
       </Reveal>
 
-      {/* Scrim under the text, from tablet up. No top scrim: the header over
-          this section is always the compact one with its own background.
-          Phones get their own wash, anchored to the text block below. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-[72%] bg-gradient-to-t from-scrim/85 via-scrim/40 to-transparent md:block"
-      />
-
       <div className="absolute inset-x-0 bottom-0">
-        {/* Phone wash. The portrait crop puts the whole text stack on the
-            white façade, and a gradient sized to the section would leave the
-            eyebrow at a different depth on every phone height. This one is
-            pinned to the text block, as in the Hero: an eased 10rem ramp ends
-            right at the eyebrow row, then deepens slowly to the button. */}
+        {/* Wash, at every width. No top scrim: the header over this section is
+            always the compact one with its own background. The text block
+            covers the lower half of the frame, so a gradient sized to the
+            section would leave the eyebrow row at a different depth on every
+            screen height — on a laptop it sat on the sunset at a quarter
+            density. This one is pinned to the text block, as in the Hero: an
+            eased 10rem ramp ends right at the eyebrow row, then deepens slowly
+            to the button. */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 -top-40 bottom-0 md:hidden"
-          style={{ backgroundImage: PHONE_WASH }}
+          className="pointer-events-none absolute inset-x-0 -top-40 bottom-0"
+          style={{ backgroundImage: WASH }}
         />
         <Container className="relative pb-12 md:pb-16 lg:pb-20">
           {/* nowrap: "PRIM-PLAN" must not break at its hyphen. The hairline
               grows from 1rem up to its full length, so it gives way first;
               only on the narrowest phones does the render caption drop to its
               own line (still right-aligned). */}
-          <Reveal className="flex flex-wrap items-center gap-x-4 gap-y-2 text-white/90 md:flex-nowrap md:text-white/75">
+          <Reveal className="flex flex-wrap items-center gap-x-4 gap-y-2 text-white/90 md:flex-nowrap">
             <span className="label whitespace-nowrap">{dict.design.spotlightEyebrow}</span>
             <span aria-hidden="true" className="h-px min-w-4 max-w-10 flex-1 bg-white/40 md:max-w-16" />
             {isRender && <span className="label ml-auto whitespace-nowrap text-right">{dict.design.render}</span>}
@@ -105,7 +101,7 @@ export function Spotlight({ locale, dict }: { locale: Locale; dict: Dictionary }
                 <span className="label">{project.district[locale]}</span>
               </div>
               <p className="mt-4 max-w-md text-pretty text-base leading-relaxed text-white/75 md:text-[1.0625rem]">
-                {project.tagline[locale]}
+                {typo(project.tagline[locale])}
               </p>
             </div>
             <Button href={routes.project(locale, project.slug)} variant="outlineLight" arrow className="shrink-0">
@@ -119,14 +115,15 @@ export function Spotlight({ locale, dict }: { locale: Locale; dict: Dictionary }
 }
 
 /**
- * Phone wash, measured from the top of the text block's backdrop (10rem above
- * the eyebrow row). The ramp eases in over those 10rem so it never reads as a
+ * Wash, measured from the top of the text block's backdrop (10rem above the
+ * eyebrow row). The ramp eases in over those 10rem so it never reads as a
  * band across the tower, and reaches 64% exactly at the eyebrow: enough for
  * the white/90 labels and the light-weight name to clear 4.5:1 where they
- * cross the white façade, in every theme (the scrim stays near-black).
- * Mirrors the Hero's phone wash so the two photo frames read as one system.
+ * cross the white façade on a phone or the low sun on a laptop, in every
+ * theme (the scrim stays near-black). Mirrors the Hero's phone wash so the
+ * two photo frames read as one system.
  */
-const PHONE_WASH = `linear-gradient(to bottom,
+const WASH = `linear-gradient(to bottom,
   rgb(var(--scrim) / 0) 0,
   rgb(var(--scrim) / 0.1) 2.5rem,
   rgb(var(--scrim) / 0.3) 5rem,

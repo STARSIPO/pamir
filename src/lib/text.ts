@@ -13,16 +13,35 @@ export const NBSP = ' ';
  *     end of a line: it is tied to the word after it ("узнать о доступных",
  *     "Свяжитесь с Pamir"). A closed list, not "any two letters": RO has
  *     many two-letter words (ce, nu, se, să, ne) and tying them all would
- *     glue half a headline into one unbreakable run.
+ *     glue half a headline into one unbreakable run;
+ *   - a brand name never splits across lines: "Pamir Construct",
+ *     "Botanic Star 2", "Botanic Park", "Prima Casă", "Eco House".
  *
- * Idempotent: running it twice gives the same string.
+ * Only ordinary spaces are ever replaced, so it is idempotent: running it
+ * twice gives the same string, and text already typeset by hand (content
+ * with no-break spaces) passes through unchanged.
  */
 const SHORT_WORD =
-  /(^|[\s(«"„])(а|в|во|и|к|ко|о|об|с|со|у|на|по|за|из|от|до|не|ни|но|для|без|под|над|при|про|o|a|și|în|la|de|pe|cu|un|din|sub) (?=\S)/giu;
+  /(^|[\s(«"„])(а|в|во|и|к|ко|о|об|обо|с|со|у|я|на|по|за|из|изо|от|ото|до|не|ни|но|или|для|без|под|над|при|про|o|a|al|ale|ai|ca|și|sau|în|la|de|pe|cu|un|din|sub|prin|spre|fără|până) (?=\S)/giu;
+
+/**
+ * Brand names, tied word to word. Each pattern captures everything up to the
+ * space to tie; the lookahead names what follows. Order matters: "Botanic
+ * Star" is tied first, so the third pattern can then keep its phase number
+ * ("Botanic Star 2") on the same line.
+ */
+const BRAND: RegExp[] = [
+  /(\bPamir) (?=Construct\b)/gi,
+  /(\bBotanic) (?=(?:Star|Park)\b)/gi,
+  /(\bBotanic Star) (?=\d)/gi,
+  /(\bPrima) (?=Cas[ăa](?![\p{L}\p{N}]))/giu,
+  /(\bEco) (?=House\b)/gi,
+];
 
 export function typo(text: string): string {
-  // Two passes: the lookahead lets adjacent short words chain ("и в доме").
   let out = text.replace(/ ([—–])(?=\s|$)/g, `${NBSP}$1`);
+  for (const re of BRAND) out = out.replace(re, `$1${NBSP}`);
+  // Two passes: the lookahead lets adjacent short words chain ("и в доме").
   for (let i = 0; i < 2; i++) out = out.replace(SHORT_WORD, `$1$2${NBSP}`);
   return out;
 }

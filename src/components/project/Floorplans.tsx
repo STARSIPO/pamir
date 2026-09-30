@@ -101,8 +101,14 @@ export function Floorplans({
 
   return (
     <div>
+      {/* On phones the filter is one row that scrolls sideways, edge to edge,
+          instead of wrapping into two ragged lines. */}
       {roomsPresent.length > 1 && (
-        <div role="group" aria-label={d.floorplansTitle} className="mb-12 flex flex-wrap gap-2 md:mb-16">
+        <div
+          role="group"
+          aria-label={d.floorplansTitle}
+          className="mb-12 flex gap-2 max-md:-mx-[var(--gutter)] max-md:-mt-2 max-md:mb-10 max-md:overflow-x-auto max-md:px-[var(--gutter)] max-md:py-2 max-md:[scrollbar-width:none] md:mb-16 md:flex-wrap"
+        >
           <FilterTab active={filter === 'all'} onClick={() => setFilter('all')}>
             {dict.design.allProjectsShort}
           </FilterTab>
@@ -115,10 +121,15 @@ export function Floorplans({
       )}
 
       {/* Three plates sit in one row from md: drawings stay legible at
-          ~220px, and 2 + 1 would leave half a row empty. */}
+          ~220px, and 2 + 1 would leave half a row empty. On phones the plates
+          are a snap carousel, the next one showing at the edge: stacked, three
+          full-width sketches ran to three screens. */}
       <div
         className={cn(
-          'grid gap-x-gutter gap-y-20',
+          // The 8px of vertical padding keeps the focus outline (2px, 4px
+          // clear) inside the scroller, which would otherwise clip it.
+          'max-md:-mx-[var(--gutter)] max-md:-my-2 max-md:flex max-md:snap-x max-md:snap-mandatory max-md:scroll-px-[var(--gutter)] max-md:gap-4 max-md:overflow-x-auto max-md:px-[var(--gutter)] max-md:py-2 max-md:[scrollbar-width:none]',
+          'md:grid md:gap-x-gutter md:gap-y-20',
           visible.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2 lg:grid-cols-3',
         )}
       >
@@ -127,7 +138,15 @@ export function Floorplans({
           const title = roomLabel(f.rooms);
           const n = floorplans.indexOf(f) + 1;
           return (
-            <article key={f.id} id={anchorFor(f.id)} className="flex scroll-mt-28 flex-col">
+            <article
+              key={f.id}
+              id={anchorFor(f.id)}
+              className={cn(
+                'flex scroll-mt-28 flex-col',
+                visible.length > 1 && 'max-md:w-[78vw] max-md:shrink-0 max-md:snap-start',
+                visible.length === 1 && 'max-md:w-full',
+              )}
+            >
               <Reveal delay={(i % 3) * 0.08}>
                 <button
                   type="button"
@@ -143,7 +162,7 @@ export function Floorplans({
                     <PlanDrawing
                       plan={f}
                       alt={`${name} — ${title}`}
-                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      sizes="(max-width: 768px) 80vw, (max-width: 1024px) 50vw, 33vw"
                     />
                   </span>
                   <span
@@ -370,7 +389,7 @@ function PlanDrawing({ plan, alt, sizes }: { plan: Floorplan; alt: string; sizes
   return (
     <span role="img" aria-label={alt} className="absolute inset-0 flex items-center justify-center p-[9%]">
       <PlanSketch rooms={plan.rooms} />
-      <span className="label absolute bottom-3 right-3 text-muted/70">demo</span>
+      <span className="label absolute bottom-3 right-3 text-muted">demo</span>
     </span>
   );
 }
@@ -482,7 +501,7 @@ function FilterTab({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        'label inline-flex h-11 items-center border px-5 transition-colors duration-500 ease-premium',
+        'label inline-flex h-11 shrink-0 items-center whitespace-nowrap border px-5 transition-colors duration-500 ease-premium',
         active ? 'border-ink bg-ink text-canvas' : 'border-line/20 text-muted hover:border-ink hover:text-ink',
       )}
     >

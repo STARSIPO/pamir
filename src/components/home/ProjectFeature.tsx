@@ -4,6 +4,7 @@ import type { Dictionary } from '@/i18n/dictionaries';
 import type { Project } from '@/content/types';
 import { routes } from '@/i18n/routing';
 import { cn } from '@/lib/utils';
+import { typo } from '@/lib/text';
 import { Media } from '@/components/ui/Media';
 import { Reveal } from '@/components/ui/Reveal';
 import { StatusBadge } from '@/components/ui/StatusBadge';
@@ -182,7 +183,8 @@ export function ProjectFeature({
         </h3>
 
         <p className="mt-6 max-w-[38ch] text-pretty text-base leading-relaxed text-muted md:text-[1.0625rem]">
-          {project.excerpt[locale]}
+          {/* typo(): "Botanic Star 2" and the short words never break. */}
+          {typo(project.excerpt[locale])}
         </p>
 
         <ArrowLabel className="mt-10 text-ink md:mt-12">{dict.common.viewProject}</ArrowLabel>

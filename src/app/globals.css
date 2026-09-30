@@ -23,10 +23,15 @@
      --accent-on-dark the accent as it reads on dark grounds (band,
                      photos, scrim dialogs) — see "Dark grounds" below
      --band*         the contrast band (CTA, footer): bg / text / muted
+     --danger        field errors on canvas, canvas-alt and surface
+                     (AA ≥4.5:1 on all three)
+     --danger-on-band field errors on the band and other dark grounds
      --line          hairline colour, always used with alpha
      --scrim         photo overlay; stays near-black in every theme
      --img-filter    grading applied to photos so renders and site
                      photos from different years sit in one palette
+     --map-filter    grading for embedded map iframes (.map-treat):
+                     grey in the light themes, inverted in dark
    ============================================================ */
 :root,
 [data-theme='warm'] {
@@ -44,9 +49,12 @@
   --band: 23 23 23; /* #171717 */
   --band-fg: 242 239 233;
   --band-muted: 160 156 148; /* #A09C94 */
+  --danger: 162 59 42; /* #A23B2A — 5.7:1 on canvas, 5:1 on canvas-alt, 6.6:1 on surface */
+  --danger-on-band: 240 140 125; /* #F08C7D — 7.5:1 on band */
   --line: 23 23 23;
   --scrim: 14 14 12;
   --img-filter: saturate(0.8) contrast(1.03) sepia(0.06);
+  --map-filter: grayscale(1) contrast(1.05);
   color-scheme: light;
 }
 
@@ -67,9 +75,14 @@
   --band: 33 34 30; /* #21221E */
   --band-fg: 244 241 234;
   --band-muted: 170 167 159;
+  --danger: 232 120 104; /* #E87868 — 6.5:1 on canvas, 6:1 on surface */
+  --danger-on-band: 240 140 125; /* #F08C7D — 6.7:1 on band */
   --line: 244 241 234;
   --scrim: 10 10 9;
   --img-filter: saturate(0.76) contrast(1.05) brightness(0.9);
+  /* The embedded map only comes light: grey it, then invert it into a dark
+     plan that sits in the page instead of glaring out of it. */
+  --map-filter: grayscale(1) invert(0.92) contrast(0.9);
   color-scheme: dark;
 }
 
@@ -89,9 +102,12 @@
   --band: 22 24 22; /* #161816 */
   --band-fg: 233 233 229;
   --band-muted: 154 158 152; /* #9A9E98 */
+  --danger: 155 58 48; /* #9B3A30 — 5.7:1 on canvas, 4.7:1 on canvas-alt, 6.5:1 on surface */
+  --danger-on-band: 240 140 125; /* #F08C7D — 7.4:1 on band */
   --line: 22 24 22;
   --scrim: 12 14 12;
   --img-filter: saturate(0.72) contrast(1.04);
+  --map-filter: grayscale(1) contrast(1.05);
   color-scheme: light;
 }
 
@@ -144,8 +160,11 @@ body {
   overflow-x: clip;
 }
 
+/* accent-strong, not accent: white on warm #9A8264 is 3.2:1 and selected
+   body copy failed AA. #7F6A50 is 5.2:1 (stone 7.8:1, dark 9.1:1). On dark
+   grounds accent-strong is re-pointed at accent-on-dark (see below). */
 ::selection {
-  background: rgb(var(--accent) / 0.9);
+  background: rgb(var(--accent-strong));
   color: rgb(var(--on-accent));
 }
 
@@ -161,9 +180,10 @@ body {
    Dark grounds: the contrast band (CTA, footer, dark page heroes), photos
    under a scrim (heroes, spotlight, the transparent header), and the
    gallery / floorplan dialogs. The accent is re-pointed at a value that
-   holds on dark (stone's dark sage is ~3:1 on the band), and text on an
-   accent fill turns dark. Focus rings, ::selection, status squares, active
-   dots and button hovers follow without per-component changes.
+   holds on dark (stone's dark sage is ~3:1 on the band), text on an accent
+   fill turns dark, and `danger` becomes the light error red. Focus rings,
+   ::selection, status squares, active dots, button hovers and field errors
+   follow without per-component changes.
    Opt a custom dark block in with `.ground-dark` / data-ground="dark"
    (or `.ground-photo` / data-ground="photo" over photographs).
    ------------------------------------------------------------ */
@@ -177,6 +197,7 @@ body {
   --accent: var(--accent-on-dark);
   --accent-strong: var(--accent-on-dark);
   --on-accent: var(--band);
+  --danger: var(--danger-on-band);
 }
 
 /* Over photographs the ring is white: a tan or sage box disappears
@@ -296,6 +317,12 @@ body {
   /* Photo grading, per theme (see --img-filter). */
   .img-treat {
     filter: var(--img-filter);
+  }
+
+  /* Map iframes, per theme (see --map-filter): a quiet grey plan in the
+     light themes, an inverted dark one in the dark theme. */
+  .map-treat {
+    filter: var(--map-filter);
   }
 
   /* Slow, small zoom on hover. Put `.zoom-media` on the frame and `.group`

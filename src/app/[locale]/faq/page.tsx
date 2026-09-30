@@ -4,6 +4,7 @@ import { getDictionary } from '@/i18n/dictionaries';
 import { buildMetadata } from '@/lib/seo';
 import { routes } from '@/i18n/routing';
 import { telHref } from '@/lib/utils';
+import { typo } from '@/lib/text';
 import { faq } from '@/content/faq';
 import { contact } from '@/content/site';
 import { PageHero } from '@/components/shared/PageHero';
@@ -51,13 +52,15 @@ export default async function FaqPage(props: { params: Promise<{ locale: string 
             <Reveal className="sticky top-32 border-t border-line/15 pt-7">
               <p className="label text-muted">{sales.label[locale]}</p>
               <p className="mt-10 max-w-[30ch] text-pretty text-base leading-relaxed text-muted">
-                {dict.faqPage.ctaSubtitle}
+                {typo(dict.faqPage.ctaSubtitle)}
               </p>
+              {/* A 44px-tall hit area (tablets in landscape reach lg); the
+                  underline stays on the number itself. */}
               <a
                 href={telHref(sales.number)}
-                className="link-line mt-8 inline-block font-display text-display-sm font-light tabular text-ink"
+                className="group mt-6 inline-flex min-h-11 items-center font-display text-display-sm font-light tabular text-ink"
               >
-                {sales.number}
+                <span className="link-line">{sales.number}</span>
               </a>
               {/* The block's label already names the sales team, so the link
                   keeps the short "contact us" wording — "contact the sales

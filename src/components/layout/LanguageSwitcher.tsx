@@ -62,7 +62,9 @@ export function LanguageSwitcher({
               aria-current={active ? 'true' : undefined}
               className={cn(
                 'inline-flex h-11 min-w-11 items-center justify-center transition-opacity duration-500 ease-premium',
-                active ? 'opacity-100' : 'opacity-65 hover:opacity-100',
+                // 80%, not less: over a hero photo the receded label is
+                // white on sky, and anything fainter drops under 3:1.
+                active ? 'opacity-100' : 'opacity-80 hover:opacity-100',
               )}
             >
               {localeNames[l]}

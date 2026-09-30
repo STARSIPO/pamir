@@ -5,6 +5,7 @@ import type { KeyboardEvent } from 'react';
 import type { Locale } from '@/i18n/config';
 import type { FaqItem } from '@/content/types';
 import { cn } from '@/lib/utils';
+import { typo } from '@/lib/text';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
@@ -72,7 +73,9 @@ export function Accordion({
                 aria-controls={panelId}
                 onClick={() => setOpen(isOpen ? -1 : i)}
                 onKeyDown={(e) => onKeyDown(e, i)}
-                className="group flex w-full items-start gap-5 py-7 text-left md:gap-8 md:py-9"
+                // The focus ring is drawn inside the row: the global 4px offset
+                // would lay its lower edge across the first line of an open answer.
+                className="group flex w-full items-start gap-5 py-7 text-left focus-visible:outline-offset-[-2px] md:gap-8 md:py-9"
               >
                 {/* Decorative index: kept out of the button's accessible name. */}
                 <span
@@ -85,7 +88,7 @@ export function Accordion({
                   {pad(i + 1)}
                 </span>
                 <span className="min-w-0 flex-1 font-display text-display-sm font-light text-balance text-ink">
-                  {item.q[locale]}
+                  {typo(item.q[locale])}
                 </span>
                 {/* Thin plus → cross. Two 1px bars; the pair turns 45°. */}
                 <span
@@ -121,7 +124,7 @@ export function Accordion({
                     isOpen ? 'opacity-100' : 'opacity-0',
                   )}
                 >
-                  {item.a[locale]}
+                  {typo(item.a[locale])}
                 </p>
               </div>
             </div>

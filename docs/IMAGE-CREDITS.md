@@ -9,12 +9,13 @@
 | Файл | Проект | Что это | Источник (pamirconstruct.md/images/…) |
 |---|---|---|---|
 | `eco-house/hero.jpg`, `eco-house/cover.jpg` | Eco House | рендер (кроп) | `project/2021/10/IMG-c037bacd2c1335156a4d561eef955c1e-V.jpg` |
-| `botanic-star-2-blocks-3-4/cover.jpg` | Botanic Star 2, бл. 3–4 | рендер, кроп без логотипа | `project/2022/12/Screenshot_20221202-213459_Gallery.jpg` |
+| `botanic-star-2-blocks-3-4/cover-v2.jpg` | Botanic Star 2, бл. 3–4 | рендер, кроп без логотипа (v2 — уточнённый кроп 1300×1074; новое имя сбрасывает кэш оптимизатора изображений) | `project/2022/12/Screenshot_20221202-213459_Gallery.jpg` |
 | `botanic-star-2-block-2/cover.jpg` | Botanic Star 2, бл. 2 | рендер; логотип убран из неба (`scripts/clean-logo-b2.mjs`) | `project/2021/01/IMG-3a43a20c366d2316a7fa66a1386c3287-V.jpg` |
 | `botanic-star-2-block-1/cover.jpg` | Botanic Star 2, бл. 1 | рендер | `project/2019/10/site-1.jpg` |
 | `company/about.jpg` | Botanic Star 2, бл. 1 | рендер | `service/000023850447.jpg` |
 | `botanic-star/cover.jpg`, `gallery-1…4.jpg` | Botanic Star | фото | `plan/NIK_6989.jpg`, `NIK_6991`, `NIK_6983`, `NIK_6984`, `gggg.jpg` |
 | `botanic-park/cover.jpg`, `gallery-1…2.jpg` | Botanic Park | фото | `project/2020/07/park-1.jpg`, `plan/park.jpg`, `plan/bot.jpg` |
+| `botanic-park/cover-v2.jpg` | Botanic Park | фото; обложка и герой в контенте. Исходник `gallery-1` (`assets/photos-src/botanic-park/g1.jpg`, фасад в кадре из деревьев), кроп `[0, 0, 1800, 1059]` — снизу срезано 11,5 % (фургон, фонари, вывеска «Продажа торговых помещений», крыши машин), 1800×1059, mozjpeg q80. `cover.jpg` (столб, провода, машины) на сайте не используется, в контенте только `cover-v2.jpg` и `gallery-2.jpg` | `plan/park.jpg` |
 
 - Рендеры на сайте всегда подписаны «Визуализация / Vizualizare» (`coverKind: 'render'`).
 - Исходники (~15 МБ) лежат в `assets/photos-src/` (в `.gitignore`). Веб-версии собирает

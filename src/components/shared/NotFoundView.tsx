@@ -7,7 +7,7 @@ import { getDictionary } from '@/i18n/dictionaries';
 import { routes } from '@/i18n/routing';
 import { contact, companyLegalName } from '@/content/site';
 import { cn, currentYear, telHref } from '@/lib/utils';
-import { splitWords } from '@/lib/text';
+import { splitWords, typo } from '@/lib/text';
 import { Logo } from '@/components/brand/Logo';
 import { Button } from '@/components/ui/Button';
 import { Reveal } from '@/components/ui/Reveal';
@@ -43,7 +43,7 @@ export function NotFoundView({ standalone = false }: { standalone?: boolean }) {
           </Reveal>
           <Reveal delay={0.12} className="lg:col-span-4 lg:col-start-9 lg:pb-3">
             <p className="max-w-md text-pretty text-base leading-relaxed text-muted md:text-[1.0625rem]">
-              {dict.notFound.subtitle}
+              {typo(dict.notFound.subtitle)}
             </p>
           </Reveal>
         </div>

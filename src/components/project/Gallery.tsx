@@ -108,9 +108,11 @@ export function Gallery({
                   <Media src={src} alt={alt} fill zoom sizes={t.sizes} caption={caption} />
                 </MaskFrame>
               </button>
+              {/* Hierarchy by tone, not by fading: the index in ink, the total
+                  in the full muted grey (AA on canvas and canvas-alt). */}
               <figcaption className="label mt-4 flex items-center justify-between gap-4 text-muted">
                 <span className="tabular">
-                  {pad(i + 1)} <span className="text-muted/60">/ {pad(count)}</span>
+                  <span className="text-ink">{pad(i + 1)}</span> / {pad(count)}
                 </span>
               </figcaption>
             </figure>
@@ -138,6 +140,11 @@ export function Gallery({
  * Full-screen viewer. A real dialog: focus moves to Close on open and returns
  * to the tile on close, Tab stays inside, Escape closes, arrow keys and
  * horizontal swipes step through the set. Page scroll (and Lenis) is paused.
+ *
+ * From md the photograph sits between two control bars, inside the gutters.
+ * On phones it takes the whole screen, edge to edge, and the bars float over
+ * it on soft scrims: in a 390px column the gutters and two 80px bars left a
+ * landscape picture thumbnail-sized in a field of black.
  */
 function Lightbox({
   images,
@@ -234,7 +241,12 @@ function Lightbox({
       )}
       onClick={onClose}
     >
-      <div className="container flex h-20 shrink-0 items-center justify-between gap-6 md:h-24">
+      <div
+        className={cn(
+          'container flex h-20 shrink-0 items-center justify-between gap-6 md:h-24',
+          'max-md:absolute max-md:inset-x-0 max-md:top-0 max-md:z-10 max-md:bg-gradient-to-b max-md:from-scrim/70 max-md:to-transparent',
+        )}
+      >
         <p className="label flex min-w-0 items-center gap-4 text-white/60">
           <span className="shrink-0 whitespace-nowrap tabular text-white" aria-live="polite">
             {pad(index + 1)} <span className="text-white/50">/ {pad(count)}</span>
@@ -254,7 +266,7 @@ function Lightbox({
       </div>
 
       <div
-        className="relative mx-[var(--gutter)] min-h-0 flex-1"
+        className="relative min-h-0 flex-1 md:mx-[var(--gutter)]"
         onClick={(e) => e.stopPropagation()}
         onTouchStart={(e) => (touchX.current = e.touches[0].clientX)}
         onTouchEnd={(e) => {
@@ -268,7 +280,12 @@ function Lightbox({
         <Slide key={index} src={images[index]} alt={`${name} — ${pad(index + 1)} / ${pad(count)}`} />
       </div>
 
-      <div className="container flex h-20 shrink-0 items-center justify-between gap-6 md:h-24">
+      <div
+        className={cn(
+          'container flex h-20 shrink-0 items-center justify-between gap-6 md:h-24',
+          'max-md:absolute max-md:inset-x-0 max-md:bottom-0 max-md:z-10 max-md:bg-gradient-to-t max-md:from-scrim/70 max-md:to-transparent',
+        )}
+      >
         {count > 1 ? (
           <CtrlButton
             label={`${name} — ${pad(prevIndex + 1)}`}

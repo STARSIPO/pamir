@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { companyIntro, companyQuote } from '@/content/company';
 import { getProject } from '@/content/projects';
 import { routes } from '@/i18n/routing';
-import { splitWords } from '@/lib/text';
+import { splitWords, typo } from '@/lib/text';
 
 /** The photograph is a render of Botanic Star 2, block 1 (docs/IMAGE-CREDITS.md). */
 const PHOTO = '/photos/projects/company/about.jpg';
@@ -70,7 +70,7 @@ export function CompanyBrief({ locale, dict }: { locale: Locale; dict: Dictionar
         </Reveal>
 
         <div className="flex flex-col gap-12 md:grid md:grid-cols-12 md:gap-x-gutter lg:col-span-5 lg:col-start-8 lg:flex lg:justify-between lg:gap-16 lg:py-1">
-          <figure className="md:col-span-7 lg:col-span-full">
+          <figure className="md:col-span-6 lg:col-span-full">
             <span aria-hidden="true" className="rule-draw block h-px w-12 bg-accent" />
             <Reveal stagger className="mt-8 md:mt-10">
               <blockquote>
@@ -81,9 +81,9 @@ export function CompanyBrief({ locale, dict }: { locale: Locale; dict: Dictionar
             </Reveal>
           </figure>
 
-          <Reveal delay={0.12} className="md:col-span-5 md:col-start-8 md:self-end lg:self-auto">
+          <Reveal delay={0.12} className="md:col-span-6 md:col-start-7 md:self-end lg:self-auto">
             <p className="max-w-md text-pretty text-base leading-relaxed text-muted md:text-[1.0625rem]">
-              {companyIntro[0][locale]}
+              {typo(companyIntro[0][locale])}
             </p>
             <Button href={routes.company(locale)} variant="ghost" arrow className="mt-10">
               {dict.about.cta}

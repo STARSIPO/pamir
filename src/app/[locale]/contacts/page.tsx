@@ -9,13 +9,15 @@ import { Reveal } from '@/components/ui/Reveal';
 import { ArrowLabel } from '@/components/ui/Button';
 import { ContactInfo, mapLinks } from '@/components/shared/ContactInfo';
 import { LeadForm } from '@/components/forms/LeadForm';
-import { splitWords } from '@/lib/text';
+import { splitWords, typo } from '@/lib/text';
 
 export async function generateMetadata(props: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const params = await props.params;
   const locale = (isLocale(params.locale) ? params.locale : 'ru') as Locale;
   const dict = getDictionary(locale);
-  return buildMetadata({ locale, routeKey: 'contacts', title: dict.contactsPage.title, description: dict.contactsPage.subtitle });
+  // The H1 already names the company and the root template appends it again,
+  // so the document title takes the section name: "Контакты — Pamir Construct".
+  return buildMetadata({ locale, routeKey: 'contacts', title: dict.contactsPage.eyebrow, description: dict.contactsPage.subtitle });
 }
 
 /**
@@ -74,7 +76,7 @@ export default async function ContactsPage(props: { params: Promise<{ locale: st
                 </h2>
               </Reveal>
               <p className="mt-5 max-w-md text-pretty text-base leading-relaxed text-muted md:text-[1.0625rem]">
-                {dict.lead.subtitle}
+                {typo(dict.lead.subtitle)}
               </p>
               <div className="mt-10">
                 <LeadForm locale={locale} dict={dict} variant="contact" tone="dark" />
@@ -91,7 +93,7 @@ export default async function ContactsPage(props: { params: Promise<{ locale: st
             src={mapLinks.embed}
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
-            className="absolute inset-0 h-full w-full grayscale"
+            className="map-treat absolute inset-0 h-full w-full"
           />
         </Reveal>
       </Section>

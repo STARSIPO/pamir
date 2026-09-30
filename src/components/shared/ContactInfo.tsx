@@ -128,7 +128,8 @@ export function ContactInfo({
           src={mapLinks.embed}
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
-          className="absolute inset-0 h-full w-full grayscale"
+          // Theme-aware treatment (grey in light themes, inverted in dark).
+          className="map-treat absolute inset-0 h-full w-full"
         />
       </div>
     </div>

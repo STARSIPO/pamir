@@ -4,7 +4,7 @@ import type { Dictionary } from '@/i18n/dictionaries';
 import { getProject } from '@/content/projects';
 import { companyLegalName } from '@/content/site';
 import { routes } from '@/i18n/routing';
-import { splitWords } from '@/lib/text';
+import { splitWords, typo } from '@/lib/text';
 import { Media } from '@/components/ui/Media';
 import { Button } from '@/components/ui/Button';
 
@@ -60,8 +60,10 @@ export function Hero({ locale, dict }: { locale: Locale; dict: Dictionary }) {
       {/* Scrims: a light one under the transparent header, a deeper one under
           the text. From tablet up the slogan crosses the white façade, so a
           lateral wash backs the text column only; the top of the building and
-          the right half of the frame stay untouched. Phones get their own
-          wash, anchored to the text block below. */}
+          the right half of the frame stay untouched. From lg the eyebrow sits
+          on open sky, above the reach of the bottom gradient, so the lateral
+          wash starts deeper there to hold its small caps above 4.5:1. Phones
+          get their own wash, anchored to the text block below. */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-scrim/55 to-transparent"
@@ -72,7 +74,7 @@ export function Hero({ locale, dict }: { locale: Locale; dict: Dictionary }) {
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-y-0 left-0 hidden w-[72%] bg-gradient-to-r from-scrim/45 via-scrim/15 to-transparent md:block"
+        className="pointer-events-none absolute inset-y-0 left-0 hidden w-[72%] bg-gradient-to-r from-scrim/45 via-scrim/15 to-transparent md:block lg:from-scrim/60 lg:via-scrim/25"
       />
 
       <div className="relative z-10 flex h-full flex-col justify-end pt-[calc(var(--header-h)+1.5rem)]">
@@ -88,10 +90,13 @@ export function Hero({ locale, dict }: { locale: Locale; dict: Dictionary }) {
             style={{ backgroundImage: PHONE_WASH }}
           />
           <div className="container relative">
+            {/* From lg: slogan in cols 1–7, subtitle on the col-9 edge that
+                01 About also uses. Column 8 stays empty, so the display lines
+                never run straight into the lead, whatever the locale. */}
             <div className="grid-12 gap-y-9 lg:items-end">
-              <div className="col-span-4 md:col-span-12 lg:col-span-8">
+              <div className="col-span-4 md:col-span-12 lg:col-span-7">
                 <p
-                  className="label flex items-center gap-4 text-white/85 animate-hero-in motion-reduce:animate-none"
+                  className="label flex items-center gap-4 text-white animate-hero-in motion-reduce:animate-none"
                   style={delay(0.1)}
                 >
                   <span aria-hidden="true" className="h-px w-10 bg-white/50" />
@@ -103,10 +108,10 @@ export function Hero({ locale, dict }: { locale: Locale; dict: Dictionary }) {
               </div>
 
               <div
-                className="col-span-4 flex flex-col items-start gap-8 animate-hero-in motion-reduce:animate-none md:col-span-7 lg:col-span-4 lg:pb-[0.35rem] xl:pl-6"
+                className="col-span-4 flex flex-col items-start gap-8 animate-hero-in motion-reduce:animate-none md:col-span-7 lg:col-span-4 lg:col-start-9 lg:pb-[0.35rem]"
                 style={delay(0.5)}
               >
-                <p className="max-w-[36ch] text-pretty text-lead text-white/75">{dict.hero.subtitle}</p>
+                <p className="max-w-[36ch] text-pretty text-lead text-white/75">{typo(dict.hero.subtitle)}</p>
                 <Button href={routes.projects(locale)} variant="light" size="lg" arrow>
                   {dict.hero.ctaProjects}
                 </Button>
@@ -139,8 +144,8 @@ export function Hero({ locale, dict }: { locale: Locale; dict: Dictionary }) {
  * Phone wash, measured from the top of the text block's backdrop (10rem above
  * the eyebrow). The ramp eases in over those 10rem so it never reads as a
  * band across the building, and reaches 64% exactly at the eyebrow: enough
- * for white/85 small caps and the light-weight slogan to clear 4.5:1 on the
- * white façade in every theme.
+ * for the small caps and the light-weight slogan to clear 4.5:1 on the white
+ * façade in every theme.
  */
 const PHONE_WASH = `linear-gradient(to bottom,
   rgb(var(--scrim) / 0) 0,

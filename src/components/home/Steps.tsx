@@ -3,7 +3,7 @@ import type { Dictionary } from '@/i18n/dictionaries';
 import { Section } from '@/components/ui/Section';
 import { Reveal } from '@/components/ui/Reveal';
 import { steps } from '@/content/home';
-import { splitWords } from '@/lib/text';
+import { splitWords, typo } from '@/lib/text';
 
 /**
  * The path from choosing a home to the keys — the second half of chapter 05.
@@ -29,7 +29,7 @@ export function Steps({ locale, dict }: { locale: Locale; dict: Dictionary }) {
         <span aria-hidden="true" className="rule-draw h-px flex-1 bg-line/15" />
       </div>
       <Reveal stagger className="mt-8 md:mt-12">
-        <h2 id="steps-title" className="max-w-[14ch] font-display text-display-lg font-light text-balance text-ink">
+        <h2 id="steps-title" className="max-w-[16ch] font-display text-display-lg font-light text-balance text-ink">
           {splitWords(dict.steps.title)}
         </h2>
       </Reveal>
@@ -50,10 +50,10 @@ export function Steps({ locale, dict }: { locale: Locale; dict: Dictionary }) {
                   description starts on one line whether its title wraps
                   ("Получение / ключей") or not. */}
               <h3 className="font-display text-display-sm font-light text-balance text-ink xl:min-h-[2lh]">
-                {s.title[locale]}
+                {typo(s.title[locale])}
               </h3>
               <p className="mt-3 max-w-[34ch] text-pretty text-base leading-relaxed text-muted md:mt-4">
-                {s.text[locale]}
+                {typo(s.text[locale])}
               </p>
             </div>
           </Reveal>

@@ -33,12 +33,21 @@ export function PageHero({
             <span aria-hidden="true" className={cn('rule-draw h-px flex-1', dark ? 'bg-band-fg/15' : 'bg-line/15')} />
           </div>
         )}
+        {/* 7/5 below xl, 8/4 from xl: at 1024 four columns (~300px) set the
+            lead in five ragged lines beside a title that filled half its
+            eight. The lead starts on column 8, then 9 — the same line as the
+            SectionHeading asides. */}
         <div className="mt-10 grid gap-10 md:mt-14 lg:grid-cols-12 lg:items-end lg:gap-gutter">
-          <Reveal stagger className="lg:col-span-8">
-            <h1 className="font-display text-display-xl font-light text-balance">{splitWords(title)}</h1>
+          <Reveal stagger className="lg:col-span-7 xl:col-span-8">
+            {/* On phones the title sets in three lines at 40px: 0.96 leading
+                let RO comma-below accents (ș, ț) touch the capitals under
+                them. From sm it fits in two and keeps the tight leading. */}
+            <h1 className="font-display text-display-xl font-light text-balance max-sm:leading-[1.04]">
+              {splitWords(title)}
+            </h1>
           </Reveal>
           {(subtitle || children) && (
-            <Reveal delay={0.12} className="lg:col-span-4 lg:pb-3">
+            <Reveal delay={0.12} className="lg:col-span-5 lg:col-start-8 lg:pb-3 xl:col-span-4 xl:col-start-9">
               {subtitle && (
                 <p className={cn('max-w-md text-pretty text-base leading-relaxed md:text-[1.0625rem]', dark ? 'text-band-muted' : 'text-muted')}>
                   {typo(subtitle)}

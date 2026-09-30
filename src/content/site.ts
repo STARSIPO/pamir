@@ -33,9 +33,14 @@ export const contact = {
 
   email: 'office@pamirconstruct.md', // TODO:CONFIRM — placeholder address
 
+  /**
+   * The street part is tied with no-break spaces ( ), so a narrow
+   * column (footer, contacts list) breaks only after the city —
+   * "Кишинёв, / ул. Дечебал 139/5, офис 1" — never strands "офис 1".
+   */
   address: {
-    ru: 'Кишинёв, ул. Дечебал 139/5, офис 1',
-    ro: 'Chișinău, str. Decebal 139/5, oficiul 1',
+    ru: 'Кишинёв, ул. Дечебал 139/5, офис 1',
+    ro: 'Chișinău, str. Decebal 139/5, oficiul 1',
   } satisfies Localized, // CONFIRMED
 
   mapQuery: 'str. Decebal 139/5, Chișinău, Moldova',

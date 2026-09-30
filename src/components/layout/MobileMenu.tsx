@@ -184,7 +184,11 @@ export function MobileMenu({
                     aria-current={active ? 'page' : undefined}
                     className="group flex items-center gap-5 py-4 md:gap-8 md:py-5"
                   >
-                    <span className="label w-6 shrink-0 tabular text-muted">{String(i + 1).padStart(2, '0')}</span>
+                    {/* The <ol> already announces the position; the index is
+                        decoration, not part of the link's name. */}
+                    <span aria-hidden="true" className="label w-6 shrink-0 tabular text-muted">
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
                     <span className="min-w-0 flex-1 font-display text-display-lg font-light md:text-display-xl">
                       {item.label[locale]}
                     </span>

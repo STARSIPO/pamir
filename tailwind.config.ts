@@ -40,6 +40,9 @@ const config: Config = {
         },
         'on-accent': rgb('--on-accent'),
         band: { DEFAULT: rgb('--band'), fg: rgb('--band-fg'), muted: rgb('--band-muted') },
+        // Field errors: `danger` on canvas / canvas-alt / surface, `danger-band`
+        // on the contrast band. Both hold AA (≥4.5:1) in every theme.
+        danger: { DEFAULT: rgb('--danger'), band: rgb('--danger-on-band') },
         line: rgb('--line'),
         scrim: rgb('--scrim'),
 

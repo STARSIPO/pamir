@@ -5,6 +5,7 @@ import { getDictionary, type Dictionary } from '@/i18n/dictionaries';
 import { buildMetadata } from '@/lib/seo';
 import { routes } from '@/i18n/routing';
 import { cn } from '@/lib/utils';
+import { typo } from '@/lib/text';
 import { services } from '@/content/services';
 import { getProject } from '@/content/projects';
 import type { Project, Service } from '@/content/types';
@@ -144,12 +145,12 @@ function ServiceRows({ items, offset, locale }: { items: Service[]; offset: numb
             {/* Below xl the title and the text share a single gutter, so the
                 title keeps some air on its right. */}
             <Reveal delay={0.04} className="md:col-span-5 md:col-start-2 md:pr-4 lg:pr-10 xl:col-span-6 xl:pr-0">
-              <h2 className="font-display text-display-md font-light text-balance text-ink">{s.title[locale]}</h2>
+              <h2 className="font-display text-display-md font-light text-balance text-ink">{typo(s.title[locale])}</h2>
             </Reveal>
 
             <Reveal delay={0.12} className="md:col-span-6 md:col-start-7 xl:col-span-4 xl:col-start-9">
               <p className="text-pretty text-base leading-relaxed text-muted md:pt-2 md:text-[1.0625rem]">
-                {s.summary[locale]}
+                {typo(s.summary[locale])}
               </p>
               {s.points.length > 0 && (
                 <ul className="mt-8 border-t border-line/15 md:mt-10">
@@ -159,7 +160,7 @@ function ServiceRows({ items, offset, locale }: { items: Service[]; offset: numb
                       className="flex gap-4 border-b border-line/15 py-3.5 text-base leading-snug text-ink last:border-b-0 last:pb-0"
                     >
                       <span aria-hidden="true" className="mt-[0.6em] h-px w-3 shrink-0 bg-accent" />
-                      {pt[locale]}
+                      {typo(pt[locale])}
                     </li>
                   ))}
                 </ul>

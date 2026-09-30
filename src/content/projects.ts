@@ -31,7 +31,9 @@ export const projects: Project[] = [
     district: { ru: 'Ботаника', ro: 'Botanica' },
     address: { ru: 'ул. Гика Водэ, 3', ro: 'str. Ghica Vodă, 3' },
     featured: true,
-    cover: '/photos/projects/botanic-star-2-blocks-3-4/cover.jpg',
+    // "-v2": the tighter re-crop (1300×1074) under a new URL, so no image
+    // optimizer or browser cache keeps serving the old frame.
+    cover: '/photos/projects/botanic-star-2-blocks-3-4/cover-v2.jpg',
     coverKind: 'render',
     gallery: [],
     excerpt: {
@@ -238,6 +240,10 @@ export const projects: Project[] = [
     address: undefined,
     cover: '/photos/projects/botanic-star/cover.jpg',
     coverKind: 'photo',
+    // A 1200×1803 worm's-eye shot with ~8% sky above the crown: anchor the
+    // crop to the top so portrait and square frames keep the whole crown and
+    // take the trim from the dark ground-floor windows.
+    coverPosition: '50% 0%',
     gallery: [
       '/photos/projects/botanic-star/gallery-1.jpg',
       '/photos/projects/botanic-star/gallery-2.jpg',
@@ -277,12 +283,18 @@ export const projects: Project[] = [
     status: 'completed',
     district: { ru: 'Ботаника', ro: 'Botanica' },
     address: undefined,
-    cover: '/photos/projects/botanic-park/cover.jpg',
+    // The tree-framed facade study leads, cut at the source rather than by
+    // object-position: "cover-v2" is gallery-1's original (1800px) with its
+    // bottom 11.5% removed (white van, lamp heads, the red sale sign, car
+    // roofs), 1800×1059. Cards up to 5:3 crop it only sideways; in 16:9 the
+    // 4% overflow comes off the bottom (coverPosition), so the roofline stays
+    // and no frame shape brings the street back. It is also the hero. The old
+    // street shot (cover.jpg: leaning pole, cables, parked cars) is not used.
+    // One spare picture, so About carries gallery-2 and there is no gallery.
+    cover: '/photos/projects/botanic-park/cover-v2.jpg',
     coverKind: 'photo',
-    gallery: [
-      '/photos/projects/botanic-park/gallery-1.jpg',
-      '/photos/projects/botanic-park/gallery-2.jpg',
-    ],
+    coverPosition: '50% 0%',
+    gallery: ['/photos/projects/botanic-park/gallery-2.jpg'],
     excerpt: {
       ru: 'Сданный комплекс с собственной инфраструктурой: детская площадка, супермаркет, парковка, детский сад.',
       ro: 'Complex finalizat cu infrastructură proprie: loc de joacă, supermarket, parcare, grădiniță.',

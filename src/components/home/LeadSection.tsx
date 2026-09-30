@@ -5,7 +5,7 @@ import { Reveal } from '@/components/ui/Reveal';
 import { LeadForm } from '@/components/forms/LeadForm';
 import { contact } from '@/content/site';
 import { telHref } from '@/lib/utils';
-import { splitWords } from '@/lib/text';
+import { splitWords, typo } from '@/lib/text';
 
 /**
  * 06 — Contact. The closing chapter, on the contrast band.
@@ -80,7 +80,7 @@ export function LeadSection({
           className="mt-8 md:mt-10 lg:sticky lg:top-28 lg:col-span-6 lg:row-start-2 lg:mt-20 lg:self-start"
         >
           <p className="max-w-md text-pretty text-base leading-relaxed text-band-muted md:text-[1.0625rem]">
-            {dict.lead.subtitle}
+            {typo(dict.lead.subtitle)}
           </p>
           <div className="mt-12 md:mt-14">
             {sales && <p className="label text-band-muted">{sales.label[locale]}</p>}

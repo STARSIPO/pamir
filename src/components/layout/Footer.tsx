@@ -6,14 +6,29 @@ import { projects } from '@/content/projects';
 import { routes } from '@/i18n/routing';
 import { telHref, currentYear, cn } from '@/lib/utils';
 import { Arrow } from '@/components/ui/Button';
-import { typesetName } from '@/lib/text';
+import { typesetName, typo, NBSP } from '@/lib/text';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { BackToTop } from './Header';
 
 /**
+ * "Кишинёв, ул. Дечебал 139/5, офис 1": an abbreviation stays with the name
+ * after it ("ул. Дечебал", "str. Decebal") and the house number, office and
+ * its number travel as one unit, so a narrow column breaks as
+ * "Кишинёв, ул. Дечебал / 139/5, офис 1" and never strands "офис 1".
+ */
+function typesetAddress(text: string): string {
+  return typo(text)
+    .replace(/(^|\s)(\p{L}{1,4}\.) (?=\S)/gu, `$1$2${NBSP}`)
+    .replace(/, (?=[^,]+$)/, `,${NBSP}`)
+    .replace(/ (\d+)$/, `${NBSP}$1`);
+}
+
+/**
  * Footer on the contrast band. On most pages it follows a band section
  * (LeadSection / CtaBand), so it opens with an in-container hairline rather
- * than a new block: the two read as one dark plane.
+ * than a new block: the two read as one dark plane. Where the page ends on
+ * canvas (contacts, privacy, thank-you) the band edge itself divides, and
+ * the hairline is dropped — on the band's first pixel row it read as a seam.
  *
  *   ──────────────────────────────────────────────────────────────────────
  *   Строим современные жилые        НАВИГАЦИЯ     ПРОЕКТЫ        КОНТАКТЫ
@@ -28,12 +43,14 @@ export function Footer({ locale, dict }: { locale: Locale; dict: Dictionary }) {
   return (
     <footer className="bg-band text-band-fg">
       <div className="container">
-        <div className="border-t border-band-fg/15 pt-[clamp(3.5rem,7vw,6.5rem)]">
+        {/* `:last-of-type`, not `:last-child`: the FAQ page closes <main>
+            with a JSON-LD <script> after its band section. */}
+        <div className="border-t border-band-fg/15 pt-[clamp(3.5rem,7vw,6.5rem)] [main:not(:has(>section.bg-band:last-of-type))+footer_&]:border-transparent">
           <div className="grid gap-y-14 lg:grid-cols-12 lg:gap-x-gutter">
             {/* Statement + social */}
             <div className="lg:col-span-4">
               <p className="max-w-[24ch] font-display text-display-sm font-light text-balance">
-                {dict.footer.tagline}
+                {typo(dict.footer.tagline)}
               </p>
               {social.length > 0 && (
                 <ul className="mt-8 flex flex-wrap gap-x-8 lg:mt-10">
@@ -56,11 +73,13 @@ export function Footer({ locale, dict }: { locale: Locale; dict: Dictionary }) {
 
             {/* Link columns. Below lg: fractional tracks sized to the content.
                 From lg: an 8-column subgrid on the page's 12 (same gutter), so
-                every column starts on a page grid line — nav at col 5, projects
-                at col 8 (the lead form's edge in the band above), contacts at
-                col 10, wide enough for the e-mail from 1024 up. */}
+                every column starts on a page grid line — nav at col 5 (two
+                columns hold "Despre companie"), projects at col 7 with three,
+                so "Botanic Star 2 — блоки 3 и 4" keeps one line from 1280 and
+                breaks only after its dash at 1024, contacts at col 10, wide
+                enough for the e-mail from 1024 up. */}
             <div className="grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-x-gutter gap-y-12 md:grid-cols-[minmax(0,0.8fr)_minmax(0,1.1fr)_minmax(0,1.1fr)] lg:col-span-8 lg:col-start-5 lg:grid-cols-8">
-              <Column title={dict.footer.nav} className="lg:col-span-3">
+              <Column title={dict.footer.nav} className="lg:col-span-2">
                 {primaryNav.map((item) => (
                   <li key={item.route}>
                     <FooterLink href={routes[item.route](locale)}>{item.label[locale]}</FooterLink>
@@ -68,7 +87,7 @@ export function Footer({ locale, dict }: { locale: Locale; dict: Dictionary }) {
                 ))}
               </Column>
 
-              <Column title={dict.footer.projects} className="lg:col-span-2">
+              <Column title={dict.footer.projects} className="lg:col-span-3">
                 {projects.map((p) => (
                   <li key={p.slug}>
                     <FooterLink href={routes.project(locale, p.slug)}>{typesetName(p.name[locale])}</FooterLink>
@@ -89,7 +108,7 @@ export function Footer({ locale, dict }: { locale: Locale; dict: Dictionary }) {
                   <FooterLink href={`mailto:${contact.email}`}>{contact.email}</FooterLink>
                 </li>
                 <li className="mt-3 text-pretty text-[0.9375rem] leading-relaxed text-band-muted">
-                  <p>{contact.address[locale]}</p>
+                  <p>{typesetAddress(contact.address[locale])}</p>
                   {/* "Пн–Сб: 9:00–18:00 · Вс: выходной" — one schedule per line. */}
                   <p className="mt-2">
                     {contact.hours[locale].split(' · ').map((part) => (
@@ -174,7 +193,9 @@ function FooterLink({
 }) {
   const external = /^(tel:|mailto:)/.test(href);
   const classes = cn(
-    'group inline-flex min-h-11 items-center py-1.5 text-[0.9375rem] leading-snug text-band-fg lg:min-h-9',
+    // min-w-11: a short label ("FAQ", 29px) still gets a 44px-wide target;
+    // the text stays on the column edge.
+    'group inline-flex min-h-11 min-w-11 items-center py-1.5 text-[0.9375rem] leading-snug text-band-fg lg:min-h-9',
     className,
   );
   // Plain greedy wrap: project names arrive tied by typesetName(), so every

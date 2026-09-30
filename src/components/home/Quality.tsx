@@ -6,6 +6,7 @@ import { Reveal } from '@/components/ui/Reveal';
 import { Media } from '@/components/ui/Media';
 import { FeatureIcon } from '@/components/ui/FeatureIcon';
 import { qualityFeatures } from '@/content/home';
+import { typo } from '@/lib/text';
 
 /**
  * Construction quality — the part of a building a facade does not show.
@@ -36,7 +37,7 @@ export function Quality({ locale, dict }: { locale: Locale; dict: Dictionary }) 
 
       <div className="mt-12 grid gap-y-12 md:mt-16 lg:mt-24 lg:grid-cols-12 lg:grid-rows-[auto_1fr] lg:gap-x-gutter">
         <Reveal delay={0.08} className="lg:col-span-5 lg:col-start-8 lg:row-start-1">
-          <p className="max-w-[44ch] text-pretty text-lead text-muted">{dict.quality.subtitle}</p>
+          <p className="max-w-[44ch] text-pretty text-lead text-muted">{typo(dict.quality.subtitle)}</p>
         </Reveal>
 
         {/* lg: 4:5 is the frame's minimum height; self-stretch lets it grow
@@ -76,7 +77,7 @@ export function Quality({ locale, dict }: { locale: Locale; dict: Dictionary }) 
               className="flex flex-col gap-5 border-t border-line/15 pb-8 pt-5 md:pb-10 md:pt-6"
             >
               <FeatureIcon name={f.icon} strokeWidth={1.25} className="h-5 w-5 text-muted" />
-              <span className="text-pretty text-base leading-snug text-ink md:text-[1.0625rem]">{f.label[locale]}</span>
+              <span className="text-pretty text-base leading-snug text-ink md:text-[1.0625rem]">{typo(f.label[locale])}</span>
             </Reveal>
           ))}
         </ul>

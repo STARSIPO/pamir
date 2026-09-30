@@ -54,6 +54,10 @@ export function SectionHeading({
   const light = tone === 'light';
   const muted = light ? 'text-band-muted' : 'text-muted';
   const center = align === 'center';
+  // Beside the title, the supporting text sits on the 12-column grid
+  // (columns 9–12), so its left edge is the same col-9 line as every other
+  // right-hand column on the page (About lead, hero subtitle, PageHero lead).
+  const aside = !center && !!(subtitle || action);
 
   return (
     <div className={cn(center && 'text-center', className)}>
@@ -76,13 +80,13 @@ export function SectionHeading({
       <div
         className={cn(
           'mt-8 flex flex-col gap-8 md:mt-12',
-          !center && (subtitle || action) && 'lg:flex-row lg:items-end lg:justify-between lg:gap-16',
+          aside && 'lg:grid lg:grid-cols-12 lg:items-end lg:gap-x-gutter',
         )}
       >
         {/* The measure sits on the heading itself: `ch` resolves against the
             element's own font size, so on the 16px wrapper 16ch was ~180px
             and a display headline broke one word per line. */}
-        <Reveal stagger={typeof title === 'string'} className={cn(!center && 'lg:min-w-0 lg:flex-1')}>
+        <Reveal stagger={typeof title === 'string'} className={cn(aside && 'lg:col-span-8 lg:min-w-0')}>
           <Heading
             className={cn(
               'font-display font-light text-balance',
@@ -101,9 +105,17 @@ export function SectionHeading({
         {(subtitle || action) && (
           <Reveal
             delay={0.12}
-            className={cn('flex flex-col gap-6 lg:max-w-xs lg:shrink-0 lg:pb-3 xl:max-w-sm', center && 'mx-auto items-center')}
+            className={cn(
+              'flex flex-col gap-6',
+              aside && 'items-start lg:col-span-4 lg:col-start-9 lg:min-w-0 lg:pb-3',
+              center && 'mx-auto items-center',
+            )}
           >
-            {subtitle && <p className={cn('text-pretty text-base leading-relaxed md:text-[1.0625rem]', muted)}>{typeof subtitle === 'string' ? typo(subtitle) : subtitle}</p>}
+            {subtitle && (
+              <p className={cn('max-w-[40ch] text-pretty text-base leading-relaxed md:text-[1.0625rem]', muted)}>
+                {typeof subtitle === 'string' ? typo(subtitle) : subtitle}
+              </p>
+            )}
             {action}
           </Reveal>
         )}

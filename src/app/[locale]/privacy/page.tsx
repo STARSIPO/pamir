@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { isLocale, localeHtmlLang, type Locale } from '@/i18n/config';
 import { getDictionary } from '@/i18n/dictionaries';
 import { buildMetadata } from '@/lib/seo';
+import { typo } from '@/lib/text';
 import { privacySections, privacyUpdated } from '@/content/legal';
 import { PageHero } from '@/components/shared/PageHero';
 import { Section } from '@/components/ui/Section';
@@ -100,7 +101,7 @@ export default async function PrivacyPage(props: { params: Promise<{ locale: str
                         className="group flex min-h-9 items-baseline gap-4 py-1.5 text-sm text-muted transition-colors duration-300 hover:text-ink"
                       >
                         <span className="label tabular w-5 shrink-0">{s.n}</span>
-                        <span className="link-line pb-0.5">{s.title}</span>
+                        <span className="link-line pb-0.5">{typo(s.title)}</span>
                       </a>
                     </li>
                   ))}
@@ -120,11 +121,11 @@ export default async function PrivacyPage(props: { params: Promise<{ locale: str
                   {s.n}
                 </span>
                 <div id={s.id} className="scroll-mt-32">
-                  <h2 className="font-display text-display-sm font-light text-balance text-ink">{s.title}</h2>
+                  <h2 className="font-display text-display-sm font-light text-balance text-ink">{typo(s.title)}</h2>
                   <div className="mt-5 max-w-prose space-y-4">
                     {s.body.map((p, j) => (
                       <p key={j} className="text-pretty text-base leading-relaxed text-muted md:text-[1.0625rem]">
-                        {p[locale]}
+                        {typo(p[locale])}
                       </p>
                     ))}
                   </div>

@@ -34,10 +34,9 @@ export const metadata: Metadata = {
   // Title (per-locale default + template) is owned by the [locale] layout.
   applicationName: companyLegalName,
   formatDetection: { telephone: true },
-  icons: {
-    icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }, { url: '/favicon.ico', sizes: 'any' }],
-    apple: '/apple-touch-icon.png',
-  },
+  // Icons come from the file conventions beside this layout — icon.svg and
+  // apple-icon.png — which Next links with the basePath applied (a manual
+  // `icons` block is not prefixed, and 404s under /pamir on GitHub Pages).
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

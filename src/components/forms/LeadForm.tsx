@@ -10,6 +10,7 @@ import { projects } from '@/content/projects';
 import { routes } from '@/i18n/routing';
 import { formatMoldovaPhone } from '@/lib/validation';
 import { cn } from '@/lib/utils';
+import { NBSP, typo } from '@/lib/text';
 import { getLenis } from '@/lib/smooth-scroll';
 import { Button } from '@/components/ui/Button';
 
@@ -130,10 +131,12 @@ export function LeadForm({
       ? 'border-band-fg/40 text-band-fg placeholder:text-band-muted hover:border-band-fg/70 focus:border-band-fg focus:shadow-[0_1px_0_0_rgb(var(--band-fg))]'
       : 'border-line/50 text-ink placeholder:text-muted hover:border-line/75 focus:border-ink focus:shadow-[0_1px_0_0_rgb(var(--ink))]',
   );
-  const errField = 'border-red-500 hover:border-red-500 focus:border-red-500 focus:shadow-[0_1px_0_0_theme(colors.red.500)]';
-  // Restrained red, readable on either ground (the band is dark in every
-  // theme; the canvas is dark only in the dark theme).
-  const errText = onBand ? 'text-red-400' : 'text-red-700 [[data-theme=dark]_&]:text-red-400';
+  // Errors use the theme's danger tokens: `danger` is tuned to each theme's
+  // canvas and surface, `danger-band` to the dark band (dark in every theme).
+  const errField = onBand
+    ? 'border-danger-band hover:border-danger-band focus:border-danger-band focus:shadow-[0_1px_0_0_rgb(var(--danger-on-band))]'
+    : 'border-danger hover:border-danger focus:border-danger focus:shadow-[0_1px_0_0_rgb(var(--danger))]';
+  const errText = onBand ? 'text-danger-band' : 'text-danger';
   const optionCls = onBand ? 'bg-band text-band-fg' : 'bg-surface text-ink';
   const errorMessages: Record<Field, string> = {
     name: dict.form.errors.name,
@@ -227,9 +230,9 @@ export function LeadForm({
             <path d="M1 6.5 5.5 11 15 1" stroke="currentColor" strokeWidth="1.25" />
           </svg>
         </span>
-        <h3 className={cn('mt-10 font-display text-display-md font-light text-balance', fg)}>{dict.form.successTitle}</h3>
+        <h3 className={cn('mt-10 font-display text-display-md font-light text-balance', fg)}>{typo(dict.form.successTitle)}</h3>
         <p className={cn('mt-5 max-w-md text-pretty text-base leading-relaxed md:text-[1.0625rem]', muted)}>
-          {dict.form.success}
+          {typo(dict.form.success)}
         </p>
       </div>
     );
@@ -239,7 +242,7 @@ export function LeadForm({
     errors[key] ? (
       <p id={fid(`${key}-error`)} className={cn('mt-3 flex items-start gap-2.5 text-sm leading-snug', errText)}>
         <span aria-hidden="true" className="mt-[0.45em] h-1.5 w-1.5 shrink-0 bg-current" />
-        {message}
+        {typo(message)}
       </p>
     ) : null;
 
@@ -249,7 +252,8 @@ export function LeadForm({
       href={routes.privacy(locale)}
       className={cn(
         'underline decoration-1 underline-offset-4 transition-colors duration-500',
-        onBand ? 'hover:text-band-muted focus-visible:outline-band-fg' : 'hover:text-accent',
+        // Hover in accent-strong, not the accent: this is small text.
+        onBand ? 'hover:text-band-muted focus-visible:outline-band-fg' : 'hover:text-accent-strong',
         fg,
       )}
     >
@@ -358,7 +362,7 @@ export function LeadForm({
                     className={cn(
                       'label flex h-11 items-center justify-center border px-2',
                       'transition-[background-color,border-color,color] duration-500 ease-premium',
-                      'peer-focus-visible:outline peer-focus-visible:outline-1 peer-focus-visible:outline-offset-4',
+                      'peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4',
                       onBand
                         ? 'peer-focus-visible:outline-band-fg border-band-fg/25 text-band-fg/80 hover:border-band-fg/60 hover:text-band-fg peer-checked:border-band-fg peer-checked:bg-band-fg peer-checked:text-band'
                         : 'peer-focus-visible:outline-accent border-line/25 text-ink/80 hover:border-line/60 hover:text-ink peer-checked:border-ink peer-checked:bg-ink peer-checked:text-canvas',
@@ -442,7 +446,11 @@ export function LeadForm({
                 onBand
                   ? 'checked:border-band-fg checked:bg-band-fg focus-visible:outline-band-fg'
                   : 'checked:border-accent checked:bg-accent',
-                errors.consent ? 'border-red-500' : onBand ? 'border-band-fg/50 hover:border-band-fg' : 'border-line/60 hover:border-ink',
+                errors.consent
+                  ? onBand
+                    ? 'border-danger-band'
+                    : 'border-danger'
+                  : onBand ? 'border-band-fg/50 hover:border-band-fg' : 'border-line/60 hover:border-ink',
               )}
               aria-invalid={errors.consent || undefined}
               aria-describedby={errors.consent ? fid('consent-error') : undefined}
@@ -460,14 +468,16 @@ export function LeadForm({
             </svg>
           </span>
           <span className="text-pretty">
+            {/* The word before the link travels with it, so the sentence
+                never ends a line on "и" / "și" with the policy below. */}
             {consentParts ? (
               <>
-                {consentParts[0]}
-                {policyLink(consentParts[1])}
+                {typo(consentParts[0]).replace(/\s+$/, NBSP)}
+                {policyLink(typo(consentParts[1]))}
               </>
             ) : (
               <>
-                {dict.form.consent} {policyLink(dict.footer.privacy)}
+                {typo(dict.form.consent)} {policyLink(typo(dict.footer.privacy))}
               </>
             )}
           </span>
@@ -484,7 +494,7 @@ export function LeadForm({
       {serverError && (
         <p role="alert" className={cn('flex items-start gap-2.5 text-sm leading-relaxed', errText)}>
           <span aria-hidden="true" className="mt-[0.45em] h-1.5 w-1.5 shrink-0 bg-current" />
-          {dict.form.error}
+          {typo(dict.form.error)}
         </p>
       )}
 

@@ -4,7 +4,7 @@ import { getDictionary } from '@/i18n/dictionaries';
 import { buildMetadata } from '@/lib/seo';
 import { routes } from '@/i18n/routing';
 import { telHref } from '@/lib/utils';
-import { splitWords } from '@/lib/text';
+import { splitWords, typo } from '@/lib/text';
 import { contact } from '@/content/site';
 import { Container } from '@/components/ui/Container';
 import { Reveal } from '@/components/ui/Reveal';
@@ -49,7 +49,7 @@ export default async function ThankYouPage(props: { params: Promise<{ locale: st
           </Reveal>
           <Reveal delay={0.12} className="lg:col-span-4 lg:col-start-9 lg:pb-3">
             <p className="max-w-md text-pretty text-base leading-relaxed text-muted md:text-[1.0625rem]">
-              {dict.thankYou.subtitle}
+              {typo(dict.thankYou.subtitle)}
             </p>
           </Reveal>
         </div>
