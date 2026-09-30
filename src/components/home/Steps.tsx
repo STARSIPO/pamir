@@ -46,7 +46,12 @@ export function Steps({ locale, dict }: { locale: Locale; dict: Dictionary }) {
               {s.n}
             </span>
             <div className="md:mt-12 xl:mt-16">
-              <h3 className="font-display text-display-sm font-light text-balance text-ink">{s.title[locale]}</h3>
+              {/* Two title lines reserved in the six-up row, so every
+                  description starts on one line whether its title wraps
+                  ("Получение / ключей") or not. */}
+              <h3 className="font-display text-display-sm font-light text-balance text-ink xl:min-h-[2lh]">
+                {s.title[locale]}
+              </h3>
               <p className="mt-3 max-w-[34ch] text-pretty text-base leading-relaxed text-muted md:mt-4">
                 {s.text[locale]}
               </p>

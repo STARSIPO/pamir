@@ -59,9 +59,18 @@ export default async function FaqPage(props: { params: Promise<{ locale: string 
               >
                 {sales.number}
               </a>
+              {/* The block's label already names the sales team, so the link
+                  keeps the short "contact us" wording — "contact the sales
+                  department" ran past three columns in RO/RU. whitespace-normal
+                  lets any longer label wrap inside the column, arrow last. */}
               <div className="mt-10">
-                <Button href={routes.contacts(locale)} variant="ghost" arrow>
-                  {dict.common.contactSales}
+                <Button
+                  href={routes.contacts(locale)}
+                  variant="ghost"
+                  arrow
+                  className="max-w-full justify-start whitespace-normal text-left"
+                >
+                  {dict.common.contactUs}
                 </Button>
               </div>
             </Reveal>

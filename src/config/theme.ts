@@ -34,5 +34,12 @@ export const THEME_COLOR: Record<ThemeName, string> = {
  * theme from `?theme=` never flashes the default palette first. Storage access
  * is wrapped because it throws in some private modes; failure just means the
  * default theme.
+ *
+ * It also:
+ *  - repaints the browser chrome (meta theme-color) for a preview theme, so a
+ *    phone previewing ?theme=dark does not keep a cream address bar;
+ *  - sets <html lang> from the URL (/ro/… → ro-MD). The root layout has no
+ *    locale param; DocumentSync keeps both in step on client navigation.
+ *    The locale is the first path segment, or the second under a basePath.
  */
-export const themeBootScript = `(function(){try{var t=${JSON.stringify(THEMES)},d=document.documentElement,q=new URLSearchParams(location.search).get('theme'),k='pamir-theme';if(q==='reset'){sessionStorage.removeItem(k)}else if(q&&t.indexOf(q)>-1){sessionStorage.setItem(k,q)}var s=sessionStorage.getItem(k);if(s&&t.indexOf(s)>-1){d.setAttribute('data-theme',s)}}catch(e){}})();`;
+export const themeBootScript = `(function(){var d=document.documentElement;try{var p=location.pathname.split('/'),l=p[1]==='ro'||p[1]==='ru'?p[1]:p[2];if(l==='ro'||l==='ru')d.lang=l+'-MD'}catch(e){}try{var t=${JSON.stringify(THEMES)},c=${JSON.stringify(THEME_COLOR)},q=new URLSearchParams(location.search).get('theme'),k='pamir-theme';if(q==='reset'){sessionStorage.removeItem(k)}else if(q&&t.indexOf(q)>-1){sessionStorage.setItem(k,q)}var s=sessionStorage.getItem(k);if(s&&t.indexOf(s)>-1){d.setAttribute('data-theme',s);var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',c[s])}}catch(e){}})();`;

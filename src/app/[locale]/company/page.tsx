@@ -69,7 +69,11 @@ export default async function CompanyPage(props: { params: Promise<{ locale: str
 
         <div className="mt-12 grid gap-y-10 md:mt-20 md:grid-cols-12 md:gap-x-gutter">
           <Reveal className="md:col-span-11 lg:col-span-10">
-            <p className="font-display text-display-md font-light text-pretty text-ink">{companyIntro[0][locale]}</p>
+            {/* A multi-line statement: display-md's 1.08 leading is tuned for one-
+                or two-line names, so the lines get more air here. */}
+            <p className="font-display text-display-md font-light leading-[1.2] text-pretty text-ink md:leading-[1.16]">
+              {companyIntro[0][locale]}
+            </p>
           </Reveal>
           {companyIntro.slice(1).map((p, i) => (
             <Reveal key={i} delay={0.08} className="md:col-span-7 md:col-start-6 md:mt-10 lg:col-span-5 lg:col-start-7">
@@ -98,22 +102,28 @@ export default async function CompanyPage(props: { params: Promise<{ locale: str
             variant="mask"
             className="relative aspect-[4/5] sm:aspect-[4/3] md:aspect-[16/9] lg:aspect-[2/1]"
           >
+            {/* The 16:9 render is cropped into taller frames on small screens,
+                so `sizes` asks for the width the crop really needs:
+                4/5 → ≈2.2× the frame width, 4/3 → ≈1.33×. The tower sits in
+                the middle third, so a centred crop keeps all of it. */}
             <Media
               src={COMPANY_IMAGE}
               alt={pictured ? pictured.name[locale] : dict.companyPage.title}
               fill
               position="50% 18%"
-              sizes="(max-width: 1680px) 100vw, 1680px"
+              sizes="(max-width: 639px) 225vw, (max-width: 767px) 135vw, (max-width: 1680px) 100vw, 1680px"
               caption={dict.design.render}
             />
           </Reveal>
+          {/* Label over value on phones, one line from sm: no dash separator
+              (the project name already carries one). The link's 44px hit area
+              is an ::after, so it does not push the line down. */}
           {pictured && (
-            <p className="label mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 text-muted">
-              <span>{dict.design.onImage}</span>
-              <span aria-hidden="true">—</span>
+            <p className="label mt-5 flex flex-col items-start gap-2 text-muted sm:flex-row sm:items-baseline sm:gap-3">
+              <span>{dict.design.onImage}:</span>
               <Link
                 href={routes.project(locale, pictured.slug)}
-                className="inline-flex min-h-11 items-center text-ink md:min-h-0"
+                className="link-rule relative pb-1 text-ink after:absolute after:-inset-y-4 after:inset-x-0 after:content-['']"
               >
                 {pictured.name[locale]}
               </Link>

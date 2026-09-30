@@ -105,7 +105,12 @@ export function parsePathname(pathname: string): ParsedPath | null {
   const parts = pathname.split('/').filter(Boolean);
   const locale = parts[0];
   if (locale !== 'ru' && locale !== 'ro') return null;
-  const key = parts[1] ? routeKeyFromSegment(locale, parts[1]) : undefined;
+  // RO also answers on the canonical (RU) folder segment — /ro/projects/<slug>
+  // renders the same page as /ro/proiecte/<slug>, and is THE RO path in the
+  // static export. Recognise both, so the header still sees a project page.
+  const key = parts[1]
+    ? (routeKeyFromSegment(locale, parts[1]) ?? routeKeyFromSegment('ru', parts[1]))
+    : undefined;
   const slug = key === 'projects' ? parts[2] : undefined;
   return { locale, key, slug };
 }

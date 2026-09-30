@@ -4,6 +4,7 @@ import type { Dictionary } from '@/i18n/dictionaries';
 import type { Project } from '@/content/types';
 import { routes } from '@/i18n/routing';
 import { cn } from '@/lib/utils';
+import { typesetName } from '@/lib/text';
 import { Media } from '@/components/ui/Media';
 import { Reveal } from '@/components/ui/Reveal';
 import { StatusBadge } from '@/components/ui/StatusBadge';
@@ -18,7 +19,9 @@ import { ArrowLabel } from '@/components/ui/Button';
  *   │                          │
  *   └──────────────────────────┘
  *   ■ В строительстве · Ботаника
- *   Botanic Star 2 — блоки 3 и 4          Смотреть проект →
+ *   Botanic Star 2 —
+ *   блоки 3 и 4
+ *   Смотреть проект →
  *
  * `size="lg"` sets the name one step larger for hero-sized cards. `aspect`
  * lets a layout vary the frame (portrait, landscape, panoramic) so a grid of
@@ -61,12 +64,16 @@ export function ProjectCard({
           label={project.name[locale]}
           sizes={sizes}
           caption={caption}
+          position={project.coverPosition}
           zoom
         />
       </Reveal>
 
-      <div className="mt-6 flex flex-col gap-5 md:mt-7 md:flex-row md:items-end md:justify-between md:gap-8">
-        <div className="min-w-0">
+      {/* Stacked at every width: the name is the card's main typographic
+          element and gets the full card measure. Beside the arrow label it
+          lost ~210px and broke as "Botanic Star / 2 — блок 1". */}
+      <div className="mt-6 flex flex-col items-start gap-5 md:mt-7 md:gap-6">
+        <div className="min-w-0 max-w-full">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted">
             <StatusBadge status={project.status} label={statusLabel} />
             <span aria-hidden="true" className="label">·</span>
@@ -78,10 +85,10 @@ export function ProjectCard({
               size === 'lg' ? 'text-display-lg' : 'text-display-md',
             )}
           >
-            {project.name[locale]}
+            {typesetName(project.name[locale])}
           </h3>
         </div>
-        <ArrowLabel className="shrink-0 text-ink md:pb-2">{dict.common.viewProject}</ArrowLabel>
+        <ArrowLabel className="text-ink">{dict.common.viewProject}</ArrowLabel>
       </div>
     </Link>
   );

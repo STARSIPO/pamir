@@ -237,5 +237,9 @@ export const ro: Dictionary = {
     allProjectsShort: 'Toate',
     viewGallery: 'Vezi galeria',
     photos: 'fotografii',
+    skipToContent: 'Salt la conținut',
+    amenitiesEyebrow: 'Facilități',
+    apartmentsEyebrow: 'Apartamente',
+    portfolioEyebrow: 'Portofoliu',
   },
 };

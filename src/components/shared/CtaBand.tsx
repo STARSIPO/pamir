@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { contact } from '@/content/site';
 import { routes } from '@/i18n/routing';
 import { telHref } from '@/lib/utils';
-import { splitWords } from '@/lib/text';
+import { splitWords, typo } from '@/lib/text';
 
 /**
  * Closing conversion block for inner pages, on the contrast band. It sits
@@ -35,12 +35,14 @@ export function CtaBand({
           {subtitle && (
             <Reveal delay={0.08}>
               <p className="mt-6 max-w-lg text-pretty text-base leading-relaxed text-band-muted md:text-[1.0625rem]">
-                {subtitle}
+                {typo(subtitle)}
               </p>
             </Reveal>
           )}
         </div>
-        <Reveal delay={0.14} className="flex flex-col gap-8 lg:col-span-4 lg:col-start-9">
+        {/* 5 columns below xl: at 1024 four columns (~300px) are narrower
+            than the nowrap "Получить консультацию" button. */}
+        <Reveal delay={0.14} className="flex flex-col gap-8 lg:col-span-5 lg:col-start-8 xl:col-span-4 xl:col-start-9">
           <a
             href={telHref(contact.primaryPhone)}
             className="link-line self-start font-display text-display-md font-light tabular text-band-fg"

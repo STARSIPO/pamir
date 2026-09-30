@@ -235,6 +235,10 @@ export const ru = {
     allProjectsShort: 'Все',
     viewGallery: 'Смотреть галерею',
     photos: 'фото',
+    skipToContent: 'Перейти к содержанию',
+    amenitiesEyebrow: 'Удобства',
+    apartmentsEyebrow: 'Квартиры',
+    portfolioEyebrow: 'Портфолио',
   },
 };
 

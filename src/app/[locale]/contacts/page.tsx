@@ -6,8 +6,8 @@ import { contact, social } from '@/content/site';
 import { PageHero } from '@/components/shared/PageHero';
 import { Section } from '@/components/ui/Section';
 import { Reveal } from '@/components/ui/Reveal';
-import { Button, ArrowLabel } from '@/components/ui/Button';
-import { ContactInfo } from '@/components/shared/ContactInfo';
+import { ArrowLabel } from '@/components/ui/Button';
+import { ContactInfo, mapLinks } from '@/components/shared/ContactInfo';
 import { LeadForm } from '@/components/forms/LeadForm';
 import { splitWords } from '@/lib/text';
 
@@ -18,19 +18,15 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
   return buildMetadata({ locale, routeKey: 'contacts', title: dict.contactsPage.title, description: dict.contactsPage.subtitle });
 }
 
-const mapEmbed = `https://www.google.com/maps?q=${encodeURIComponent(contact.mapQuery)}&z=16&output=embed`;
-const mapRoute = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(contact.mapQuery)}`;
-
 /**
  * Contacts.
  *
  *   PageHero
- *   ┌ contact rows (phones, office, hours, email) ┐  ┌ write to us ──────┐
- *   │ social row                                   │  │ title, lead, form │
- *   └──────────────────────────────────────────────┘  └───────────────────┘
- *   ┌ map, wide letterbox ─────────────────────────────────────────────────┐
- *   └──────────────────────────────────────────────────────────────────────┘
- *   address ······························································ route →
+ *   ┌ contact rows (phones, office + route, hours, email) ┐  ┌ write to us ──────┐
+ *   │ social row                                           │  │ title, lead, form │
+ *   └──────────────────────────────────────────────────────┘  └───────────────────┘
+ *   ┌ map, wide letterbox ─────────────────────────────────────────────────────────┐
+ *   └──────────────────────────────────────────────────────────────────────────────┘
  *
  * No CtaBand: the footer (band) follows directly.
  */
@@ -87,27 +83,17 @@ export default async function ContactsPage(props: { params: Promise<{ locale: st
           </Reveal>
         </div>
 
-        {/* Map band + route row. */}
-        <div className="mt-section-sm">
-          <Reveal className="relative aspect-[4/3] overflow-hidden bg-canvas-alt md:aspect-[16/9] lg:aspect-[21/8]">
-            <iframe
-              title={contact.address[locale]}
-              src={mapEmbed}
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              className="absolute inset-0 h-full w-full grayscale"
-            />
-          </Reveal>
-          <div className="flex flex-col gap-6 border-b border-line/15 py-6 sm:flex-row sm:items-center sm:justify-between md:py-8">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:gap-6">
-              <p className="label shrink-0 text-muted">{dict.contactsPage.officeTitle}</p>
-              <p className="text-pretty text-base text-ink md:text-[1.0625rem]">{contact.address[locale]}</p>
-            </div>
-            <Button href={mapRoute} variant="outline" arrow className="self-start sm:self-auto">
-              {dict.contactBlock.routeCta}
-            </Button>
-          </div>
-        </div>
+        {/* The map on its own: the address and the route link already sit in
+            the office row above, so nothing is repeated under it. */}
+        <Reveal className="relative mt-section-sm aspect-[4/3] overflow-hidden bg-canvas-alt md:aspect-[16/9] lg:aspect-[21/8]">
+          <iframe
+            title={contact.address[locale]}
+            src={mapLinks.embed}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            className="absolute inset-0 h-full w-full grayscale"
+          />
+        </Reveal>
       </Section>
     </>
   );

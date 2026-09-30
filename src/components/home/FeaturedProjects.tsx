@@ -19,10 +19,24 @@ export const FEATURED_SLUGS = ['botanic-star-2-blocks-3-4', 'eco-house'] as cons
  * Per-row frame. Landscape first, portrait second: two rows of the same shape
  * would read as a template. Eco House's cover is a tall render, which suits
  * the portrait slot.
+ *
+ * Its cover is also a crop of the Hero's render, so shown whole it repeats
+ * the opening photo two screens later (same corner, same car and passer-by).
+ * Row 2 therefore goes in close: scaled 1.35x from the top-right corner, it
+ * keeps the rhythm of the orange loggias and the wing receding into the sky
+ * and drops the street, the corner tower the Hero crops to on a phone, and the
+ * figures. `[scale:…]` is the standalone CSS property, so it composes with the
+ * hover zoom and the mask reveal (both set `transform`); `sizes` grows by the
+ * same 1.35 so the enlarged image is not upscaled.
  */
-const ROWS: { aspect: string; position?: string }[] = [
+const ROWS: { aspect: string; position?: string; imgClassName?: string; sizes?: string }[] = [
   { aspect: '5 / 4', position: '40% 50%' },
-  { aspect: '4 / 5', position: '50% 50%' },
+  {
+    aspect: '4 / 5',
+    position: '100% 0%',
+    imgClassName: '[scale:1.35] origin-top-right',
+    sizes: '(max-width: 767px) 135vw, (max-width: 1023px) 90vw, 68vw',
+  },
 ];
 
 export function FeaturedProjects({ locale, dict }: { locale: Locale; dict: Dictionary }) {
@@ -43,19 +57,24 @@ export function FeaturedProjects({ locale, dict }: { locale: Locale; dict: Dicti
       />
 
       <div className="mt-section-sm flex flex-col gap-y-section">
-        {featured.map((project, i) => (
-          <ProjectFeature
-            key={project.slug}
-            project={project}
-            locale={locale}
-            dict={dict}
-            index={i}
-            total={featured.length}
-            reverse={i % 2 === 1}
-            aspect={ROWS[i % ROWS.length].aspect}
-            position={ROWS[i % ROWS.length].position}
-          />
-        ))}
+        {featured.map((project, i) => {
+          const row = ROWS[i % ROWS.length];
+          return (
+            <ProjectFeature
+              key={project.slug}
+              project={project}
+              locale={locale}
+              dict={dict}
+              index={i}
+              total={featured.length}
+              reverse={i % 2 === 1}
+              aspect={row.aspect}
+              position={row.position}
+              imgClassName={row.imgClassName}
+              sizes={row.sizes}
+            />
+          );
+        })}
       </div>
     </Section>
   );

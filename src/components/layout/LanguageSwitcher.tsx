@@ -10,8 +10,9 @@ import { cn } from '@/lib/utils';
  * RU / RO — two tracked labels and a thin slash. No pills, no flags.
  *
  * The current language is full strength; the other recedes and comes forward
- * on hover. Each link is a 44px-high target so the switcher is usable beside
- * the menu button on a phone.
+ * on hover. Each link is a 44×44 target so the switcher is usable beside
+ * the menu button on a phone; callers pull it -12px (`-ml-3`) to align the
+ * first label with their edge.
  *
  * tone
  *   auto  — follows currentColor (the header: white over the hero, ink when solid)
@@ -60,7 +61,7 @@ export function LanguageSwitcher({
               lang={l}
               aria-current={active ? 'true' : undefined}
               className={cn(
-                'inline-flex h-11 min-w-[2.5rem] items-center justify-center transition-opacity duration-500 ease-premium',
+                'inline-flex h-11 min-w-11 items-center justify-center transition-opacity duration-500 ease-premium',
                 active ? 'opacity-100' : 'opacity-65 hover:opacity-100',
               )}
             >

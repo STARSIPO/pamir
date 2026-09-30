@@ -42,6 +42,10 @@ export function Floorplans({
 
   const [filter, setFilter] = useState<number | 'all'>('all');
   const [zoomId, setZoomId] = useState<string | null>(null);
+  // The plate that opened the viewer, for focus on close. Taken from the click
+  // itself: Safari does not focus a clicked button, so document.activeElement
+  // at open time would be <body>.
+  const openedBy = useRef<HTMLElement | null>(null);
 
   const visible = useMemo(
     () => (filter === 'all' ? floorplans : floorplans.filter((f) => f.rooms === filter)),
@@ -85,6 +89,7 @@ export function Floorplans({
       if (!hash.startsWith('plan-')) return;
       const id = hash.slice('plan-'.length);
       if (floorplans.some((f) => f.id === id)) {
+        openedBy.current = document.querySelector<HTMLElement>(`#${anchorFor(id)} button`);
         setFilter('all');
         setZoomId(id);
       }
@@ -109,7 +114,14 @@ export function Floorplans({
         </div>
       )}
 
-      <div className="grid gap-x-gutter gap-y-20 md:grid-cols-2 lg:grid-cols-3">
+      {/* Three plates sit in one row from md: drawings stay legible at
+          ~220px, and 2 + 1 would leave half a row empty. */}
+      <div
+        className={cn(
+          'grid gap-x-gutter gap-y-20',
+          visible.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2 lg:grid-cols-3',
+        )}
+      >
         {visible.map((f, i) => {
           const status = resolveAvailability(f);
           const title = roomLabel(f.rooms);
@@ -119,7 +131,10 @@ export function Floorplans({
               <Reveal delay={(i % 3) * 0.08}>
                 <button
                   type="button"
-                  onClick={() => setZoomId(f.id)}
+                  onClick={(e) => {
+                    openedBy.current = e.currentTarget;
+                    setZoomId(f.id);
+                  }}
                   aria-haspopup="dialog"
                   aria-label={`${d.planDialogTitle} — ${title}`}
                   className="group relative block w-full cursor-zoom-in border border-line/20 bg-surface text-ink transition-colors duration-500 ease-premium hover:border-line/50"
@@ -146,22 +161,18 @@ export function Floorplans({
               </div>
               <h3 className="mt-4 font-display text-display-md font-light text-balance text-ink">{title}</h3>
 
+              {/* One word for "not confirmed yet" across the table: the same
+                  «Уточняется / Se precizează» the content uses for floors. */}
               <dl className="mt-6 border-b border-line/15 text-sm">
-                <Row label={d.area} value={f.area ? `${f.area} ${d.sqm}` : d.onRequest} />
-                <Row label={d.floor} value={f.floor ? f.floor[locale] : d.onRequest} />
+                <Row label={d.area} value={f.area ? `${f.area} ${d.sqm}` : d.statusUnknown} />
+                <Row label={d.floor} value={f.floor ? f.floor[locale] : d.statusUnknown} />
               </dl>
               {f.placeholder && <p className="mt-4 text-xs leading-relaxed text-muted">{d.placeholderNote}</p>}
 
-              <div className="mt-auto flex flex-wrap items-center gap-x-8 gap-y-1 pt-6">
+              <div className="mt-auto pt-6">
                 <Button href="#lead" variant="ghost" arrow className="min-h-11">
                   {d.priceCta}
                 </Button>
-                <a
-                  href="#lead"
-                  className="link-line inline-flex min-h-11 items-center text-[0.75rem] font-medium uppercase tracking-[0.14em] text-muted transition-colors duration-500 hover:text-ink"
-                >
-                  {d.leaveRequest}
-                </a>
               </div>
             </article>
           );
@@ -179,6 +190,7 @@ export function Floorplans({
           prevLabel={d.prevPlan}
           nextLabel={d.nextPlan}
           position={visible.length > 1 ? `${pad(zoomIndex + 1)} / ${pad(visible.length)}` : null}
+          returnFocus={openedBy}
           onClose={close}
           onPrev={() => step(-1)}
           onNext={() => step(1)}
@@ -204,6 +216,7 @@ function PlanDialog({
   prevLabel,
   nextLabel,
   position,
+  returnFocus,
   onClose,
   onPrev,
   onNext,
@@ -216,6 +229,8 @@ function PlanDialog({
   prevLabel: string;
   nextLabel: string;
   position: string | null;
+  /** The plate that opened the viewer; focus goes back there on close. */
+  returnFocus: React.RefObject<HTMLElement | null>;
   onClose: () => void;
   onPrev: () => void;
   onNext: () => void;
@@ -224,7 +239,7 @@ function PlanDialog({
   const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    const restoreTo = document.activeElement as HTMLElement | null;
+    const restoreTo = returnFocus.current ?? (document.activeElement as HTMLElement | null);
 
     // Lock page scroll, compensating for the scrollbar so the page behind does
     // not shift sideways when it disappears.
@@ -239,7 +254,7 @@ function PlanDialog({
       document.body.style.paddingRight = paddingRight;
       restoreTo?.focus?.({ preventScroll: true });
     };
-  }, []);
+  }, [returnFocus]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -284,7 +299,7 @@ function PlanDialog({
       aria-modal="true"
       aria-label={`${dialogTitle} — ${title}`}
       data-lenis-prevent
-      className="fixed inset-0 z-[110] flex flex-col bg-scrim/95 text-white"
+      className="fixed inset-0 z-[110] flex flex-col bg-scrim text-white"
       onClick={onClose}
     >
       <div className="container flex h-20 shrink-0 items-center justify-between gap-6 md:h-24">

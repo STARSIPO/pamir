@@ -21,17 +21,11 @@ export const mapLinks = {
  *   ОФИС                Кишинёв, ул. Дечебал 139/5
  *                       ПОСТРОИТЬ МАРШРУТ ──→
  *   ─────────────────────────────────────────
- *   ГРАФИК РАБОТЫ       Пн–Сб: 9:00–18:00 · …
+ *   ГРАФИК РАБОТЫ       Пн–Сб: 9:00–18:00
+ *                       Вс: выходной
  *
- * `compact` — two columns of label-over-value cells for the lead band, where
- *   the sales number is already shown large: that number is left out.
- *
- *   ─────────────────  ─────────────────
- *   АДМИНИСТРАЦИЯ      БУХГАЛТЕРИЯ
- *   +373 22 54 05 05   +373 22 80 28 03
- *   ─────────────────  ─────────────────
- *   ОФИС               ГРАФИК РАБОТЫ
- *   address, route →   hours
+ * Phone and email links are at least 44px tall (the phone is the main action
+ * on a phone); the underline stays on the text inside.
  *
  * `tone`    — 'canvas' (default) or 'band' for the dark contrast band.
  * `withMap` — adds the map beside the rows (wide screens) or under them.
@@ -41,32 +35,29 @@ export function ContactInfo({
   dict,
   withMap = true,
   tone = 'canvas',
-  compact = false,
   className,
 }: {
   locale: Locale;
   dict: Dictionary;
   withMap?: boolean;
   tone?: 'canvas' | 'band';
-  compact?: boolean;
   className?: string;
 }) {
   const band = tone === 'band';
   const muted = band ? 'text-band-muted' : 'text-muted';
   const fg = band ? 'text-band-fg' : 'text-ink';
   const rule = band ? 'border-band-fg/15' : 'border-line/15';
-  const phones = compact ? contact.phones.filter((p) => p.number !== contact.primaryPhone) : contact.phones;
 
   const items: { key: string; term: string; value: React.ReactNode }[] = [
-    ...phones.map((p) => ({
+    ...contact.phones.map((p) => ({
       key: p.number,
       term: p.label[locale],
       value: (
         <a
           href={telHref(p.number)}
-          className={cn('link-line inline-block whitespace-nowrap tabular', !compact && 'font-display text-display-md font-light')}
+          className="group inline-flex min-h-11 items-center whitespace-nowrap font-display text-display-md font-light tabular"
         >
-          {p.number}
+          <span className="link-line">{p.number}</span>
         </a>
       ),
     })),
@@ -80,35 +71,36 @@ export function ContactInfo({
             href={mapLinks.route}
             target="_blank"
             rel="noopener noreferrer"
-            className={cn('group inline-flex min-h-11 items-center', compact ? 'mt-1' : 'mt-2')}
+            className="group mt-2 inline-flex min-h-11 items-center"
           >
             <ArrowLabel>{dict.contactBlock.routeCta}</ArrowLabel>
           </a>
         </>
       ),
     },
-    { key: 'hours', term: dict.contactsPage.hoursTitle, value: <span className="text-pretty">{contact.hours[locale]}</span> },
+    {
+      key: 'hours',
+      term: dict.contactsPage.hoursTitle,
+      // "Пн–Сб: 9:00–18:00 · Вс: выходной" — one schedule per line, as in the
+      // footer, so a day never ends a line with its hours on the next.
+      value: contact.hours[locale].split(' · ').map((part) => (
+        <span key={part} className="block">
+          {part}
+        </span>
+      )),
+    },
     {
       key: 'email',
       term: dict.form.email,
       value: (
-        <a href={`mailto:${contact.email}`} className="link-line inline-block break-all">
-          {contact.email}
+        <a href={`mailto:${contact.email}`} className="group inline-flex min-h-11 max-w-full items-center">
+          <span className="link-line min-w-0 break-all">{contact.email}</span>
         </a>
       ),
     },
   ];
 
-  const list = compact ? (
-    <dl className="grid gap-x-gutter sm:grid-cols-2">
-      {items.map((it) => (
-        <div key={it.key} className={cn('border-t pb-8 pt-5', rule)}>
-          <dt className={cn('label', muted)}>{it.term}</dt>
-          <dd className={cn('mt-3 text-base leading-relaxed', fg)}>{it.value}</dd>
-        </div>
-      ))}
-    </dl>
-  ) : (
+  const list = (
     <dl className={cn('border-b', rule)}>
       {items.map((it) => (
         <div

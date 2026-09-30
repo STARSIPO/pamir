@@ -22,8 +22,8 @@ const MENU_ID = 'site-menu';
  *   ▲ PAMIR          О компании  Проекты  Услуги  FAQ  Контакты  │  RU / RO   [ СВЯЗАТЬСЯ С НАМИ ]
  *
  * Over a hero photograph (home, project pages) it starts transparent with
- * white type; after a few pixels of scroll it settles into a compact bar on
- * the canvas colour with a hairline. Everywhere else it is solid from the
+ * white type; after a few pixels of scroll it settles into a compact, solid
+ * bar on the canvas colour with a hairline. Everywhere else it is solid from the
  * start and a spacer keeps the page below it. Below `lg` the nav collapses
  * into a two-line menu button that opens the full-screen <MobileMenu>.
  */
@@ -62,10 +62,12 @@ export function Header({ locale, dict }: { locale: Locale; dict: Dictionary }) {
       <header
         className={cn(
           'fixed inset-x-0 top-0 z-50 border-b',
-          'transition-[background-color,color,border-color,backdrop-filter] duration-500 ease-premium',
+          'transition-[background-color,color,border-color] duration-500 ease-premium',
+          // Solid canvas once compact: a translucent bar lets hero photos,
+          // the dark band and 100px headings bleed through as a grey smudge.
           transparent
             ? 'border-transparent bg-transparent text-white'
-            : cn('bg-canvas/85 text-ink backdrop-blur-md', scrolled ? 'border-line/10' : 'border-transparent'),
+            : cn('bg-canvas text-ink', scrolled ? 'border-line/10' : 'border-transparent'),
         )}
       >
         <div
@@ -92,10 +94,16 @@ export function Header({ locale, dict }: { locale: Locale; dict: Dictionary }) {
                         aria-current={active ? 'page' : undefined}
                         className="group relative inline-flex h-11 items-center text-[0.8125rem] font-medium"
                       >
+                        {/* Over a photo the accent can sink into the sky
+                            (stone's sage), so the marker follows the type. */}
                         {active && (
                           <span
                             aria-hidden="true"
-                            className="absolute -left-3 top-1/2 h-1 w-1 -translate-y-1/2 bg-accent"
+                            className={cn(
+                              'absolute -left-3 top-1/2 h-1 w-1 -translate-y-1/2',
+                              'transition-colors duration-500 ease-premium',
+                              transparent ? 'bg-current' : 'bg-accent',
+                            )}
                           />
                         )}
                         <span className="link-line pb-0.5">{item.label[locale]}</span>
@@ -108,7 +116,7 @@ export function Header({ locale, dict }: { locale: Locale; dict: Dictionary }) {
 
             <span aria-hidden="true" className="mx-5 h-4 w-px bg-current opacity-20 xl:mx-8" />
 
-            <LanguageSwitcher current={locale} tone="auto" label={dict.footer.langLabel} className="-mx-1.5" />
+            <LanguageSwitcher current={locale} tone="auto" label={dict.footer.langLabel} className="-mx-2" />
 
             <a
               href={telHref(contact.primaryPhone)}

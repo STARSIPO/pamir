@@ -1,6 +1,17 @@
 import { cn } from '@/lib/utils';
-import { splitWords } from '@/lib/text';
+import { splitWords, typo } from '@/lib/text';
 import { Reveal } from './Reveal';
+
+/**
+ * Line measure per size, in `ch` of the heading's own display size (so it
+ * scales with the clamp()). Roughly 17–21 characters a line: a headline sets
+ * in two or three balanced lines, never one word per line.
+ */
+const measure = {
+  xl: 'lg:max-w-[16ch] xl:max-w-[18ch]',
+  lg: 'lg:max-w-[20ch]',
+  md: 'lg:max-w-[24ch]',
+} as const;
 
 /**
  * Section opener used across the site.
@@ -68,13 +79,18 @@ export function SectionHeading({
           !center && (subtitle || action) && 'lg:flex-row lg:items-end lg:justify-between lg:gap-16',
         )}
       >
-        <Reveal stagger={typeof title === 'string'} className={cn(!center && 'lg:max-w-[16ch] xl:max-w-[18ch]', center && 'mx-auto max-w-[18ch]')}>
+        {/* The measure sits on the heading itself: `ch` resolves against the
+            element's own font size, so on the 16px wrapper 16ch was ~180px
+            and a display headline broke one word per line. */}
+        <Reveal stagger={typeof title === 'string'} className={cn(!center && 'lg:min-w-0 lg:flex-1')}>
           <Heading
             className={cn(
               'font-display font-light text-balance',
               size === 'xl' && 'text-display-xl',
               size === 'lg' && 'text-display-lg',
               size === 'md' && 'text-display-md',
+              !center && measure[size],
+              center && 'mx-auto max-w-[18ch]',
               light ? 'text-band-fg' : 'text-ink',
             )}
           >
@@ -83,8 +99,11 @@ export function SectionHeading({
         </Reveal>
 
         {(subtitle || action) && (
-          <Reveal delay={0.12} className={cn('flex flex-col gap-6 lg:max-w-sm lg:pb-3', center && 'mx-auto items-center')}>
-            {subtitle && <p className={cn('text-pretty text-base leading-relaxed md:text-[1.0625rem]', muted)}>{subtitle}</p>}
+          <Reveal
+            delay={0.12}
+            className={cn('flex flex-col gap-6 lg:max-w-xs lg:shrink-0 lg:pb-3 xl:max-w-sm', center && 'mx-auto items-center')}
+          >
+            {subtitle && <p className={cn('text-pretty text-base leading-relaxed md:text-[1.0625rem]', muted)}>{typeof subtitle === 'string' ? typo(subtitle) : subtitle}</p>}
             {action}
           </Reveal>
         )}

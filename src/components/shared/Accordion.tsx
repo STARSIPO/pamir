@@ -74,7 +74,9 @@ export function Accordion({
                 onKeyDown={(e) => onKeyDown(e, i)}
                 className="group flex w-full items-start gap-5 py-7 text-left md:gap-8 md:py-9"
               >
+                {/* Decorative index: kept out of the button's accessible name. */}
                 <span
+                  aria-hidden="true"
                   className={cn(
                     'label tabular w-6 shrink-0 pt-[0.7em] transition-colors duration-500 ease-premium md:w-8',
                     isOpen ? 'text-ink' : 'text-muted',

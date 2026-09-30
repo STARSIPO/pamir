@@ -6,6 +6,7 @@ import { projects } from '@/content/projects';
 import { routes } from '@/i18n/routing';
 import { telHref, currentYear, cn } from '@/lib/utils';
 import { Arrow } from '@/components/ui/Button';
+import { typesetName } from '@/lib/text';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { BackToTop } from './Header';
 
@@ -53,9 +54,13 @@ export function Footer({ locale, dict }: { locale: Locale; dict: Dictionary }) {
               )}
             </div>
 
-            {/* Link columns */}
-            <div className="grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-x-gutter gap-y-12 md:grid-cols-[minmax(0,0.8fr)_minmax(0,1.1fr)_minmax(0,1.1fr)] lg:col-span-8 lg:col-start-5">
-              <Column title={dict.footer.nav}>
+            {/* Link columns. Below lg: fractional tracks sized to the content.
+                From lg: an 8-column subgrid on the page's 12 (same gutter), so
+                every column starts on a page grid line — nav at col 5, projects
+                at col 8 (the lead form's edge in the band above), contacts at
+                col 10, wide enough for the e-mail from 1024 up. */}
+            <div className="grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-x-gutter gap-y-12 md:grid-cols-[minmax(0,0.8fr)_minmax(0,1.1fr)_minmax(0,1.1fr)] lg:col-span-8 lg:col-start-5 lg:grid-cols-8">
+              <Column title={dict.footer.nav} className="lg:col-span-3">
                 {primaryNav.map((item) => (
                   <li key={item.route}>
                     <FooterLink href={routes[item.route](locale)}>{item.label[locale]}</FooterLink>
@@ -63,15 +68,15 @@ export function Footer({ locale, dict }: { locale: Locale; dict: Dictionary }) {
                 ))}
               </Column>
 
-              <Column title={dict.footer.projects}>
+              <Column title={dict.footer.projects} className="lg:col-span-2">
                 {projects.map((p) => (
                   <li key={p.slug}>
-                    <FooterLink href={routes.project(locale, p.slug)}>{p.name[locale]}</FooterLink>
+                    <FooterLink href={routes.project(locale, p.slug)}>{typesetName(p.name[locale])}</FooterLink>
                   </li>
                 ))}
               </Column>
 
-              <Column title={dict.footer.contacts} className="col-span-2 md:col-span-1">
+              <Column title={dict.footer.contacts} className="col-span-2 md:col-span-1 lg:col-span-3">
                 {contact.phones.map((p) => (
                   <li key={p.number} className="mb-3">
                     <span className="block text-[0.8125rem] text-band-muted">{p.label[locale]}</span>
@@ -132,7 +137,7 @@ export function Footer({ locale, dict }: { locale: Locale; dict: Dictionary }) {
             >
               <span className="link-line pb-0.5">{dict.footer.privacy}</span>
             </Link>
-            <LanguageSwitcher current={locale} tone="band" label={dict.footer.langLabel} className="-ml-2.5 lg:-mx-2.5" />
+            <LanguageSwitcher current={locale} tone="band" label={dict.footer.langLabel} className="-ml-3 lg:-mx-3" />
             <BackToTop label={dict.design.backToTop} className="justify-self-end text-band-fg" />
           </div>
         </div>
@@ -172,8 +177,10 @@ function FooterLink({
     'group inline-flex min-h-11 items-center py-1.5 text-[0.9375rem] leading-snug text-band-fg lg:min-h-9',
     className,
   );
-  // balance: "Botanic Star 2 — / блок 2", never an orphaned digit.
-  const inner = <span className="link-line pb-0.5 text-balance">{children}</span>;
+  // Plain greedy wrap: project names arrive tied by typesetName(), so every
+  // long one breaks the same way — "Botanic Star 2 — / блоки 3 и 4" — with the
+  // dash closing the line. (text-balance split some after "Botanic".)
+  const inner = <span className="link-line pb-0.5">{children}</span>;
   return external ? (
     <a href={href} className={classes}>
       {inner}

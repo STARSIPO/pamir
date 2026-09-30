@@ -35,11 +35,13 @@ export function NotFoundView({ standalone = false }: { standalone?: boolean }) {
           <span aria-hidden="true" className="rule-draw h-px flex-1 bg-line/15" />
         </div>
 
+        {/* Title in 7 columns, lead from column 9: one empty column keeps the
+            display line and the lead apart. */}
         <div className="mt-12 grid gap-y-10 md:mt-16 lg:grid-cols-12 lg:items-end lg:gap-x-gutter">
-          <Reveal stagger className="lg:col-span-8">
+          <Reveal stagger className="lg:col-span-7">
             <h1 className="font-display text-display-xl font-light text-balance">{splitWords(dict.notFound.title)}</h1>
           </Reveal>
-          <Reveal delay={0.12} className="lg:col-span-4 lg:pb-3">
+          <Reveal delay={0.12} className="lg:col-span-4 lg:col-start-9 lg:pb-3">
             <p className="max-w-md text-pretty text-base leading-relaxed text-muted md:text-[1.0625rem]">
               {dict.notFound.subtitle}
             </p>
@@ -61,10 +63,15 @@ export function NotFoundView({ standalone = false }: { standalone?: boolean }) {
     </section>
   );
 
+  // Inside the locale layout the page title comes from its metadata.
   if (!standalone) return body;
 
   return (
     <div lang={localeHtmlLang[locale]} className="flex min-h-svh flex-col bg-canvas text-ink">
+      {/* The root layout sets no title and not-found files take no metadata
+          export, so the global 404 names itself. React 19 hoists this into
+          <head>. */}
+      <title>{`${dict.notFound.title} — ${dict.meta.titleSuffix}`}</title>
       <header className="container flex h-[88px] shrink-0 items-center justify-between">
         <Link href={routes.home(locale)} aria-label={companyLegalName} className="-m-2 p-2">
           <Logo />

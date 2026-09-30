@@ -74,9 +74,18 @@ export function Media({
         <Placeholder alt={alt} label={label} seed={seed} showTag={showTag} />
       )}
       {src && caption && (
-        <span className="label pointer-events-none absolute bottom-4 left-4 z-[1] text-white/80 [text-shadow:0_1px_12px_rgb(0_0_0/0.45)]">
-          {caption}
-        </span>
+        <>
+          {/* Local scrim: the caption is the honesty label for renders and has
+              to stay legible over pale pavement and sky. Only the bottom
+              corner is shaded, so the photograph itself keeps its light. */}
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute bottom-0 left-0 z-[1] h-24 w-full bg-gradient-to-t from-scrim/55 via-scrim/20 to-transparent md:h-28 md:w-2/3 md:bg-[radial-gradient(120%_100%_at_0%_100%,rgb(var(--scrim)/0.55),rgb(var(--scrim)/0.18)_45%,transparent_75%)]"
+          />
+          <span className="label pointer-events-none absolute bottom-4 left-4 z-[2] text-white [text-shadow:0_1px_10px_rgb(0_0_0/0.5)]">
+            {caption}
+          </span>
+        </>
       )}
     </div>
   );

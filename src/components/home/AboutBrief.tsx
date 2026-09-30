@@ -14,19 +14,20 @@ import { Button } from '@/components/ui/Button';
  *
  *   01 — О КОМПАНИИ ───────────────────────────────────────────────
  *
- *   Надёжность,            Pamir Construct создаёт жилые проекты,
- *   подтверждённая         сочетая качество строительства, …
- *   построенными           (display-md, light — read as one sentence)
- *   объектами
- *                          ПОДРОБНЕЕ О КОМПАНИИ ⟶
+ *   Надёжность,                                   Pamir Construct создаёт
+ *   подтверждённая                                жилые проекты, … (lead,
+ *   построенными объектами                        muted, cols 9–12)
+ *   (display-lg, light, cols 1–7)                 ПОДРОБНЕЕ О КОМПАНИИ ⟶
  *
  *   ───────────────────────────────────────────────────────────────
  *   Кишинёв                4                      2
  *   ОФИС                   ЗАВЕРШЁННЫЕ            В СТРОИТЕЛЬСТВЕ
  *
- * The facts row sits on the same 12-column grid as the text above (4 · 4 · 4),
- * so its columns land exactly under the title and the statement. Counts are
- * derived from the project list, never typed in.
+ * One display voice: the title is the statement, the paragraph under it
+ * supports it at lead size. The facts row sits on the same 12-column grid
+ * (4 · 4 · 4), so the copy column starts exactly over a fact (the second on
+ * tablet, the third on desktop). Counts are derived from the project list,
+ * never typed in.
  */
 export function AboutBrief({ locale, dict }: { locale: Locale; dict: Dictionary }) {
   const completed = projects.filter((p) => p.status === 'completed').length;
@@ -50,23 +51,26 @@ export function AboutBrief({ locale, dict }: { locale: Locale; dict: Dictionary 
         <span aria-hidden="true" className="rule-draw h-px flex-1 bg-line/15" />
       </div>
 
-      <div className="mt-14 grid-12 gap-y-10 md:mt-20 lg:mt-28">
-        <Reveal stagger className="col-span-4 md:col-span-4">
+      <div className="mt-14 grid-12 gap-y-10 md:mt-20 md:gap-y-14 lg:mt-28">
+        {/* The title IS the statement: the one display voice in the block. */}
+        <Reveal stagger className="col-span-4 md:col-span-10 lg:col-span-7">
           <h2
             id="about-title"
-            className="max-w-[18ch] font-display text-display-sm font-light text-balance text-ink md:pt-[0.55rem] lg:pt-3"
+            className="font-display text-display-lg font-light text-balance text-ink"
           >
             {splitWords(dict.about.title)}
           </h2>
         </Reveal>
 
-        <div className="col-span-4 md:col-span-8">
+        {/* Supporting copy steps right, always onto a fact column's edge:
+            under the title from col 5 on tablet, beside it in cols 9–12 on
+            desktop. The optical offset lines the lead's first x-height up
+            with the title's cap line. */}
+        <div className="col-span-4 md:col-span-8 md:col-start-5 lg:col-span-4 lg:col-start-9 lg:pt-[0.4rem]">
           <Reveal delay={0.08}>
-            <p className="font-display text-display-md font-light text-pretty text-ink">
-              {bindDashes(dict.about.body)}
-            </p>
+            <p className="max-w-[40ch] text-pretty text-lead text-muted">{bindDashes(dict.about.body)}</p>
           </Reveal>
-          <Reveal delay={0.16} className="mt-10 md:mt-14">
+          <Reveal delay={0.16} className="mt-8 md:mt-10">
             <Button href={routes.company(locale)} variant="ghost" arrow>
               {dict.about.cta}
             </Button>

@@ -78,6 +78,10 @@ export function Gallery({
 }) {
   const [open, setOpen] = useState<number | null>(null);
   const close = useCallback(() => setOpen(null), []);
+  // The tile that opened the viewer, for focus on close. Taken from the click
+  // itself: Safari does not focus a clicked button, so document.activeElement
+  // at open time would be <body>.
+  const openedBy = useRef<HTMLElement | null>(null);
   const count = images.length;
 
   if (count === 0) return null;
@@ -92,7 +96,10 @@ export function Gallery({
             <figure key={src + i} className={t.place}>
               <button
                 type="button"
-                onClick={() => setOpen(i)}
+                onClick={(e) => {
+                  openedBy.current = e.currentTarget;
+                  setOpen(i);
+                }}
                 aria-haspopup="dialog"
                 aria-label={alt}
                 className="group block w-full cursor-zoom-in text-left"
@@ -118,6 +125,7 @@ export function Gallery({
           name={name}
           caption={caption}
           labels={labels}
+          returnFocus={openedBy}
           onIndex={setOpen}
           onClose={close}
         />
@@ -137,6 +145,7 @@ function Lightbox({
   name,
   caption,
   labels,
+  returnFocus,
   onIndex,
   onClose,
 }: {
@@ -145,6 +154,8 @@ function Lightbox({
   name: string;
   caption?: string;
   labels: { close: string; title: string };
+  /** The tile that opened the viewer; focus goes back there on close. */
+  returnFocus: React.RefObject<HTMLElement | null>;
   onIndex: (i: number) => void;
   onClose: () => void;
 }) {
@@ -168,7 +179,7 @@ function Lightbox({
   // Mount / unmount: focus, scroll lock (compensating for the scrollbar so the
   // page behind does not shift), and focus restore.
   useEffect(() => {
-    const restoreTo = document.activeElement as HTMLElement | null;
+    const restoreTo = returnFocus.current ?? (document.activeElement as HTMLElement | null);
     const { paddingRight } = document.body.style;
     const gap = window.innerWidth - document.documentElement.clientWidth;
     if (gap > 0) document.body.style.paddingRight = `${gap}px`;
@@ -179,7 +190,7 @@ function Lightbox({
       document.body.style.paddingRight = paddingRight;
       restoreTo?.focus?.({ preventScroll: true });
     };
-  }, []);
+  }, [returnFocus]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -218,7 +229,7 @@ function Lightbox({
       aria-label={`${name} — ${labels.title}`}
       data-lenis-prevent
       className={cn(
-        'fixed inset-0 z-[110] flex flex-col bg-scrim/95 text-white transition-opacity duration-500 ease-premium',
+        'fixed inset-0 z-[110] flex flex-col bg-scrim text-white transition-opacity duration-500 ease-premium',
         shown ? 'opacity-100' : 'opacity-0',
       )}
       onClick={onClose}

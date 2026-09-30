@@ -46,15 +46,23 @@ export function Quality({ locale, dict }: { locale: Locale; dict: Dictionary }) 
           className="relative aspect-[4/3] md:aspect-[16/10] lg:col-span-6 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:aspect-[4/5] lg:self-stretch lg:justify-self-stretch"
         >
           {/* Stock photo, atmosphere only: the theme grading still applies on
-              the <img>; the frame mutes it further so the site's own project
-              photographs stay the loudest images on the page. */}
+              the <img>; the frame then takes it almost to monochrome and lifts
+              it slightly (dims it on the dark theme, where pale concrete would
+              glare), so the red/yellow formwork reads as a quiet texture and
+              the site's own project photographs stay the loudest images on the
+              page. The right-hand crop keeps most of the yellow formwork out of
+              the tall lg frame.
+              sizes: the 3:2 photo covers a ≥4:5 frame at lg, so it renders
+              ~1.9× the frame width (≈ 85vw), not the frame's own 45vw; up to
+              ~1200px the frame stretches taller with the text column and the
+              photo needs up to ~1.08vw, so those widths keep 100vw. */}
           <Media
             src="/photos/quality-site.jpg"
             alt={dict.quality.eyebrow}
             fill
-            position="82% 50%"
-            className="saturate-[.55]"
-            sizes="(max-width: 1024px) 100vw, 45vw"
+            position="96% 50%"
+            className="brightness-[1.03] contrast-[.92] saturate-[.2] [[data-theme=dark]_&]:brightness-[.86]"
+            sizes="(max-width: 1200px) 100vw, 85vw"
             seed={4}
           />
         </Reveal>

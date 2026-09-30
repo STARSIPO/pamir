@@ -73,6 +73,12 @@ export interface Project {
    * buyer never mistakes a visualisation of an unbuilt block for a photo.
    */
   coverKind?: 'render' | 'photo';
+  /**
+   * CSS object-position for the cover when a card crops it (4/5, 1/1…), e.g.
+   * '57% 50%'. Set it when the building is off-centre in a wide render, so a
+   * portrait crop keeps the whole tower instead of cutting its edge.
+   */
+  coverPosition?: string;
   gallery: string[];
   excerpt: Localized;
   description: Localized[];

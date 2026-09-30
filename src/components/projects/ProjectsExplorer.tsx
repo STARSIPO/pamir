@@ -46,12 +46,68 @@ const OUT_MS = 280;
    of a fixed prop value. Percentage margins resolve against the card's own
    grid-area width, which keeps the offsets proportional at every width.
    ------------------------------------------------------------------ */
-type Slot = { place: string; ratio: string; size: 'md' | 'lg'; sizes: string };
+type Slot = {
+  place: string;
+  /** `--card-ratio` per breakpoint. Must match `crop`. */
+  ratio: string;
+  size: 'md' | 'lg';
+  /** Frame width on phones, tablets (md) and desktops (lg) in vw, then in px once the container stops growing at 1680px. */
+  width: readonly [phone: number, tablet: number, desktop: number, cap: number];
+  /** The same ratios as `ratio`, as numbers (w / h), on phones, tablets and desktops. */
+  crop: readonly [phone: number, tablet: number, desktop: number];
+};
 
-const WIDE_SIZES = '(min-width: 1680px) 880px, (min-width: 1024px) 56vw, 92vw';
-const NARROW_SIZES = '(min-width: 1680px) 620px, (min-width: 1024px) 40vw, (min-width: 768px) 70vw, 92vw';
-const HALF_SIZES = '(min-width: 1680px) 760px, (min-width: 1024px) 47vw, (min-width: 768px) 70vw, 92vw';
-const FULL_SIZES = '(min-width: 1680px) 1540px, 92vw';
+// Measured off the 12-column grid: 12 cols ≈ 92vw, 9 ≈ 69vw at md; at lg
+// 7 cols ≈ 52vw, 6 ≈ 44vw, 5 ≈ 36vw (rounded up, so the 3.5% hover zoom
+// never runs out of pixels).
+const WIDE = [92, 92, 52, 880] as const;
+const NARROW = [92, 69, 36, 620] as const;
+const HALF = [92, 69, 44, 760] as const;
+const FULL = [92, 92, 92, 1540] as const;
+
+/**
+ * Intrinsic size (px) of each cover in /public, as scripts/process-photos.mjs
+ * prints it. Covers are cropped into their frames with object-cover, so a
+ * landscape photo in a portrait frame renders far wider than the frame: a
+ * 2000×924 panorama in a 4/5 frame is 2.7× the frame's width. `sizes` has to
+ * ask for that rendered width, or the browser picks a file that is too small
+ * and upscales it. Update an entry when a cover is re-cut.
+ */
+const COVER_SIZE: Record<string, readonly [w: number, h: number]> = {
+  '/photos/projects/botanic-star-2-blocks-3-4/cover.jpg': [1300, 1074],
+  '/photos/projects/eco-house/cover.jpg': [1000, 1161],
+  '/photos/projects/botanic-star-2-block-2/cover.jpg': [1400, 1018],
+  '/photos/projects/botanic-star-2-block-1/cover.jpg': [2000, 924],
+  '/photos/projects/botanic-star/cover.jpg': [1200, 1803],
+  '/photos/projects/botanic-park/cover.jpg': [1800, 1195],
+};
+
+/**
+ * An unmeasured cover is assumed to be a wide landscape: asking too much only
+ * costs bytes (the optimizer never enlarges past the source), asking too
+ * little costs sharpness.
+ */
+const UNKNOWN_COVER_ASPECT = 16 / 9;
+
+/** `sizes` for a cover in a slot: the width the cropped photo is drawn at. */
+function sizesFor(slot: Slot, cover?: string): string {
+  const px = cover ? COVER_SIZE[cover] : undefined;
+  const aspect = px ? px[0] / px[1] : UNKNOWN_COVER_ASPECT;
+  // How many times wider than its frame the photo is drawn.
+  const k = (frame: number) => Math.max(1, aspect / frame);
+  const [phone, tablet, desktop, cap] = slot.width;
+  const [onPhone, onTablet, onDesktop] = slot.crop;
+  const steps: [query: string, size: string][] = [
+    ['(min-width: 1680px) ', `${Math.ceil(cap * k(onDesktop))}px`],
+    ['(min-width: 1024px) ', `${Math.ceil(desktop * k(onDesktop))}vw`],
+    ['(min-width: 768px) ', `${Math.ceil(tablet * k(onTablet))}vw`],
+    ['', `${Math.ceil(phone * k(onPhone))}vw`],
+  ];
+  return steps
+    .filter(([, size], i) => i === steps.length - 1 || size !== steps[i + 1][1])
+    .map(([query, size]) => query + size)
+    .join(', ');
+}
 
 // A 5-column card is too narrow on desktop for ProjectCard's side-by-side
 // name + "view project" row: stack them, like a caption under a print.
@@ -61,46 +117,53 @@ const SLOTS = {
   aWide: {
     place: 'md:col-span-12 lg:col-span-7 lg:col-start-1',
     ratio: '[--card-ratio:1/1] md:[--card-ratio:4/3] lg:[--card-ratio:5/4]',
+    crop: [1, 4 / 3, 5 / 4],
     size: 'lg',
-    sizes: WIDE_SIZES,
+    width: WIDE,
   },
   aNarrow: {
     place: `md:col-span-9 md:col-start-4 lg:col-span-5 lg:col-start-8 lg:mt-[36%] ${STACKED}`,
     ratio: '[--card-ratio:4/5]',
+    crop: [4 / 5, 4 / 5, 4 / 5],
     size: 'md',
-    sizes: NARROW_SIZES,
+    width: NARROW,
   },
   bNarrow: {
     place: `md:col-span-9 md:col-start-1 lg:col-span-5 lg:col-start-1 ${STACKED}`,
     ratio: '[--card-ratio:4/5] lg:[--card-ratio:3/4]',
+    crop: [4 / 5, 4 / 5, 3 / 4],
     size: 'md',
-    sizes: NARROW_SIZES,
+    width: NARROW,
   },
   bWide: {
     place: 'md:col-span-12 lg:col-span-7 lg:col-start-6 lg:mt-[30%]',
     ratio: '[--card-ratio:1/1] md:[--card-ratio:4/3] lg:[--card-ratio:5/4]',
+    crop: [1, 4 / 3, 5 / 4],
     size: 'lg',
-    sizes: WIDE_SIZES,
+    width: WIDE,
   },
   cLeft: {
     place: 'md:col-span-9 md:col-start-1 lg:col-span-6 lg:col-start-1',
     ratio: '[--card-ratio:4/5]',
+    crop: [4 / 5, 4 / 5, 4 / 5],
     size: 'md',
-    sizes: HALF_SIZES,
+    width: HALF,
   },
   cRight: {
     // 4/5 beside 1/1 at equal widths: dropping the square by 25% of its
     // width lands both photos on the same bottom edge.
     place: 'md:col-span-9 md:col-start-4 lg:col-span-6 lg:col-start-7 lg:mt-[25%]',
     ratio: '[--card-ratio:1/1]',
+    crop: [1, 1, 1],
     size: 'md',
-    sizes: HALF_SIZES,
+    width: HALF,
   },
   full: {
     place: 'md:col-span-12',
     ratio: '[--card-ratio:4/5] md:[--card-ratio:4/3] lg:[--card-ratio:16/9]',
+    crop: [4 / 5, 4 / 3, 16 / 9],
     size: 'lg',
-    sizes: FULL_SIZES,
+    width: FULL,
   },
 } satisfies Record<string, Slot>;
 
@@ -174,19 +237,52 @@ export function ProjectsExplorer({
     [shown, projects],
   );
 
-  /** On phones the tab strip scrolls sideways: keep the chosen tab in view. */
+  /*
+   * On phones the tab strip scrolls sideways, edge to edge. Each edge fades
+   * out only while tabs run past it: the fade grows with the distance still
+   * to scroll (up to the gutter plus 1.5rem), so it is gone at either end and
+   * never switches abruptly. The widths travel to the mask as --fade-s /
+   * --fade-e; before hydration the CSS fallbacks match the resting state
+   * (start clean, end faded).
+   */
+  useEffect(() => {
+    const list = tablist.current;
+    if (!list) return;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const rest = list.scrollWidth - list.clientWidth - list.scrollLeft;
+      const fade = (parseFloat(getComputedStyle(list).paddingLeft) || 0) + 24;
+      list.style.setProperty('--fade-s', `${Math.round(Math.min(Math.max(list.scrollLeft, 0), fade))}px`);
+      list.style.setProperty('--fade-e', `${Math.round(Math.min(Math.max(rest, 0), fade))}px`);
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    update();
+    list.addEventListener('scroll', schedule, { passive: true });
+    // Web fonts and viewport changes move the tab widths.
+    const ro = new ResizeObserver(schedule);
+    ro.observe(list);
+    tabs.current.forEach((t) => t && ro.observe(t));
+    return () => {
+      list.removeEventListener('scroll', schedule);
+      ro.disconnect();
+      cancelAnimationFrame(frame);
+    };
+  }, [showFilters]);
+
+  /** Centre the chosen tab in the phone strip, so its neighbours peek in from the faded edges. */
   function bringIntoView(i: number) {
     const list = tablist.current;
     const tab = tabs.current[i];
-    if (!list || !tab || list.scrollWidth <= list.clientWidth) return;
-    const pad = parseFloat(getComputedStyle(list).paddingLeft) || 0;
+    if (!list || !tab) return;
+    const max = list.scrollWidth - list.clientWidth;
+    if (max <= 0) return;
     const l = list.getBoundingClientRect();
     const t = tab.getBoundingClientRect();
-    const dx =
-      t.right > l.right - pad ? t.right - (l.right - pad)
-      : t.left < l.left + pad ? t.left - (l.left + pad)
-      : 0;
-    if (dx) list.scrollBy({ left: dx, behavior: reduce ? 'auto' : 'smooth' });
+    const left = Math.min(max, Math.max(0, list.scrollLeft + t.left + t.width / 2 - (l.left + l.width / 2)));
+    if (Math.abs(left - list.scrollLeft) >= 1) list.scrollTo({ left, behavior: reduce ? 'auto' : 'smooth' });
   }
 
   function select(next: Filter) {
@@ -218,7 +314,8 @@ export function ProjectsExplorer({
     if (next < 0) return;
     e.preventDefault();
     select(FILTERS[next]);
-    tabs.current[next]?.focus();
+    // The strip scrolls itself (smoothly); a focus scroll would cut it short.
+    tabs.current[next]?.focus({ preventScroll: true });
   }
 
   const panelId = `${uid}-panel`;
@@ -233,7 +330,10 @@ export function ProjectsExplorer({
             role="tablist"
             aria-label={dict.projectsPage.eyebrow}
             onKeyDown={onTabKey}
-            className="no-scrollbar -mx-[var(--gutter)] flex gap-x-9 overflow-x-auto px-[var(--gutter)] md:mx-0 md:gap-x-12 md:overflow-visible md:px-0 lg:gap-x-16"
+            className={cn(
+              'no-scrollbar -mx-[var(--gutter)] flex gap-x-9 overflow-x-auto px-[var(--gutter)] md:mx-0 md:gap-x-12 md:overflow-visible md:px-0 lg:gap-x-16',
+              'max-md:[mask-image:linear-gradient(90deg,transparent,black_var(--fade-s,0px),black_calc(100%_-_var(--fade-e,2.75rem)),transparent)]',
+            )}
           >
             {FILTERS.map((f, i) => {
               const active = f === filter;
@@ -333,7 +433,7 @@ export function ProjectsExplorer({
                     index={i}
                     aspect="var(--card-ratio, 4 / 5)"
                     size={slot.size}
-                    sizes={slot.sizes}
+                    sizes={sizesFor(slot, p.cover)}
                     priority={showFilters && i < 2}
                   />
                 </li>

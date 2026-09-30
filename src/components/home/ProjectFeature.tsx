@@ -63,7 +63,13 @@ export function splitTied(text: string): React.ReactNode {
  * frame is a column narrower) on purpose: the offset lets the row breathe.
  *
  * The whole row is one link; the photo zooms slowly on hover via `group`.
- * Below `lg` it stacks: photo at full container width, text underneath.
+ * Below `lg` it stacks: photo at full container width, text underneath. On a
+ * tablet the mirrored row keeps both photo and text to the right two thirds,
+ * so they share one left edge and the empty third reads as a margin.
+ *
+ * The link is named by the heading alone (aria-labelledby) and described by
+ * the status line: left to itself it would read out the alt text, the render
+ * caption, the address, the name a second time and the excerpt.
  */
 export function ProjectFeature({
   project,
@@ -74,6 +80,8 @@ export function ProjectFeature({
   reverse = false,
   aspect = reverse ? '4 / 5' : '5 / 4',
   position,
+  imgClassName,
+  sizes,
   className,
 }: {
   project: Project;
@@ -86,6 +94,10 @@ export function ProjectFeature({
   aspect?: string;
   /** CSS object-position for the photo. */
   position?: string;
+  /** Extra classes on the <img>, e.g. a `[scale:…]` detail crop. */
+  imgClassName?: string;
+  /** Overrides the default `sizes` (needed when imgClassName enlarges the photo). */
+  sizes?: string;
   className?: string;
 }) {
   const name = project.name[locale];
@@ -93,10 +105,14 @@ export function ProjectFeature({
     project.status === 'construction' ? dict.common.status.construction : dict.common.status.completed;
   const caption = project.coverKind === 'render' ? dict.design.render : undefined;
   const pad = (n: number) => String(n).padStart(2, '0');
+  const titleId = `feature-${project.slug}-title`;
+  const metaId = `feature-${project.slug}-meta`;
 
   return (
     <Link
       href={routes.project(locale, project.slug)}
+      aria-labelledby={titleId}
+      aria-describedby={metaId}
       className={cn('group grid grid-cols-1 gap-y-9 md:gap-y-12 lg:grid-cols-12 lg:gap-x-gutter', className)}
     >
       <div
@@ -117,11 +133,13 @@ export function ProjectFeature({
             label={name}
             seed={index}
             position={position}
+            imgClassName={imgClassName}
             caption={caption}
             sizes={
-              reverse
+              sizes ??
+              (reverse
                 ? '(max-width: 767px) 100vw, (max-width: 1023px) 66vw, 50vw'
-                : '(max-width: 1023px) 100vw, 58vw'
+                : '(max-width: 1023px) 100vw, 58vw')
             }
             zoom
           />
@@ -130,13 +148,14 @@ export function ProjectFeature({
 
       {/* Text: five columns with a 12% inset on the photo side. Four plain
           columns are ~6.9em of display-lg — one word short of "Botanic Star
-          2 —" — so the inset carries the breathing room instead. */}
+          2 —" — so the inset carries the breathing room instead. On a tablet
+          the mirrored row's text follows its photo to the right two thirds. */}
       <Reveal
         delay={0.12}
         className={cn(
           'lg:row-start-1 lg:col-span-5',
           reverse
-            ? 'lg:col-start-1 lg:self-start lg:pr-[12%] lg:pt-[clamp(2rem,6vw,7rem)]'
+            ? 'md:ml-auto md:w-2/3 lg:col-start-1 lg:ml-0 lg:w-auto lg:self-start lg:pr-[12%] lg:pt-[clamp(2rem,6vw,7rem)]'
             : 'lg:col-start-8 lg:self-end lg:pl-[12%]',
         )}
       >
@@ -147,7 +166,7 @@ export function ProjectFeature({
           <span className="h-px flex-1 bg-line/15" />
         </div>
 
-        <div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-2 text-muted">
+        <div id={metaId} className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-2 text-muted">
           <StatusBadge status={project.status} label={statusLabel} />
           <span aria-hidden="true" className="label">
             ·
@@ -158,7 +177,7 @@ export function ProjectFeature({
             wrap mid-list and strand a separator. */}
         {project.address && <p className="label mt-3 text-muted">{project.address[locale]}</p>}
 
-        <h3 className="mt-8 font-display text-display-lg font-light text-balance text-ink md:mt-10">
+        <h3 id={titleId} className="mt-8 font-display text-display-lg font-light text-balance text-ink md:mt-10">
           {typesetName(name)}
         </h3>
 

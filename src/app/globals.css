@@ -20,6 +20,8 @@
      --accent-soft   quieter accent (decorative lines, hover fills)
      --accent-strong accent for hover on accent
      --on-accent     text placed on an accent fill
+     --accent-on-dark the accent as it reads on dark grounds (band,
+                     photos, scrim dialogs) — see "Dark grounds" below
      --band*         the contrast band (CTA, footer): bg / text / muted
      --line          hairline colour, always used with alpha
      --scrim         photo overlay; stays near-black in every theme
@@ -33,11 +35,12 @@
   --canvas-alt: 229 224 215; /* #E5E0D7 */
   --surface: 255 255 255; /* #FFFFFF */
   --ink: 23 23 23; /* #171717 */
-  --muted: 106 104 99; /* #6A6863 */
+  --muted: 99 97 92; /* #63615C — 5.4:1 on canvas, 4.7:1 on canvas-alt */
   --accent: 154 130 100; /* #9A8264 */
   --accent-soft: 201 187 166; /* #C9BBA6 */
   --accent-strong: 127 106 80; /* #7F6A50 */
   --on-accent: 255 255 255;
+  --accent-on-dark: 154 130 100; /* 4.9:1 on band */
   --band: 23 23 23; /* #171717 */
   --band-fg: 242 239 233;
   --band-muted: 160 156 148; /* #A09C94 */
@@ -50,7 +53,9 @@
 [data-theme='dark'] {
   /* Variant 2 — Premium Dark: strict, restrained, never "nightclub". */
   --canvas: 17 18 16; /* #111210 */
-  --canvas-alt: 27 28 25; /* #1B1C19 */
+  /* canvas → canvas-alt → band step up in value, so alternate sections and
+     the closing band (CTA + footer) read as separate planes, not one sheet. */
+  --canvas-alt: 24 25 22; /* #181916 */
   --surface: 27 28 25; /* #1B1C19 */
   --ink: 244 241 234; /* #F4F1EA */
   --muted: 170 167 159; /* #AAA79F */
@@ -58,7 +63,8 @@
   --accent-soft: 112 97 77; /* #70614D */
   --accent-strong: 200 178 142; /* #C8B28E */
   --on-accent: 17 18 16;
-  --band: 27 28 25; /* #1B1C19 */
+  --accent-on-dark: 179 154 115; /* 6:1 on band */
+  --band: 33 34 30; /* #21221E */
   --band-fg: 244 241 234;
   --band-muted: 170 167 159;
   --line: 244 241 234;
@@ -73,11 +79,13 @@
   --canvas-alt: 213 214 208; /* #D5D6D0 */
   --surface: 248 248 245; /* #F8F8F5 */
   --ink: 22 24 22; /* #161816 */
-  --muted: 105 109 104; /* #696D68 */
+  --muted: 88 92 87; /* #585C57 — 5.6:1 on canvas, 4.7:1 on canvas-alt */
   --accent: 89 102 91; /* #59665B */
   --accent-soft: 156 165 156; /* #9CA59C */
   --accent-strong: 70 81 74; /* #46514A */
   --on-accent: 248 248 245;
+  /* The dark sage is ~3:1 on the band: dark grounds use the soft sage. */
+  --accent-on-dark: 156 165 156; /* #9CA59C — 7:1 on band */
   --band: 22 24 22; /* #161816 */
   --band-fg: 233 233 229;
   --band-muted: 154 158 152; /* #9A9E98 */
@@ -141,9 +149,43 @@ body {
   color: rgb(var(--on-accent));
 }
 
+/* 2px: at DPR 1 a 1.5px outline rasterises to a hairline. --focus is never
+   set on :root, so the fallback resolves --accent at the focused element and
+   follows the dark-ground remap below. */
 :focus-visible {
-  outline: 1.5px solid rgb(var(--accent));
+  outline: 2px solid rgb(var(--focus, var(--accent)));
   outline-offset: 4px;
+}
+
+/* ------------------------------------------------------------
+   Dark grounds: the contrast band (CTA, footer, dark page heroes), photos
+   under a scrim (heroes, spotlight, the transparent header), and the
+   gallery / floorplan dialogs. The accent is re-pointed at a value that
+   holds on dark (stone's dark sage is ~3:1 on the band), and text on an
+   accent fill turns dark. Focus rings, ::selection, status squares, active
+   dots and button hovers follow without per-component changes.
+   Opt a custom dark block in with `.ground-dark` / data-ground="dark"
+   (or `.ground-photo` / data-ground="photo" over photographs).
+   ------------------------------------------------------------ */
+.ground-dark,
+[data-ground='dark'],
+.ground-photo,
+[data-ground='photo'],
+.bg-band,
+.bg-scrim,
+.text-white {
+  --accent: var(--accent-on-dark);
+  --accent-strong: var(--accent-on-dark);
+  --on-accent: var(--band);
+}
+
+/* Over photographs the ring is white: a tan or sage box disappears
+   against sky and facades. */
+.ground-photo,
+[data-ground='photo'],
+.bg-scrim,
+.text-white {
+  --focus: 255 255 255;
 }
 
 @media (prefers-reduced-motion: reduce) {

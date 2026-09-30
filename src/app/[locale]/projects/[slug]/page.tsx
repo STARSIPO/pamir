@@ -13,8 +13,10 @@ import { FeatureIcon } from '@/components/ui/FeatureIcon';
 import { ProjectHero } from '@/components/project/ProjectHero';
 import { Gallery } from '@/components/project/Gallery';
 import { Floorplans } from '@/components/project/Floorplans';
+import { Media } from '@/components/ui/Media';
 import { ProjectCard } from '@/components/projects/ProjectCard';
 import { LeadSection } from '@/components/home/LeadSection';
+import { cn } from '@/lib/utils';
 
 export function generateStaticParams() {
   return locales.flatMap((locale) => projects.map((p) => ({ locale, slug: p.slug })));
@@ -41,13 +43,50 @@ export async function generateMetadata(
 const pad = (n: number) => String(n).padStart(2, '0');
 
 /**
- * Project page. One idea per section, a lot of air between them, and the
- * same opener everywhere: an index on a hairline, then the content.
+ * Framing of the About picture, per project. With no second picture, About
+ * shows a detail of the hero render — zoomed toward `origin` so it reads as a
+ * second view, not a repeat of the hero a screen above. `origin` places the
+ * zoomed window the way object-position places a crop (0% = left/top edge).
+ * `aspect` is the source's width / height, so `sizes` can follow the width
+ * the picture is painted at (see AboutPicture).
  *
- *   Hero (full-bleed photograph, huge name)
- *   01 About      statement + specs as a hairline table
- *   02 Advantages hairline grid, thin icons
- *   03 Gallery    editorial image grid + lightbox        (only with photos)
+ * Block 2 has one render: About frames its crown — the curved dark volume,
+ * the bay-window column and the yellow fin — cut off above the lower floors,
+ * so there is no ground, no park and no whole-tower silhouette to echo the
+ * hero. 1.6× keeps the 1400px source near native size in the lg frame.
+ */
+type Frame = { aspect?: number; position?: string; zoom?: number; origin?: string };
+const ABOUT_FRAME: Record<string, Frame> = {
+  'botanic-star-2-blocks-3-4': { aspect: 1.21, position: '80% 55%', zoom: 1.25, origin: '65% 75%' },
+  'botanic-star-2-block-2': { aspect: 1.375, position: '50% 50%', zoom: 1.6, origin: '36% 14%' },
+  'eco-house': { aspect: 0.861, position: '40% 50%' },
+  'botanic-star-2-block-1': { aspect: 1.78, position: '49% 50%' },
+};
+
+/**
+ * Advantage columns follow the count, so no row ends on an orphan: 3 → 3,
+ * 4 → 2×2 then 4, 5 → 2 + 3 then 5, 6 → 3, 8 → 2 then 4. Full class strings,
+ * so Tailwind sees every one. Below md the list is single-column rows.
+ */
+const ADVANTAGE_GRID: Record<number, string> = {
+  3: 'md:grid-cols-3',
+  4: 'md:grid-cols-2 lg:grid-cols-4',
+  5: 'md:grid-cols-6 lg:grid-cols-5',
+  6: 'md:grid-cols-3',
+  8: 'md:grid-cols-2 lg:grid-cols-4',
+};
+const advantageCell = (n: number, i: number) =>
+  n === 5 ? (i < 2 ? 'md:col-span-3 lg:col-span-1' : 'md:col-span-2 lg:col-span-1') : undefined;
+
+/**
+ * Project page. One idea per section, a lot of air between them, and the
+ * same opener everywhere: an index and a name on a hairline, then the content.
+ *
+ *   Hero (full-bleed photograph, huge name; a split at xl for small renders)
+ *   01 About      statement + specs as a hairline table; a tall picture beside
+ *                 them when the project has too few for a gallery
+ *   02 Advantages hairline grid, thin icons (≤2 items: rows under the specs)
+ *   03 Gallery    editorial image grid + lightbox        (2+ pictures)
  *   04 Plans      drawings in 1px frames                 (only with plans)
  *   05 Location   district, nearby list, route, map
  *   06 More       two projects, asymmetric
@@ -64,10 +103,24 @@ export default async function ProjectPage(props: { params: Promise<{ locale: str
   const name = project.name[locale];
   const renderCaption = project.coverKind === 'render' ? dict.design.render : undefined;
 
-  // The hero already shows its picture full-bleed; repeating it as the first
-  // gallery frame reads as filler.
+  // Every distinct picture of the project except the one the hero already
+  // shows full-bleed (the cover counts: Eco House's second render lives there).
+  // Two or more make a gallery. Fewer, and About carries the picture itself —
+  // the spare one, or a detail of the hero — so no page runs from the hero to
+  // the map without a photograph.
   const heroSrc = project.hero ?? project.cover;
-  const gallery = project.gallery.filter((src) => src !== heroSrc);
+  const pictures = Array.from(
+    new Set([project.cover, ...project.gallery].filter((src): src is string => !!src)),
+  ).filter((src) => src !== heroSrc);
+  const gallery = pictures.length >= 2 ? pictures : [];
+  const aboutSrc = pictures.length >= 2 ? undefined : (pictures[0] ?? heroSrc);
+  const aboutFrame = ABOUT_FRAME[project.slug] ?? {};
+
+  // One or two advantages do not carry a section and a display heading of
+  // their own: they join the specs as rows.
+  const advantagesInline = project.advantages.length > 0 && project.advantages.length <= 2;
+  const advantagesSection = project.advantages.length > 2;
+  const advantageCount = project.advantages.length;
 
   // The next two projects in catalogue order (wrapping), so every page links
   // onward to different neighbours.
@@ -87,7 +140,7 @@ export default async function ProjectPage(props: { params: Promise<{ locale: str
   // Section numbers follow what is actually on the page.
   const order = [
     'about',
-    project.advantages.length > 0 && 'advantages',
+    advantagesSection && 'advantages',
     gallery.length > 0 && 'gallery',
     project.floorplans.length > 0 && 'floorplans',
     hasLocation && 'location',
@@ -97,15 +150,50 @@ export default async function ProjectPage(props: { params: Promise<{ locale: str
 
   const [statement, ...rest] = project.description;
 
+  // Specs, plus the advantages when there are too few for their own section.
+  const facts =
+    project.specs.length > 0 || advantagesInline ? (
+      <>
+        {project.specs.length > 0 && (
+          <>
+            <h3 className="label text-muted">{d.specsTitle}</h3>
+            <dl className="mt-6 border-b border-line/15">
+              {project.specs.map((s) => (
+                <div key={s.key} className="flex items-baseline justify-between gap-6 border-t border-line/15 py-4 md:py-5">
+                  <dt className="text-sm text-muted">{s.label[locale]}</dt>
+                  <dd className="text-right text-base text-ink md:text-[1.0625rem]">{s.value[locale]}</dd>
+                </div>
+              ))}
+            </dl>
+          </>
+        )}
+        {advantagesInline && (
+          <div className={cn(project.specs.length > 0 && 'mt-12 md:mt-14')}>
+            <h3 className="label text-muted">{d.advantagesTitle}</h3>
+            <ul className="mt-6 border-b border-line/15">
+              {project.advantages.map((a, i) => (
+                <li key={a.icon + i} className="flex min-h-16 items-center gap-5 border-t border-line/15 py-4">
+                  <FeatureIcon name={a.icon} strokeWidth={1.25} className="h-5 w-5 shrink-0 text-muted" />
+                  <span className="flex-1 text-base text-ink md:text-[1.0625rem]">{a.label[locale]}</span>
+                  {a.note && <span className="text-sm text-muted">{a.note[locale]}</span>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </>
+    ) : null;
+
   return (
     <>
       <ProjectHero project={project} locale={locale} dict={dict} />
 
-      {/* 01 — About: the first paragraph as a statement, specs beside it. */}
+      {/* 01 — About: the first paragraph as a statement, specs beside it —
+          or, with a picture in the right-hand columns, under it. */}
       <Section id="about">
         <LabelRow index={num('about')}>{d.aboutTitle}</LabelRow>
         <div className="mt-12 grid gap-16 md:mt-20 lg:grid-cols-12 lg:gap-gutter">
-          <div className="lg:col-span-7">
+          <div className={aboutSrc ? 'lg:col-span-6' : 'lg:col-span-7'}>
             {statement && (
               <Reveal>
                 <p className="font-display text-display-md font-light text-pretty text-ink">{statement[locale]}</p>
@@ -122,41 +210,62 @@ export default async function ProjectPage(props: { params: Promise<{ locale: str
                 ))}
               </div>
             )}
+            {aboutSrc && facts && (
+              <Reveal delay={0.12} className="mt-14 md:mt-20 md:pl-[14.3%]">
+                {facts}
+              </Reveal>
+            )}
           </div>
 
-          {project.specs.length > 0 && (
-            <Reveal delay={0.12} className="lg:col-span-4 lg:col-start-9">
-              <h3 className="label text-muted">{d.specsTitle}</h3>
-              <dl className="mt-6 border-b border-line/15">
-                {project.specs.map((s) => (
-                  <div key={s.key} className="flex items-baseline justify-between gap-6 border-t border-line/15 py-4 md:py-5">
-                    <dt className="text-sm text-muted">{s.label[locale]}</dt>
-                    <dd className="text-right text-base text-ink md:text-[1.0625rem]">{s.value[locale]}</dd>
-                  </div>
-                ))}
-              </dl>
-            </Reveal>
+          {aboutSrc ? (
+            <AboutPicture
+              src={aboutSrc}
+              alt={name}
+              caption={renderCaption}
+              frame={aboutFrame}
+              className="md:ml-auto md:w-2/3 lg:col-span-5 lg:col-start-8 lg:ml-0 lg:w-auto"
+            />
+          ) : (
+            facts && (
+              <Reveal delay={0.12} className="lg:col-span-4 lg:col-start-9">
+                {facts}
+              </Reveal>
+            )
           )}
         </div>
       </Section>
 
-      {/* 02 — Advantages: a hairline grid, thin icons, nothing boxed. */}
-      {project.advantages.length > 0 && (
+      {/* 02 — Advantages: a hairline grid, thin icons, nothing boxed. Phones
+          get single-column rows, icon then label, like the nearby list. */}
+      {advantagesSection && (
         <Section id="advantages" spacing="sm" className="pb-section">
-          <SectionHeading index={num('advantages')} title={d.advantagesTitle} size="lg" />
-          <ul className="mt-14 grid grid-cols-2 gap-x-gutter gap-y-12 md:mt-20 md:grid-cols-3 lg:grid-cols-4">
+          <SectionHeading
+            index={num('advantages')}
+            eyebrow={dict.design.amenitiesEyebrow}
+            title={d.advantagesTitle}
+            size="lg"
+          />
+          <ul
+            className={cn(
+              'mt-10 grid grid-cols-1 border-b border-line/15 md:mt-20 md:gap-x-gutter md:gap-y-12 md:border-b-0',
+              ADVANTAGE_GRID[advantageCount] ?? 'md:grid-cols-3 lg:grid-cols-4',
+            )}
+          >
             {project.advantages.map((a, i) => (
               <Reveal
                 as="li"
                 key={a.icon + i}
                 delay={(i % 4) * 0.08}
-                className="flex min-h-[10.5rem] flex-col justify-between gap-10 border-t border-line/15 pt-5 md:min-h-[13rem]"
+                className={cn(
+                  'flex items-center gap-5 border-t border-line/15 py-5 md:min-h-[9rem] md:flex-col md:items-stretch md:justify-between md:gap-10 md:pb-0 md:pt-5 lg:min-h-[13rem]',
+                  advantageCell(advantageCount, i),
+                )}
               >
-                <div className="flex items-start justify-between gap-4">
-                  <span className="label tabular text-muted">{pad(i + 1)}</span>
-                  <FeatureIcon name={a.icon} strokeWidth={1.25} className="h-6 w-6 text-muted" />
+                <div className="flex shrink-0 items-start justify-between gap-4">
+                  <span className="label tabular text-muted max-md:hidden">{pad(i + 1)}</span>
+                  <FeatureIcon name={a.icon} strokeWidth={1.25} className="h-5 w-5 text-muted md:h-6 md:w-6" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="font-display text-display-sm font-light text-balance text-ink">{a.label[locale]}</p>
                   {a.note && <p className="mt-2 text-sm text-muted">{a.note[locale]}</p>}
                 </div>
@@ -166,11 +275,12 @@ export default async function ProjectPage(props: { params: Promise<{ locale: str
         </Section>
       )}
 
-      {/* 03 — Gallery, only when there are photographs beyond the hero. */}
+      {/* 03 — Gallery, only when there are two or more pictures beyond the hero. */}
       {gallery.length > 0 && (
         <Section id="gallery" spacing="sm" className="pb-section">
           <SectionHeading
             index={num('gallery')}
+            eyebrow={renderCaption ?? dict.design.photo}
             title={d.galleryTitle}
             size="lg"
             action={
@@ -193,7 +303,13 @@ export default async function ProjectPage(props: { params: Promise<{ locale: str
       {/* 04 — Floorplans, as drawings on paper plates. */}
       {project.floorplans.length > 0 && (
         <Section id="floorplans" tone="alt">
-          <SectionHeading index={num('floorplans')} title={d.floorplansTitle} subtitle={d.floorplansSubtitle} size="lg" />
+          <SectionHeading
+            index={num('floorplans')}
+            eyebrow={dict.design.apartmentsEyebrow}
+            title={d.floorplansTitle}
+            subtitle={d.floorplansSubtitle}
+            size="lg"
+          />
           <div className="mt-14 md:mt-20">
             <Floorplans floorplans={project.floorplans} name={name} locale={locale} dict={dict} />
           </div>
@@ -265,6 +381,7 @@ export default async function ProjectPage(props: { params: Promise<{ locale: str
         <Section id="more" spacing="sm" className="pb-section">
           <SectionHeading
             index={num('more')}
+            eyebrow={dict.design.portfolioEyebrow}
             title={d.otherProjects}
             size="lg"
             action={
@@ -322,5 +439,63 @@ function LabelRow({ index, children }: { index: string; children: React.ReactNod
       </Reveal>
       <span aria-hidden="true" className="rule-draw h-px flex-1 bg-line/15" />
     </div>
+  );
+}
+
+/**
+ * About's picture: a tall 4:5 frame that opens with the mask reveal. A zoomed
+ * detail scales the photograph inside the frame, so the render caption sits
+ * outside that layer (Media's own would be scaled and cropped with it). The
+ * caption and its corner scrim repeat Media's markup exactly: it is the
+ * render disclosure and has to hold on a white façade or pale pavement.
+ *
+ * `sizes` follows the painted width, not the frame's: a landscape source in
+ * a 4:5 frame is height-bound (1.25 × aspect frame widths wide), then scaled
+ * by the zoom — Block 2 at 1.6× paints ~2.75 frame widths. Frame widths:
+ * the container on phones, two thirds of it on tablets, five columns at lg.
+ */
+function AboutPicture({
+  src,
+  alt,
+  caption,
+  frame,
+  className,
+}: {
+  src: string;
+  alt: string;
+  caption?: string;
+  frame: Frame;
+  className?: string;
+}) {
+  const paint = Math.max(1, 1.25 * (frame.aspect ?? 1.5)) * (frame.zoom ?? 1);
+  const vw = (frameVw: number) => `${Math.ceil(frameVw * paint)}vw`;
+  return (
+    <Reveal variant="mask" className={className}>
+      <div className="relative overflow-hidden bg-canvas-alt" style={{ aspectRatio: '4 / 5' }}>
+        <div
+          className="absolute inset-0"
+          style={frame.zoom ? { transform: `scale(${frame.zoom})`, transformOrigin: frame.origin } : undefined}
+        >
+          <Media
+            src={src}
+            alt={alt}
+            fill
+            sizes={`(max-width: 768px) ${vw(100)}, (max-width: 1024px) ${vw(66)}, ${vw(40)}`}
+            position={frame.position}
+          />
+        </div>
+        {caption && (
+          <>
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute bottom-0 left-0 z-[1] h-24 w-full bg-gradient-to-t from-scrim/55 via-scrim/20 to-transparent md:h-28 md:w-2/3 md:bg-[radial-gradient(120%_100%_at_0%_100%,rgb(var(--scrim)/0.55),rgb(var(--scrim)/0.18)_45%,transparent_75%)]"
+            />
+            <span className="label pointer-events-none absolute bottom-4 left-4 z-[2] text-white [text-shadow:0_1px_10px_rgb(0_0_0/0.5)]">
+              {caption}
+            </span>
+          </>
+        )}
+      </div>
+    </Reveal>
   );
 }

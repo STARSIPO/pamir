@@ -9,22 +9,29 @@ import { cn } from '@/lib/utils';
  *  outline       hairline border → fills with ink on hover.
  *  ghost         text + arrow with a standing underline. Secondary actions.
  *  inverse       for the dark band (CTA, footer): solid band-fg.
- *  light         on photographs: solid white.
+ *  light         on photographs: solid white, near-black (scrim) label.
  *  outlineLight  on photographs: white hairline.
  */
 type Variant = 'primary' | 'outline' | 'ghost' | 'inverse' | 'light' | 'outlineLight';
 type Size = 'md' | 'lg';
 
+// Focus uses the site-wide :focus-visible outline (globals.css): 2px, 4px
+// clear of the button, accent on light grounds and white over photographs.
+// A ring with a transparent offset painted a solid 5px slab instead.
 const base =
-  'group relative inline-flex items-center justify-center gap-3 whitespace-nowrap text-[0.75rem] font-medium uppercase tracking-[0.14em] transition-[background-color,color,border-color] duration-500 ease-premium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent focus-visible:ring-offset-4 focus-visible:ring-offset-transparent disabled:pointer-events-none disabled:opacity-50';
+  'group relative inline-flex items-center justify-center gap-3 whitespace-nowrap text-[0.75rem] font-medium uppercase tracking-[0.14em] transition-[background-color,color,border-color] duration-500 ease-premium disabled:pointer-events-none disabled:opacity-50';
 
+// Hovers fill with accent-strong: the 12px uppercase label keeps AA on it in
+// every theme (warm white on the plain accent was 3.65:1). On dark grounds
+// globals.css re-points accent-strong / on-accent to a light fill + dark text.
 const variants: Record<Variant, string> = {
-  primary: 'bg-ink text-canvas hover:bg-accent hover:text-on-accent',
+  primary: 'bg-ink text-canvas hover:bg-accent-strong hover:text-on-accent',
   outline: 'border border-ink/25 text-ink hover:border-ink hover:bg-ink hover:text-canvas',
   ghost: 'text-ink',
-  inverse: 'bg-band-fg text-band hover:bg-accent hover:text-on-accent',
-  light: 'bg-white text-[#111] hover:bg-accent hover:text-on-accent',
-  outlineLight: 'border border-white/40 text-white hover:border-white hover:bg-white hover:text-[#111]',
+  inverse: 'bg-band-fg text-band hover:bg-accent-strong hover:text-on-accent',
+  light: 'bg-white text-scrim hover:bg-accent-strong hover:text-on-accent focus-visible:outline-white',
+  outlineLight:
+    'border border-white/40 text-white hover:border-white hover:bg-white hover:text-scrim focus-visible:outline-white',
 };
 
 const sizes: Record<Size, string> = {
@@ -64,7 +71,8 @@ type AnchorProps = CommonProps & { href: string } & React.AnchorHTMLAttributes<H
 export function Button(props: ButtonProps | AnchorProps) {
   const { variant = 'primary', size = 'md', arrow = false, className, children } = props;
   const ghost = variant === 'ghost';
-  const classes = cn(base, variants[variant], !ghost && sizes[size], ghost && 'h-auto px-0 py-1', className);
+  // Ghost keeps its text-only look but a 44px tap height (touch target).
+  const classes = cn(base, variants[variant], !ghost && sizes[size], ghost && 'min-h-11 px-0 py-1', className);
 
   const inner = (
     <>

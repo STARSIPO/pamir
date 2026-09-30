@@ -42,8 +42,12 @@ export function Advantages({ locale, dict }: { locale: Locale; dict: Dictionary 
       <SectionHeading index="03" eyebrow={dict.design.numbersEyebrow} title={dict.stats.title} />
 
       {/* Figures. <dt> comes first in the DOM (label, then value) for screen
-          readers; flex-col-reverse puts the numeral on top visually. */}
-      <dl className="mt-16 grid grid-cols-2 gap-y-14 md:mt-24 md:grid-cols-4 lg:mt-28">
+          readers; flex-col-reverse puts the numeral on top visually.
+          The gutter gap puts each hairline on the page grid: at lg every cell
+          spans 3 of 12 columns (lines on cols 1/4/7/10), at md the lines meet
+          the reasons list's 8 columns, and on phones they match the 2-column
+          lists further down. */}
+      <dl className="mt-16 grid grid-cols-2 gap-x-gutter gap-y-14 md:mt-24 md:grid-cols-4 lg:mt-28">
         {stats.map((s, i) => (
           <Reveal
             key={s.label.ru}

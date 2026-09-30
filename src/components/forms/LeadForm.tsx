@@ -1,6 +1,7 @@
 'use client';
 
 import { useId, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { Locale } from '@/i18n/config';
@@ -9,13 +10,51 @@ import { projects } from '@/content/projects';
 import { routes } from '@/i18n/routing';
 import { formatMoldovaPhone } from '@/lib/validation';
 import { cn } from '@/lib/utils';
+import { getLenis } from '@/lib/smooth-scroll';
 import { Button } from '@/components/ui/Button';
 
 type Variant = 'lead' | 'contact';
 type Tone = 'light' | 'dark';
 type Method = 'phone' | 'whatsapp' | 'telegram';
+type Field = 'name' | 'phone' | 'consent';
 
 const METHODS: Method[] = ['phone', 'whatsapp', 'telegram'];
+/** Validated controls, in DOM order — the first failing one takes focus. */
+const FIELDS: Field[] = ['name', 'phone', 'consent'];
+
+const validName = (v: string) => v.trim().length >= 2;
+const validPhone = (v: string) => /^\+373\d{8}$/.test(v.replace(/[^\d+]/g, ''));
+
+/**
+ * Field pairs (name/phone, email/subject) sit side by side only when the FORM
+ * is wide enough for two readable fields — measured on the form itself (it is
+ * an inline-size container), not on the viewport, because the same form lives
+ * in a full-width band, a 5-of-12 column and a narrow card.
+ */
+const pairCls =
+  'grid gap-9 [@container_(min-width:28rem)]:grid-cols-2 [@container_(min-width:28rem)]:gap-x-gutter';
+
+/**
+ * Bring a control the user has to fix into view: focus it without the
+ * browser's jump, then glide it to a third of the viewport (clear of the
+ * compact header, label above and error below in view). Skipped when it is
+ * already comfortably on screen.
+ */
+function revealControl(el: HTMLElement) {
+  el.focus({ preventScroll: true });
+  const rect = el.getBoundingClientRect();
+  const header = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h-compact')) || 68;
+  const margin = 72;
+  if (rect.top >= header + margin && rect.bottom <= window.innerHeight - margin) return;
+  const offset = -Math.max(header + margin, Math.round(window.innerHeight * 0.3));
+  const lenis = getLenis();
+  if (lenis) {
+    lenis.scrollTo(el, { offset });
+    return;
+  }
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  window.scrollTo({ top: window.scrollY + rect.top + offset, behavior: reduce ? 'auto' : 'smooth' });
+}
 
 /**
  * Split the consent sentence so its closing privacy-policy phrase can be the
@@ -36,10 +75,16 @@ function splitConsent(consent: string, policyTitle: string): [string, string] | 
  * Lead / contact form.
  *
  * Architectural and quiet: fields are single rules (no boxes), labels are small
- * tracked captions, focus turns the rule to the accent and thickens it. The
- * contact method is a row of square toggles; consent is a square checkbox.
+ * tracked captions, focus draws the rule at full ink and doubles its weight.
+ * The contact method is a row of square toggles; consent is a square checkbox.
+ *
+ * A failed submit moves focus to the first field to fix (scrolling it into
+ * view) and announces every error in a polite live region; each error clears
+ * as soon as its field becomes valid.
  *
  * `tone="light"` — on the dark band (light text); `tone="dark"` — on canvas.
+ * On the band every state is drawn in band-fg, never the accent: the band is
+ * near-black in all themes and the stone accent would vanish on it.
  */
 export function LeadForm({
   locale,
@@ -62,34 +107,45 @@ export function LeadForm({
   const [method, setMethod] = useState<Method>('phone');
   const [consent, setConsent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState<Record<string, boolean>>({});
+  const [errors, setErrors] = useState<Partial<Record<Field, boolean>>>({});
+  // Error summary for the live region, re-keyed on every failed attempt so a
+  // repeated failure is announced again.
+  const [announce, setAnnounce] = useState({ attempt: 0, text: '' });
   const [serverError, setServerError] = useState(false);
   const [done, setDone] = useState(false);
 
   const onBand = tone === 'light';
   const fid = (name: string) => `${uid}-${name}`;
+  const clearError = (key: Field) => setErrors((prev) => (prev[key] ? { ...prev, [key]: false } : prev));
 
   const fg = onBand ? 'text-band-fg' : 'text-ink';
   const muted = onBand ? 'text-band-muted' : 'text-muted';
   const labelCls = cn('label block', muted);
+  // Resting rules and placeholders hold ≥3:1 on their ground; hover darkens
+  // the rule, focus draws it at full strength and 2px.
   const fieldCls = cn(
     'block w-full rounded-none border-0 border-b bg-transparent px-0 py-4 text-base outline-none',
-    'transition-[border-color,box-shadow] duration-500 ease-premium',
-    'focus:border-accent focus:shadow-[0_1px_0_0_rgb(var(--accent))] focus-visible:outline-none',
+    'transition-[border-color,box-shadow] duration-500 ease-premium focus-visible:outline-none',
     onBand
-      ? 'border-band-fg/25 text-band-fg placeholder:text-band-muted/70 hover:border-band-fg/50'
-      : 'border-line/25 text-ink placeholder:text-muted/70 hover:border-line/50',
+      ? 'border-band-fg/40 text-band-fg placeholder:text-band-muted hover:border-band-fg/70 focus:border-band-fg focus:shadow-[0_1px_0_0_rgb(var(--band-fg))]'
+      : 'border-line/50 text-ink placeholder:text-muted hover:border-line/75 focus:border-ink focus:shadow-[0_1px_0_0_rgb(var(--ink))]',
   );
   const errField = 'border-red-500 hover:border-red-500 focus:border-red-500 focus:shadow-[0_1px_0_0_theme(colors.red.500)]';
   // Restrained red, readable on either ground (the band is dark in every
   // theme; the canvas is dark only in the dark theme).
   const errText = onBand ? 'text-red-400' : 'text-red-700 [[data-theme=dark]_&]:text-red-400';
   const optionCls = onBand ? 'bg-band text-band-fg' : 'bg-surface text-ink';
+  const errorMessages: Record<Field, string> = {
+    name: dict.form.errors.name,
+    phone: dict.form.errors.phone,
+    consent: dict.form.errors.consent,
+  };
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setServerError(false);
-    const fd = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    const fd = new FormData(form);
 
     const payload = {
       name: String(fd.get('name') ?? ''),
@@ -107,12 +163,26 @@ export function LeadForm({
     };
 
     // Lightweight client checks (server re-validates).
-    const nextErrors: Record<string, boolean> = {};
-    if (payload.name.trim().length < 2) nextErrors.name = true;
-    if (!/^\+373\d{8}$/.test(payload.phone.replace(/[^\d+]/g, ''))) nextErrors.phone = true;
+    const nextErrors: Partial<Record<Field, boolean>> = {};
+    if (!validName(payload.name)) nextErrors.name = true;
+    if (!validPhone(payload.phone)) nextErrors.phone = true;
     if (!consent) nextErrors.consent = true;
-    setErrors(nextErrors);
-    if (Object.keys(nextErrors).length) return;
+    const failed = FIELDS.filter((k) => nextErrors[k]);
+
+    // Commit synchronously so aria-invalid / aria-describedby are in the DOM
+    // before focus lands: the screen reader then reads the field's error.
+    flushSync(() => {
+      setErrors(nextErrors);
+      setAnnounce((prev) => ({
+        attempt: failed.length ? prev.attempt + 1 : prev.attempt,
+        text: failed.length ? `${failed.map((k) => errorMessages[k]).join('. ')}.` : '',
+      }));
+    });
+    if (failed.length) {
+      const first = document.getElementById(fid(failed[0]));
+      if (first) revealControl(first);
+      return;
+    }
 
     setSubmitting(true);
 
@@ -146,7 +216,13 @@ export function LeadForm({
   if (done) {
     return (
       <div role="status" className={cn('border-t pt-10', onBand ? 'border-band-fg/15' : 'border-line/15', className)}>
-        <span aria-hidden="true" className="flex h-11 w-11 items-center justify-center border border-accent text-accent">
+        <span
+          aria-hidden="true"
+          className={cn(
+            'flex h-11 w-11 items-center justify-center border',
+            onBand ? 'border-band-fg text-band-fg' : 'border-accent text-accent',
+          )}
+        >
           <svg viewBox="0 0 16 12" fill="none" className="h-3 w-4">
             <path d="M1 6.5 5.5 11 15 1" stroke="currentColor" strokeWidth="1.25" />
           </svg>
@@ -159,7 +235,7 @@ export function LeadForm({
     );
   }
 
-  const error = (key: string, message: string) =>
+  const error = (key: Field, message: string) =>
     errors[key] ? (
       <p id={fid(`${key}-error`)} className={cn('mt-3 flex items-start gap-2.5 text-sm leading-snug', errText)}>
         <span aria-hidden="true" className="mt-[0.45em] h-1.5 w-1.5 shrink-0 bg-current" />
@@ -171,15 +247,23 @@ export function LeadForm({
   const policyLink = (text: string) => (
     <Link
       href={routes.privacy(locale)}
-      className={cn('underline decoration-1 underline-offset-4 transition-colors duration-500 hover:text-accent', fg)}
+      className={cn(
+        'underline decoration-1 underline-offset-4 transition-colors duration-500',
+        onBand ? 'hover:text-band-muted focus-visible:outline-band-fg' : 'hover:text-accent',
+        fg,
+      )}
     >
       {text}
     </Link>
   );
 
   return (
-    <form onSubmit={handleSubmit} className={cn('flex flex-col gap-9', className)} noValidate>
-      <div className="grid gap-9 sm:grid-cols-2 sm:gap-x-gutter">
+    <form
+      onSubmit={handleSubmit}
+      className={cn('flex flex-col gap-9 [container-type:inline-size]', className)}
+      noValidate
+    >
+      <div className={pairCls}>
         <div>
           <label htmlFor={fid('name')} className={labelCls}>
             {dict.form.name}
@@ -190,6 +274,7 @@ export function LeadForm({
             type="text"
             autoComplete="name"
             placeholder={dict.form.namePlaceholder}
+            onChange={(e) => validName(e.target.value) && clearError('name')}
             className={cn(fieldCls, errors.name && errField)}
             aria-required="true"
             aria-invalid={errors.name || undefined}
@@ -208,7 +293,11 @@ export function LeadForm({
             inputMode="tel"
             autoComplete="tel"
             value={phone}
-            onChange={(e) => setPhone(formatMoldovaPhone(e.target.value))}
+            onChange={(e) => {
+              const next = formatMoldovaPhone(e.target.value);
+              setPhone(next);
+              if (validPhone(next)) clearError('phone');
+            }}
             placeholder={dict.form.phonePlaceholder}
             className={cn(fieldCls, 'tabular', errors.phone && errField)}
             aria-required="true"
@@ -269,10 +358,10 @@ export function LeadForm({
                     className={cn(
                       'label flex h-11 items-center justify-center border px-2',
                       'transition-[background-color,border-color,color] duration-500 ease-premium',
-                      'peer-focus-visible:outline peer-focus-visible:outline-1 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-accent',
+                      'peer-focus-visible:outline peer-focus-visible:outline-1 peer-focus-visible:outline-offset-4',
                       onBand
-                        ? 'border-band-fg/25 text-band-fg/80 hover:border-band-fg/60 hover:text-band-fg peer-checked:border-band-fg peer-checked:bg-band-fg peer-checked:text-band'
-                        : 'border-line/25 text-ink/80 hover:border-line/60 hover:text-ink peer-checked:border-ink peer-checked:bg-ink peer-checked:text-canvas',
+                        ? 'peer-focus-visible:outline-band-fg border-band-fg/25 text-band-fg/80 hover:border-band-fg/60 hover:text-band-fg peer-checked:border-band-fg peer-checked:bg-band-fg peer-checked:text-band'
+                        : 'peer-focus-visible:outline-accent border-line/25 text-ink/80 hover:border-line/60 hover:text-ink peer-checked:border-ink peer-checked:bg-ink peer-checked:text-canvas',
                     )}
                   >
                     {dict.form.methods[m]}
@@ -297,7 +386,7 @@ export function LeadForm({
         </>
       ) : (
         <>
-          <div className="grid gap-9 sm:grid-cols-2 sm:gap-x-gutter">
+          <div className={pairCls}>
             <div>
               <label htmlFor={fid('email')} className={labelCls}>
                 {dict.form.emailOptional}
@@ -340,14 +429,20 @@ export function LeadForm({
         <label className={cn('flex cursor-pointer items-start gap-4 text-sm leading-relaxed', muted)}>
           <span className="relative mt-px flex h-5 w-5 shrink-0">
             <input
+              id={fid('consent')}
               type="checkbox"
               checked={consent}
-              onChange={(e) => setConsent(e.target.checked)}
+              onChange={(e) => {
+                setConsent(e.target.checked);
+                if (e.target.checked) clearError('consent');
+              }}
               className={cn(
                 'peer h-5 w-5 cursor-pointer appearance-none rounded-none border bg-transparent',
-                'transition-[background-color,border-color] duration-500 ease-premium',
-                'checked:border-accent checked:bg-accent focus-visible:outline-offset-2',
-                errors.consent ? 'border-red-500' : onBand ? 'border-band-fg/40 hover:border-band-fg' : 'border-line/40 hover:border-ink',
+                'transition-[background-color,border-color] duration-500 ease-premium focus-visible:outline-offset-2',
+                onBand
+                  ? 'checked:border-band-fg checked:bg-band-fg focus-visible:outline-band-fg'
+                  : 'checked:border-accent checked:bg-accent',
+                errors.consent ? 'border-red-500' : onBand ? 'border-band-fg/50 hover:border-band-fg' : 'border-line/60 hover:border-ink',
               )}
               aria-invalid={errors.consent || undefined}
               aria-describedby={errors.consent ? fid('consent-error') : undefined}
@@ -356,7 +451,10 @@ export function LeadForm({
               viewBox="0 0 16 12"
               fill="none"
               aria-hidden="true"
-              className="pointer-events-none absolute inset-0 m-auto h-2.5 w-3 text-on-accent opacity-0 transition-opacity duration-300 peer-checked:opacity-100"
+              className={cn(
+                'pointer-events-none absolute inset-0 m-auto h-2.5 w-3 opacity-0 transition-opacity duration-300 peer-checked:opacity-100',
+                onBand ? 'text-band' : 'text-on-accent',
+              )}
             >
               <path d="M1 6.5 5.5 11 15 1" stroke="currentColor" strokeWidth="1.75" />
             </svg>
@@ -375,6 +473,12 @@ export function LeadForm({
           </span>
         </label>
         {error('consent', dict.form.errors.consent)}
+      </div>
+
+      {/* What went wrong, for screen readers; focus is already on the first
+          field to fix. */}
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {announce.text && <p key={announce.attempt}>{announce.text}</p>}
       </div>
 
       {serverError && (

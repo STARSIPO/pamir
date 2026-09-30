@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { splitWords } from '@/lib/text';
+import { splitWords, typo } from '@/lib/text';
 import { Container } from '@/components/ui/Container';
 import { Reveal } from '@/components/ui/Reveal';
 
@@ -41,7 +41,7 @@ export function PageHero({
             <Reveal delay={0.12} className="lg:col-span-4 lg:pb-3">
               {subtitle && (
                 <p className={cn('max-w-md text-pretty text-base leading-relaxed md:text-[1.0625rem]', dark ? 'text-band-muted' : 'text-muted')}>
-                  {subtitle}
+                  {typo(subtitle)}
                 </p>
               )}
               {children && <div className={cn(subtitle && 'mt-8')}>{children}</div>}

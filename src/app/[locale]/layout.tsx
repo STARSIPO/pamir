@@ -7,6 +7,7 @@ import { contact, companyLegalName } from '@/content/site';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { SmoothScroll } from '@/components/layout/SmoothScroll';
+import { DocumentSync } from '@/lib/DocumentSync';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://pamirconstruct.md';
 
@@ -82,8 +83,9 @@ export default async function LocaleLayout(
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:bg-ink focus:px-4 focus:py-2 focus:text-sm focus:text-canvas"
       >
-        {dict.common.learnMore}
+        {dict.design.skipToContent}
       </a>
+      <DocumentSync lang={localeHtmlLang[locale]} />
       <SmoothScroll />
       <Header locale={locale} dict={dict} />
       <main id="main">{children}</main>

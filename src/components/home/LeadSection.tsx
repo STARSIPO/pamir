@@ -3,7 +3,6 @@ import type { Dictionary } from '@/i18n/dictionaries';
 import { Section } from '@/components/ui/Section';
 import { Reveal } from '@/components/ui/Reveal';
 import { LeadForm } from '@/components/forms/LeadForm';
-import { ContactInfo } from '@/components/shared/ContactInfo';
 import { contact } from '@/content/site';
 import { telHref } from '@/lib/utils';
 import { splitWords } from '@/lib/text';
@@ -21,16 +20,17 @@ import { splitWords } from '@/lib/text';
  *   ОТДЕЛ ПРОДАЖ                              ИНТЕРЕСУЮЩИЙ ПРОЕКТ
  *   +373 76 007 007                           ─────────────────────────
  *                                             [ЗВОНОК] [WHATSAPP] [TG]
- *   ─────────────  ─────────────              КОММЕНТАРИЙ
- *   АДМИНИСТРАЦИЯ  БУХГАЛТЕРИЯ                ─────────────────────────
- *   ─────────────  ─────────────              □ consent
- *   ОФИС           ГРАФИК · EMAIL             [ ПОЛУЧИТЬ КОНСУЛЬТАЦИЮ → ]
+ *                                             КОММЕНТАРИЙ
+ *                                             ─────────────────────────
+ *                                             □ consent
+ *                                             [ ПОЛУЧИТЬ КОНСУЛЬТАЦИЮ → ]
  *
- * The heading spans the grid; below it the lead-in, the sales number and the
- * remaining details face the form, the details bottom-aligned with it. On
- * phones the order is heading → lead-in → number → form → details. On the
- * homepage the footer (also band) follows directly, so the section ends on
- * its padding with no closing rule.
+ * The heading spans the grid; below it the lead-in and the sales number face
+ * the form. The rest of the contact list (other numbers, office, hours,
+ * email) is left to the footer, which follows on the same band on every page
+ * — listing it twice in a row only diluted the call to action. On phones the
+ * order is heading → lead-in → number → form. The section ends on its
+ * padding with no closing rule: the footer opens with its own hairline.
  * `projectName` preselects the project in the form (project detail page).
  * `index` is the homepage chapter number; it is omitted by default when the
  * section closes a project page, where "06" would mean nothing.
@@ -73,7 +73,12 @@ export function LeadSection({
           </h2>
         </Reveal>
 
-        <Reveal delay={0.1} className="mt-8 md:mt-10 lg:col-span-6 lg:row-start-2 lg:mt-20">
+        {/* Pinned beside the (taller) form on wide screens, so the lead-in
+            and the number stay opposite whichever fields are in view. */}
+        <Reveal
+          delay={0.1}
+          className="mt-8 md:mt-10 lg:sticky lg:top-28 lg:col-span-6 lg:row-start-2 lg:mt-20 lg:self-start"
+        >
           <p className="max-w-md text-pretty text-base leading-relaxed text-band-muted md:text-[1.0625rem]">
             {dict.lead.subtitle}
           </p>
@@ -81,22 +86,15 @@ export function LeadSection({
             {sales && <p className="label text-band-muted">{sales.label[locale]}</p>}
             <a
               href={telHref(contact.primaryPhone)}
-              className="link-line mt-4 inline-block font-display text-display-md font-light tabular text-band-fg"
+              className="group mt-3 inline-flex min-h-11 items-center font-display text-display-md font-light tabular text-band-fg"
             >
-              {contact.primaryPhone}
+              <span className="link-line">{contact.primaryPhone}</span>
             </a>
           </div>
         </Reveal>
 
-        <Reveal
-          delay={0.12}
-          className="mt-16 md:mt-20 lg:col-span-5 lg:col-start-8 lg:row-span-2 lg:row-start-2 lg:mt-20"
-        >
+        <Reveal delay={0.12} className="mt-16 md:mt-20 lg:col-span-5 lg:col-start-8 lg:row-start-2 lg:mt-20">
           <LeadForm locale={locale} dict={dict} variant="lead" tone="light" projectName={projectName} />
-        </Reveal>
-
-        <Reveal delay={0.08} className="mt-16 md:mt-20 lg:col-span-6 lg:row-start-3 lg:mt-16 lg:self-end">
-          <ContactInfo locale={locale} dict={dict} tone="band" compact withMap={false} />
         </Reveal>
       </div>
     </Section>

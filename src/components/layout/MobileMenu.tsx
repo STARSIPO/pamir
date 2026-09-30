@@ -223,7 +223,7 @@ export function MobileMenu({
           </div>
 
           <div className="mt-8 flex items-center justify-between border-t border-line/15 pt-2">
-            <LanguageSwitcher current={locale} tone="dark" label={dict.footer.langLabel} className="-ml-2.5" />
+            <LanguageSwitcher current={locale} tone="dark" label={dict.footer.langLabel} className="-ml-3" />
             {social.length > 0 && (
               <ul className="flex items-center gap-6">
                 {social.map((s) => (

@@ -11,6 +11,10 @@ import type { Project } from './types';
  * Images are the developer's own renders and photos, taken from the legacy
  * pamirconstruct.md site (see docs/IMAGE-CREDITS.md). `coverKind: 'render'`
  * makes the UI caption the picture as a visualisation, never as a photo.
+ *
+ * Names are typeset: "Botanic Star 2 —" is tied with no-break spaces
+ * ( ), so wherever a name wraps — footer, cards, form options — the
+ * dash never opens a line and the "2" never leaves "Star".
  */
 
 const TBD = { ru: 'Уточняется', ro: 'Se precizează' };
@@ -18,7 +22,7 @@ const TBD = { ru: 'Уточняется', ro: 'Se precizează' };
 export const projects: Project[] = [
   {
     slug: 'botanic-star-2-blocks-3-4',
-    name: { ru: 'Botanic Star 2 — блоки 3 и 4', ro: 'Botanic Star 2 — blocurile 3 și 4' },
+    name: { ru: 'Botanic Star 2 — блоки 3 и 4', ro: 'Botanic Star 2 — blocurile 3 și 4' },
     tagline: {
       ru: 'Современный жилой комплекс в секторе Ботаника',
       ro: 'Complex rezidențial modern în sectorul Botanica',
@@ -140,7 +144,7 @@ export const projects: Project[] = [
   },
   {
     slug: 'botanic-star-2-block-2',
-    name: { ru: 'Botanic Star 2 — блок 2', ro: 'Botanic Star 2 — blocul 2' },
+    name: { ru: 'Botanic Star 2 — блок 2', ro: 'Botanic Star 2 — blocul 2' },
     tagline: { ru: 'Завершённый блок квартала Botanic Star 2', ro: 'Bloc finalizat al cvartalului Botanic Star 2' },
     status: 'completed',
     district: { ru: 'Ботаника', ro: 'Botanica' },
@@ -181,7 +185,7 @@ export const projects: Project[] = [
   },
   {
     slug: 'botanic-star-2-block-1',
-    name: { ru: 'Botanic Star 2 — блок 1', ro: 'Botanic Star 2 — blocul 1' },
+    name: { ru: 'Botanic Star 2 — блок 1', ro: 'Botanic Star 2 — blocul 1' },
     tagline: { ru: 'Завершённый блок квартала Botanic Star 2', ro: 'Bloc finalizat al cvartalului Botanic Star 2' },
     status: 'completed',
     district: { ru: 'Ботаника', ro: 'Botanica' },
@@ -189,6 +193,9 @@ export const projects: Project[] = [
     cover: '/photos/projects/botanic-star-2-block-1/cover.jpg',
     hero: '/photos/projects/botanic-star-2-block-1/cover.jpg',
     coverKind: 'render',
+    // The tower stands right of centre in a 2000×924 render (x≈800–1440):
+    // 60% centres it in portrait and square crops, whole width in frame.
+    coverPosition: '60% 50%',
     gallery: [
       '/photos/projects/company/about.jpg',
     ],
