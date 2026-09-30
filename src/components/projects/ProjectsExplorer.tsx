@@ -5,7 +5,7 @@ import type { KeyboardEvent } from 'react';
 import type { Locale } from '@/i18n/config';
 import type { Dictionary } from '@/i18n/dictionaries';
 import type { Project, ProjectStatus } from '@/content/types';
-import { ProjectCard } from './ProjectCard';
+import { ProjectRow, type RowAvailability } from './ProjectRow';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import { usePrefersReducedMotion } from '@/lib/useReducedMotion';
@@ -18,60 +18,18 @@ const FILTERS: Filter[] = ['all', 'construction', 'completed'];
 const OUT_MS = 280;
 
 /* ------------------------------------------------------------------
-   Layout rhythm
-
-   Projects are laid out as a curated sequence, not a uniform grid. On
-   desktop (lg) they pair up in rows that cycle through three figures, and
-   in every row the right-hand card sits lower — one calm, staggered
-   rhythm down the page, with the voids between rows kept even:
-
-     A   ┌────────────┐                 wide 7 cols, landscape
-         │            │  ┌───────┐      narrow 5 cols, portrait, set lower
-         └────────────┘  │       │
-                         └───────┘
-     B   ┌───────┐                      mirrored: narrow portrait left,
-         │       │  ┌────────────┐     wide landscape right, set lower
-         │       │  │            │
-         └───────┘  └────────────┘
-     C   ┌─────────┐ ┌─────────┐       a pair of equals: the right frame is
-         │         │ │         │       shorter and set lower by exactly the
-         │         │ └─────────┘       difference, so both photos end on one
-         └─────────┘                    line
-     —   an odd last project runs the full width.
-
-   On tablets (md) the same sequence becomes a single column that swings
-   between full width and a 9-column frame set left or right; on phones
-   every card takes the full measure. Frame ratios are breakpoint-specific,
-   so they travel to ProjectCard as a CSS variable (`--card-ratio`) instead
-   of a fixed prop value. Percentage margins resolve against the card's own
-   grid-area width, which keeps the offsets proportional at every width.
+   Layout: one even column. Every project gets a framed row of its own —
+   photo on the left cropped to the same frame, text on the right — so the
+   catalogue reads as a calm, orderly list (client's request, 2026-09-30).
+   Phones stack photo over text inside the same frame.
    ------------------------------------------------------------------ */
-type Slot = {
-  place: string;
-  /** `--card-ratio` per breakpoint. Must match `crop`. */
-  ratio: string;
-  size: 'md' | 'lg';
-  /** Frame width on phones, tablets (md) and desktops (lg) in vw, then in px once the container stops growing at 1680px. */
-  width: readonly [phone: number, tablet: number, desktop: number, cap: number];
-  /** The same ratios as `ratio`, as numbers (w / h), on phones, tablets and desktops. */
-  crop: readonly [phone: number, tablet: number, desktop: number];
-};
-
-// Measured off the 12-column grid: 12 cols ≈ 92vw, 9 ≈ 69vw at md; at lg
-// 7 cols ≈ 52vw, 6 ≈ 44vw, 5 ≈ 36vw (rounded up, so the 3.5% hover zoom
-// never runs out of pixels).
-const WIDE = [92, 92, 52, 880] as const;
-const NARROW = [92, 69, 36, 620] as const;
-const HALF = [92, 69, 44, 760] as const;
-const FULL = [92, 92, 92, 1540] as const;
 
 /**
  * Intrinsic size (px) of each cover in /public, as scripts/process-photos.mjs
  * prints it. Covers are cropped into their frames with object-cover, so a
- * landscape photo in a portrait frame renders far wider than the frame: a
- * 2000×924 panorama in a 4/5 frame is 2.7× the frame's width. `sizes` has to
- * ask for that rendered width, or the browser picks a file that is too small
- * and upscales it. Update an entry when a cover is re-cut.
+ * landscape photo in a narrower frame renders wider than the frame. `sizes`
+ * asks for that rendered width, or the browser picks a file that is too
+ * small and upscales it. Update an entry when a cover is re-cut.
  */
 const COVER_SIZE: Record<string, readonly [w: number, h: number]> = {
   '/photos/projects/botanic-star-2-blocks-3-4/cover-v2.jpg': [1300, 1074],
@@ -82,109 +40,28 @@ const COVER_SIZE: Record<string, readonly [w: number, h: number]> = {
   '/photos/projects/botanic-park/cover-v2.jpg': [1800, 1059],
 };
 
-/**
- * An unmeasured cover is assumed to be a wide landscape: asking too much only
- * costs bytes (the optimizer never enlarges past the source), asking too
- * little costs sharpness.
- */
-const UNKNOWN_COVER_ASPECT = 16 / 9;
+/** Frame shapes: 4:3 on phones; from md about 1.3:1 (5 of 12 columns × the row height). */
+const PHONE_FRAME = 4 / 3;
+const ROW_FRAME = 1.3;
 
-/** `sizes` for a cover in a slot: the width the cropped photo is drawn at. */
-function sizesFor(slot: Slot, cover?: string): string {
+/** `sizes` for a row photo: the width the cropped cover is drawn at. */
+function rowSizes(cover?: string): string {
   const px = cover ? COVER_SIZE[cover] : undefined;
-  const aspect = px ? px[0] / px[1] : UNKNOWN_COVER_ASPECT;
-  // How many times wider than its frame the photo is drawn.
+  const aspect = px ? px[0] / px[1] : 16 / 9;
   const k = (frame: number) => Math.max(1, aspect / frame);
-  const [phone, tablet, desktop, cap] = slot.width;
-  const [onPhone, onTablet, onDesktop] = slot.crop;
-  const steps: [query: string, size: string][] = [
-    ['(min-width: 1680px) ', `${Math.ceil(cap * k(onDesktop))}px`],
-    ['(min-width: 1024px) ', `${Math.ceil(desktop * k(onDesktop))}vw`],
-    ['(min-width: 768px) ', `${Math.ceil(tablet * k(onTablet))}vw`],
-    ['', `${Math.ceil(phone * k(onPhone))}vw`],
-  ];
-  return steps
-    .filter(([, size], i) => i === steps.length - 1 || size !== steps[i + 1][1])
-    .map(([query, size]) => query + size)
-    .join(', ');
-}
-
-// A 5-column card is too narrow on desktop for ProjectCard's side-by-side
-// name + "view project" row: stack them, like a caption under a print.
-const STACKED = 'lg:[&_a>div:last-child]:flex-col lg:[&_a>div:last-child]:items-start lg:[&_a>div:last-child]:gap-6';
-
-const SLOTS = {
-  aWide: {
-    place: 'md:col-span-12 lg:col-span-7 lg:col-start-1',
-    ratio: '[--card-ratio:1/1] md:[--card-ratio:4/3] lg:[--card-ratio:5/4]',
-    crop: [1, 4 / 3, 5 / 4],
-    size: 'lg',
-    width: WIDE,
-  },
-  aNarrow: {
-    place: `md:col-span-9 md:col-start-4 lg:col-span-5 lg:col-start-8 lg:mt-[36%] ${STACKED}`,
-    ratio: '[--card-ratio:4/5]',
-    crop: [4 / 5, 4 / 5, 4 / 5],
-    size: 'md',
-    width: NARROW,
-  },
-  bNarrow: {
-    place: `md:col-span-9 md:col-start-1 lg:col-span-5 lg:col-start-1 ${STACKED}`,
-    ratio: '[--card-ratio:4/5] lg:[--card-ratio:3/4]',
-    crop: [4 / 5, 4 / 5, 3 / 4],
-    size: 'md',
-    width: NARROW,
-  },
-  bWide: {
-    place: 'md:col-span-12 lg:col-span-7 lg:col-start-6 lg:mt-[30%]',
-    ratio: '[--card-ratio:1/1] md:[--card-ratio:4/3] lg:[--card-ratio:5/4]',
-    crop: [1, 4 / 3, 5 / 4],
-    size: 'lg',
-    width: WIDE,
-  },
-  cLeft: {
-    place: 'md:col-span-9 md:col-start-1 lg:col-span-6 lg:col-start-1',
-    ratio: '[--card-ratio:4/5]',
-    crop: [4 / 5, 4 / 5, 4 / 5],
-    size: 'md',
-    width: HALF,
-  },
-  cRight: {
-    // 4/5 beside 1/1 at equal widths: dropping the square by 25% of its
-    // width lands both photos on the same bottom edge.
-    place: 'md:col-span-9 md:col-start-4 lg:col-span-6 lg:col-start-7 lg:mt-[25%]',
-    ratio: '[--card-ratio:1/1]',
-    crop: [1, 1, 1],
-    size: 'md',
-    width: HALF,
-  },
-  full: {
-    place: 'md:col-span-12',
-    ratio: '[--card-ratio:4/5] md:[--card-ratio:4/3] lg:[--card-ratio:16/9]',
-    crop: [4 / 5, 4 / 3, 16 / 9],
-    size: 'lg',
-    width: FULL,
-  },
-} satisfies Record<string, Slot>;
-
-function slotFor(i: number, total: number): Slot {
-  if (total % 2 === 1 && i === total - 1) return SLOTS.full;
-  const second = i % 2 === 1;
-  switch (Math.floor(i / 2) % 3) {
-    case 0:
-      return second ? SLOTS.aNarrow : SLOTS.aWide;
-    case 1:
-      return second ? SLOTS.bWide : SLOTS.bNarrow;
-    default:
-      return second ? SLOTS.cRight : SLOTS.cLeft;
-  }
+  // 5/12 of the container: ≈ 39vw, capped at the 1680px measure.
+  return [
+    `(min-width: 1680px) ${Math.ceil(650 * k(ROW_FRAME))}px`,
+    `(min-width: 768px) ${Math.ceil(40 * k(ROW_FRAME))}vw`,
+    `${Math.ceil(92 * k(PHONE_FRAME))}vw`,
+  ].join(', ');
 }
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
 /**
- * The project catalogue: text tabs over an asymmetric, editorial sequence of
- * large ProjectCards. Used on /projects (with filters) and on the company
+ * The project catalogue: text tabs over one even column of framed project
+ * rows (ProjectRow). Used on /projects (with filters) and on the company
  * page (`showFilters={false}`, completed projects only).
  *
  * Switching a filter fades the current list out, swaps it while invisible,
@@ -196,11 +73,14 @@ export function ProjectsExplorer({
   locale,
   dict,
   showFilters = true,
+  availability = {},
 }: {
   projects: Project[];
   locale: Locale;
   dict: Dictionary;
   showFilters?: boolean;
+  /** Per-slug availability for projects with an apartment selector (computed on the server). */
+  availability?: Record<string, RowAvailability>;
 }) {
   const uid = useId();
   const reduce = usePrefersReducedMotion();
@@ -412,33 +292,23 @@ export function ProjectsExplorer({
           <ul
             key={swaps}
             role="list"
-            className={cn(
-              'grid grid-cols-1 gap-y-[clamp(4.5rem,9vw,8.5rem)] md:grid-cols-12 md:gap-x-gutter lg:gap-x-[clamp(2.5rem,4.5vw,5.5rem)]',
-              swaps > 0 && 'animate-fade-up',
-            )}
+            // Rows side by side from md share one height (the tallest), so the
+            // frames line up as an even column whatever the text length.
+            className={cn('grid grid-cols-1 gap-6 md:auto-rows-fr md:gap-8', swaps > 0 && 'animate-fade-up')}
           >
-            {visible.map((p, i) => {
-              const slot = slotFor(i, visible.length);
-              return (
-                <li
-                  key={p.slug}
-                  // Big names shrink one step on phones, where a single
-                  // column should read as one calm list.
-                  className={cn(slot.place, slot.ratio, 'max-md:[&_h3]:text-display-md')}
-                >
-                  <ProjectCard
-                    project={p}
-                    locale={locale}
-                    dict={dict}
-                    index={i}
-                    aspect="var(--card-ratio, 4 / 5)"
-                    size={slot.size}
-                    sizes={sizesFor(slot, p.cover)}
-                    priority={showFilters && i < 2}
-                  />
-                </li>
-              );
-            })}
+            {visible.map((p, i) => (
+              <li key={p.slug}>
+                <ProjectRow
+                  project={p}
+                  locale={locale}
+                  dict={dict}
+                  index={i}
+                  sizes={rowSizes(p.cover)}
+                  priority={showFilters && i < 2}
+                  availability={availability[p.slug]}
+                />
+              </li>
+            ))}
           </ul>
         )}
       </div>

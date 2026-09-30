@@ -7,6 +7,7 @@ import { PageHero } from '@/components/shared/PageHero';
 import { Section } from '@/components/ui/Section';
 import { ProjectsExplorer } from '@/components/projects/ProjectsExplorer';
 import { CtaBand } from '@/components/shared/CtaBand';
+import { listInventories, stats } from '@/lib/inventory/repository';
 
 export async function generateMetadata(
   props: {
@@ -26,13 +27,22 @@ export async function generateMetadata(
 
 /**
  * Project catalogue: a typographic opening, then the portfolio itself —
- * filter tabs over large photographs in an asymmetric rhythm — and the
- * closing CTA on the band, which runs straight into the band footer.
+ * filter tabs over one even column of framed project rows — and the closing
+ * CTA on the band, which runs straight into the band footer.
+ *
+ * Availability for projects with an apartment selector is computed here, on
+ * the server, so the inventory never ships in the catalogue's client bundle.
  */
 export default async function ProjectsPage(props: { params: Promise<{ locale: string }> }) {
   const params = await props.params;
   const locale = (isLocale(params.locale) ? params.locale : 'ru') as Locale;
   const dict = getDictionary(locale);
+  const availability = Object.fromEntries(
+    listInventories().map((inv) => {
+      const s = stats(inv.apartments);
+      return [inv.projectSlug, { available: s.available, priceFrom: s.priceFrom }];
+    }),
+  );
 
   return (
     <>
@@ -44,7 +54,7 @@ export default async function ProjectsPage(props: { params: Promise<{ locale: st
       <Section spacing="none" className="pb-section">
         {/* Keeps the outline h1 → h2 → h3 (card names) without a visible heading. */}
         <h2 className="sr-only">{dict.common.viewAllProjects}</h2>
-        <ProjectsExplorer projects={projects} locale={locale} dict={dict} showFilters />
+        <ProjectsExplorer projects={projects} locale={locale} dict={dict} showFilters availability={availability} />
       </Section>
       <CtaBand locale={locale} dict={dict} title={dict.projectDetail.ctaTitle} subtitle={dict.projectDetail.ctaSubtitle} />
     </>
