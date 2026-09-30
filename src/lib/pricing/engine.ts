@@ -161,7 +161,12 @@ export function installment(input: InstallmentInput, cfg: PricingConfig = pricin
   };
 }
 
-/** Locale-aware EUR formatting: "€122 670" (ru/ro both use a thin space group). */
+/**
+ * Locale-aware EUR formatting with the locale's own digit grouping:
+ * ru → "€122 670" (no-break space, U+00A0), ro → "€122.670" (dot, as
+ * Romanian writes thousands). Both are correct for their language; to force
+ * the RU look in RO, replace the dot with a no-break space here.
+ */
 export function formatEUR(value: number, locale: string): string {
   const n = new Intl.NumberFormat(locale === 'ro' ? 'ro-MD' : 'ru-MD', { maximumFractionDigits: 0 }).format(value);
   return `€${n}`;

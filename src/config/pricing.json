@@ -12,7 +12,7 @@
         { "from": 5, "to": 7, "k": 1.02 },
         { "from": 8, "to": 99, "k": 1.05 }
       ],
-      "roomCoefficients": { "1": 1.06, "2": 1.0, "3": 0.98, "4": 0.97 },
+      "roomCoefficients": { "1": 1.06, "2": 1.0, "3": 0.98 },
       "typeCoefficients": { "standard": 1.0, "corner": 1.03, "penthouse": 1.1 },
       "outdoorShare": { "none": 0, "balcony": 0.5, "terrace": 0.35 },
       "parking": { "none": 0, "surface": 6000, "underground": 12000 }

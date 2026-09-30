@@ -1,0 +1,84 @@
+/*
+ * Draw-in of the apartment plan. CSS keyframes (not JS) so the drawing runs
+ * straight from the server HTML, and `animation-fill-mode: both` holds the
+ * start state on the first frame — no flash of the finished plan. Every
+ * keyframe ends on the plain, fully drawn state. Under reduced motion the
+ * plan is simply there: the block at the end drops every animation (the
+ * global rule only shortens durations, which would keep the delays).
+ *
+ *   0.00s  exterior walls draw round the outline         (0.9s, ease-arch)
+ *   0.35s+ partitions draw, room by room (70ms apart)     (0.8s)
+ *   0.90s  windows, doors, balcony glazing, the entrance  (0.6s fade)
+ *   1.00s  room labels rise into place                    (0.7s)
+ *
+ * Geometry uses pathLength="1", so one dash of length 1 is the whole path.
+ */
+
+.wall {
+  stroke-dasharray: 1 1;
+  animation: draw 0.9s var(--ease-arch) 0.05s both;
+}
+
+.partition {
+  stroke-dasharray: 1 1;
+  animation: draw 0.8s var(--ease-premium) both;
+  animation-delay: calc(0.35s + var(--i, 0) * 70ms);
+}
+
+.room {
+  animation: fade 0.8s var(--ease-premium) both;
+  animation-delay: calc(0.3s + var(--i, 0) * 70ms);
+}
+
+.openings {
+  animation: fade 0.6s var(--ease-premium) 0.9s both;
+}
+
+.labels {
+  animation: rise 0.7s var(--ease-premium) both;
+  animation-delay: var(--labels-delay, 1s);
+}
+
+.soon {
+  animation: fade 0.6s var(--ease-premium) both;
+}
+
+@keyframes draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wall,
+  .partition,
+  .room,
+  .openings,
+  .labels,
+  .soon {
+    animation: none;
+  }
+}

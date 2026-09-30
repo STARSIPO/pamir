@@ -4,6 +4,7 @@ import type { Locale } from '@/i18n/config';
 import type { Dictionary } from '@/i18n/dictionaries';
 import type { Project } from '@/content/types';
 import { routes } from '@/i18n/routing';
+import { getInventory } from '@/lib/inventory/repository';
 import { Container } from '@/components/ui/Container';
 import { Media } from '@/components/ui/Media';
 import { StatusBadge } from '@/components/ui/StatusBadge';
@@ -120,6 +121,12 @@ const captionText = cn('label text-white/85', halo);
  *   БОТАНИКА                  │
  *   [ Узнать о квартирах → ]  │
  *   Планировки →              │                          ВИЗУАЛИЗАЦИЯ
+ *
+ * A project with an apartment selector (repository.getInventory) leads with
+ * it: the boxed action becomes «Выбрать квартиру →» (the selector's first
+ * step), and the second action — boxed or a text link, exactly where the
+ * plans link stood — is the consultation form (#lead). The plans stay one
+ * scroll away, and their section links to the selector too.
  */
 export function ProjectHero({
   project,
@@ -134,6 +141,17 @@ export function ProjectHero({
   const statusLabel =
     project.status === 'construction' ? dict.common.status.construction : dict.common.status.completed;
   const hasFloorplans = project.floorplans.length > 0;
+  const hasSelector = !!getInventory(project.slug);
+  // Primary: the selector when there is one, else the lead form. Secondary:
+  // the lead form beside the selector, else the plans (when there are any).
+  const primary = hasSelector
+    ? { href: routes.selector(locale, project.slug), label: dict.inventory.common.cta }
+    : { href: '#lead', label: dict.projectDetail.availableApartments };
+  const secondary = hasSelector
+    ? { href: '#lead', label: dict.common.getConsultation }
+    : hasFloorplans
+      ? { href: '#floorplans', label: dict.projectDetail.viewFloorplans }
+      : null;
   const caption = project.coverKind === 'render' ? dict.design.render : undefined;
   const art = ART[project.slug] ?? CENTRE;
   const inset = !!art.inset;
@@ -291,25 +309,25 @@ export function ProjectHero({
                 inset && 'xl:col-span-1 xl:flex-col xl:items-start xl:justify-start xl:gap-4',
               )}
             >
-              <Button href="#lead" variant="light" size="lg" arrow className={fitPhone}>
-                {dict.projectDetail.availableApartments}
+              <Button href={primary.href} variant="light" size="lg" arrow className={fitPhone}>
+                {primary.label}
               </Button>
-              {hasFloorplans && (
+              {secondary && (
                 <>
                   {/* One boxed action per view on phones, in the half-width
                       cell from lg to xl (two boxes there wrap into a ragged
-                      pair) and in the narrow inset column; the plans link
+                      pair) and in the narrow inset column; the second action
                       steps down to a text link. */}
                   <Button
-                    href="#floorplans"
+                    href={secondary.href}
                     variant="outlineLight"
                     size="lg"
                     className={cn('max-sm:hidden lg:max-xl:hidden', inset && 'xl:hidden')}
                   >
-                    {dict.projectDetail.viewFloorplans}
+                    {secondary.label}
                   </Button>
                   <Button
-                    href="#floorplans"
+                    href={secondary.href}
                     variant="ghost"
                     arrow
                     className={cn(
@@ -317,7 +335,7 @@ export function ProjectHero({
                       inset && 'xl:inline-flex',
                     )}
                   >
-                    {dict.projectDetail.viewFloorplans}
+                    {secondary.label}
                   </Button>
                 </>
               )}

@@ -29,6 +29,8 @@ export const leadSchema = z.object({
   name: z.string().trim().min(2, 'name').max(80),
   phone: phoneField,
   project: z.string().max(120).optional().default(''),
+  /** Apartment context from the selector ("Квартира №34, Блок 3, этаж 7"). */
+  apartment: z.string().trim().max(160).optional().default(''),
   method: z.enum(['phone', 'whatsapp', 'telegram']).optional(),
   subject: z.string().max(160).optional().default(''),
   comment: z.string().max(2000).optional().default(''),

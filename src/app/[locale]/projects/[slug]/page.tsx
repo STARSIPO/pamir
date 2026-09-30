@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { locales, isLocale, type Locale } from '@/i18n/config';
 import { getDictionary } from '@/i18n/dictionaries';
@@ -9,7 +10,7 @@ import { routes } from '@/i18n/routing';
 import { Section } from '@/components/ui/Section';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { Reveal } from '@/components/ui/Reveal';
-import { Button } from '@/components/ui/Button';
+import { Arrow, Button } from '@/components/ui/Button';
 import { FeatureIcon } from '@/components/ui/FeatureIcon';
 import { ProjectHero } from '@/components/project/ProjectHero';
 import { Gallery } from '@/components/project/Gallery';
@@ -17,12 +18,22 @@ import { Floorplans } from '@/components/project/Floorplans';
 import { Media } from '@/components/ui/Media';
 import { ProjectCard } from '@/components/projects/ProjectCard';
 import { LeadSection } from '@/components/home/LeadSection';
+import { SelectorTeaser } from '@/components/inventory/selector/SelectorTeaser';
+import { DemoNotice } from '@/components/inventory/DemoNotice';
+import { CostCalculator } from '@/components/inventory/calculator/CostCalculator';
+import { getInventory, stats } from '@/lib/inventory/repository';
+import type { Apartment } from '@/lib/inventory/types';
+import type { AvailabilityStatus, Floorplan } from '@/content/types';
+import { pricedProjects } from '@/lib/pricing/engine';
 import { cn } from '@/lib/utils';
 import { typo } from '@/lib/text';
 
 export function generateStaticParams() {
   return locales.flatMap((locale) => projects.map((p) => ({ locale, slug: p.slug })));
 }
+
+/** Static export: only the slugs above exist. */
+export const dynamicParams = false;
 
 export async function generateMetadata(
   props: {
@@ -88,19 +99,47 @@ const advantageCell = (n: number, i: number) =>
   n === 5 ? (i < 2 ? 'md:col-span-3 lg:col-span-1' : 'md:col-span-2 lg:col-span-1') : undefined;
 
 /**
+ * A plan card, told by the stock when the project has an inventory: the
+ * floors its room count occupies and whether any of it is on sale — the same
+ * story the selector and the calculator tell on the page, where the content
+ * alone says «Уточняется». Area stays as the content has it: a card holds one
+ * figure, the units of a room count span several (the selector shows each).
+ */
+function withStock(plan: Floorplan, apartments: Apartment[]): Floorplan {
+  const units = apartments.filter((a) => a.rooms === plan.rooms);
+  if (units.length === 0) return plan;
+  const floors = units.map((a) => a.floor);
+  const lo = Math.min(...floors);
+  const hi = Math.max(...floors);
+  const range = lo === hi ? String(lo) : `${lo}–${hi}`;
+  const s = stats(units);
+  const status: AvailabilityStatus = s.available > 0 ? 'available' : s.reserved > 0 ? 'reserved' : 'sold';
+  return { ...plan, floor: { ru: range, ro: range }, status, available: s.available > 0 };
+}
+
+/**
  * Project page. One idea per section, a lot of air between them, and the
  * same opener everywhere: an index and a name on a hairline, then the content.
  *
- *   Hero (full-bleed photograph, huge name; a split at xl for small renders)
+ *   Hero (full-bleed photograph, huge name; a split at xl for small renders;
+ *         «Выбрать квартиру» leads when the project has a selector)
  *   01 About      statement + specs as a hairline table; a tall picture beside
  *                 them unless exactly two pictures make the gallery
- *   02 Advantages hairline grid, thin icons (≤2 items: rows under the specs)
- *   03 Gallery    editorial image grid + lightbox        (2+ pictures)
- *   04 Plans      drawings in 1px frames                 (only with plans)
- *   05 Location   district, nearby list, route, map
- *   06 More       two projects, asymmetric; a portfolio note (counts) in
+ *   02 Selector   the way into the apartment selector   (only with inventory;
+ *                 the demo notice under it while the stock is demo)
+ *   03 Advantages hairline grid, thin icons (≤2 items: rows under the specs)
+ *   04 Gallery    editorial image grid + lightbox        (2+ pictures)
+ *   05 Plans      drawings in 1px frames                 (only with plans;
+ *                 links to the selector, floors and status from the stock
+ *                 when there is one)
+ *   06 Calculator cost and installment estimate          (projects priced
+ *                 in src/config/pricing.json): what the plans cost, on the
+ *                 same ground as the plans, before the page turns outward
+ *   07 Location   district, nearby list, route, map
+ *   08 More       two projects, asymmetric; a portfolio note (counts) in
  *                 the room the offset card leaves (md+)
  *   Lead          contrast band, runs into the footer
+ * Numbers follow the sections actually present.
  */
 export default async function ProjectPage(props: { params: Promise<{ locale: string; slug: string }> }) {
   const params = await props.params;
@@ -156,16 +195,37 @@ export default async function ProjectPage(props: { params: Promise<{ locale: str
     : null;
   const hasLocation = !!(mapEmbed || project.address || project.nearby.length > 0);
 
+  // The apartment selector (projects with an inventory) and the cost
+  // calculator (projects with a price configuration) are independent: a
+  // project can be priced before its stock is published.
+  const inventory = getInventory(project.slug);
+  const hasSelector = !!inventory;
+  const hasCalculator = pricedProjects().includes(project.slug);
+  const floorplans = inventory
+    ? project.floorplans.map((f) => withStock(f, inventory.apartments))
+    : project.floorplans;
+
   // Section numbers follow what is actually on the page.
   const order = [
     'about',
+    hasSelector && 'selector',
     advantagesSection && 'advantages',
     gallery.length > 0 && 'gallery',
-    project.floorplans.length > 0 && 'floorplans',
+    floorplans.length > 0 && 'floorplans',
+    hasCalculator && 'calculator',
     hasLocation && 'location',
     others.length > 0 && 'more',
   ].filter(Boolean) as string[];
   const num = (key: string) => pad(order.indexOf(key) + 1);
+
+  // The calculator draws its own heading (eyebrow row + title). Here the
+  // page's own opener stands in for its eyebrow row — «06 — Калькулятор» on
+  // a hairline, like every other section — so the block gets the dictionary
+  // with the eyebrow emptied, and SectionHeading leaves that row out.
+  const calculatorDict = {
+    ...dict,
+    inventory: { ...dict.inventory, calculator: { ...dict.inventory.calculator, eyebrow: '' } },
+  };
 
   const [statement, ...rest] = project.description;
 
@@ -266,7 +326,28 @@ export default async function ProjectPage(props: { params: Promise<{ locale: str
         </div>
       </Section>
 
-      {/* 02 — Advantages: a hairline grid, thin icons, nothing boxed. Phones
+      {/* 02 — Selector: the way into the apartment selector (the complex
+          scheme, what is on sale, the first step). The teaser carries its own
+          display type, so the section opens on a label row, like About. */}
+      {hasSelector && (
+        <Section id="selector" spacing="sm" className="scroll-mt-[var(--header-h-compact)] pb-section">
+          <LabelRow index={num('selector')}>{dict.inventory.common.selectorTitle}</LabelRow>
+          <div className="mt-12 md:mt-20">
+            <SelectorTeaser locale={locale} dict={dict} projectSlug={project.slug} />
+          </div>
+          {/* Demo stock: the figures above (units on sale, prices) and the
+              storeys of the scheme are invented, while About lists storeys as
+              «Уточняется» — the notice every selector step carries says so
+              here too, right under the figures. */}
+          {inventory?.demo && (
+            <Reveal delay={0.1} className="mt-12 md:mt-16">
+              <DemoNotice badge={dict.inventory.common.demoBadge} text={typo(dict.inventory.common.demoNotice)} />
+            </Reveal>
+          )}
+        </Section>
+      )}
+
+      {/* 03 — Advantages: a hairline grid, thin icons, nothing boxed. Phones
           get single-column rows, icon then label, like the nearby list. */}
       {advantagesSection && (
         <Section id="advantages" spacing="sm" className="pb-section">
@@ -306,7 +387,7 @@ export default async function ProjectPage(props: { params: Promise<{ locale: str
         </Section>
       )}
 
-      {/* 03 — Gallery, only with two or more pictures beyond the hero and
+      {/* 04 — Gallery, only with two or more pictures beyond the hero and
           the one About shows. */}
       {gallery.length > 0 && (
         <Section id="gallery" spacing="sm" className="pb-section">
@@ -332,23 +413,58 @@ export default async function ProjectPage(props: { params: Promise<{ locale: str
         </Section>
       )}
 
-      {/* 04 — Floorplans, as drawings on paper plates. */}
-      {project.floorplans.length > 0 && (
+      {/* 05 — Floorplans, as drawings on paper plates. With a selector, the
+          heading also leads to it (its first step, the complex scheme: every
+          unit is reached from there), the cards take floors and status from
+          the stock, and the lead-in sends exact figures to the selector and
+          the calculator instead of the sales desk. */}
+      {floorplans.length > 0 && (
         <Section id="floorplans" tone="alt">
           <SectionHeading
             index={num('floorplans')}
             eyebrow={dict.design.apartmentsEyebrow}
             title={d.floorplansTitle}
-            subtitle={d.floorplansSubtitle}
+            subtitle={hasSelector && hasCalculator ? dict.inventory.common.plansSubtitle : d.floorplansSubtitle}
             size="lg"
+            action={
+              hasSelector ? (
+                <WrapLink href={routes.selector(locale, project.slug)}>{dict.inventory.common.viewOnScheme}</WrapLink>
+              ) : undefined
+            }
           />
           <div className="mt-14 md:mt-20">
-            <Floorplans floorplans={project.floorplans} name={name} locale={locale} dict={dict} />
+            <Floorplans floorplans={floorplans} name={name} locale={locale} dict={dict} />
           </div>
         </Section>
       )}
 
-      {/* 05 — Location. Only confirmed facts: no invented distances. */}
+      {/* 06 — Calculator: what the plans above cost, then the installment —
+          preset to this project. It stays on the plans' secondary ground (one
+          band: the apartments and their price) and follows them at the dense
+          rhythm; on its own it opens a band of its own. The page's opener
+          replaces the block's eyebrow row (see calculatorDict); the block
+          keeps its anchor, #calculator, which sits on the section so a jump
+          lands on the opener, not under it. */}
+      {hasCalculator && (
+        <Section
+          id="calculator"
+          tone="alt"
+          spacing={floorplans.length > 0 ? 'sm' : 'default'}
+          className={cn('scroll-mt-[var(--header-h-compact)]', floorplans.length > 0 && 'pb-section')}
+        >
+          <LabelRow index={num('calculator')} as="p">
+            {dict.inventory.calculator.eyebrow}
+          </LabelRow>
+          <CostCalculator
+            locale={locale}
+            dict={calculatorDict}
+            id="calculator-tool"
+            preset={{ projectSlug: project.slug }}
+          />
+        </Section>
+      )}
+
+      {/* 06 — Location. Only confirmed facts: no invented distances. */}
       {hasLocation && (
         <Section id="location">
           <LabelRow index={num('location')}>{d.locationTitle}</LabelRow>
@@ -408,7 +524,7 @@ export default async function ProjectPage(props: { params: Promise<{ locale: str
         </Section>
       )}
 
-      {/* 06 — More projects: two, never a row of small cards. */}
+      {/* 07 — More projects: two, never a row of small cards. */}
       {others.length > 0 && (
         <Section id="more" spacing="sm" className="pb-section">
           <SectionHeading
@@ -487,12 +603,14 @@ export default async function ProjectPage(props: { params: Promise<{ locale: str
 /**
  * Section opener when the content itself carries the display type:
  *   01 — О ПРОЕКТЕ ──────────────────────────────
- * The label is the section's h2; the index is decoration.
+ * The label is the section's h2; the index is decoration. `as="p"` when the
+ * content brings its own h2 (the calculator's title), so the outline keeps
+ * one heading per section.
  */
-function LabelRow({ index, children }: { index: string; children: React.ReactNode }) {
+function LabelRow({ index, as = 'h2', children }: { index: string; as?: 'h2' | 'p'; children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-4">
-      <Reveal as="h2" className="label flex shrink-0 items-center gap-3 text-muted">
+      <Reveal as={as} className="label flex shrink-0 items-center gap-3 text-muted">
         <span aria-hidden="true" className="tabular">
           {index}
         </span>
@@ -501,6 +619,29 @@ function LabelRow({ index, children }: { index: string; children: React.ReactNod
       </Reveal>
       <span aria-hidden="true" className="rule-draw h-px flex-1 bg-line/15" />
     </div>
+  );
+}
+
+/**
+ * The ghost button's voice — tracked caps, a standing rule, the thin arrow —
+ * for a label long enough to wrap in a narrow column ("Смотреть квартиры на
+ * схеме комплекса" in the heading's four right-hand columns, or on a phone).
+ * The text runs inline, so the rule is drawn under every line (not only the
+ * block's foot) and the lines are balanced; a word joiner ties the arrow to
+ * the last word, so it follows the text instead of standing at the column's
+ * edge, and never starts a line alone.
+ */
+const WORD_JOINER = '⁠';
+function WrapLink({ href, children }: { href: string; children: string }) {
+  return (
+    <Link
+      href={href}
+      className="group inline-block max-w-full py-3 text-balance text-[0.75rem] font-medium uppercase leading-[1.9] tracking-[0.14em] text-ink"
+    >
+      <span className="link-rule pb-1">{typo(children)}</span>
+      {WORD_JOINER}
+      <Arrow className="ml-3 inline-block align-[-0.13em]" />
+    </Link>
   );
 }
 

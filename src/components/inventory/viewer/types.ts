@@ -10,6 +10,21 @@
  * Selection is always by id (building id, floor number, apartment id), and the
  * data model carries `model3D` refs with optional `nodeId`s, so a GLTF scene
  * can map its meshes onto exactly these ids.
+ *
+ * Two kinds of state per step:
+ *   - `active…`   highlighted (hover, keyboard focus) — transient;
+ *   - `selected…` / `pinned…` pressed by a tap, click or Enter — persists until
+ *     the next choice. Touch has no hover, so this is how a phone (and a 3D
+ *     scene driven by taps) shows the info card before navigating.
+ *
+ * Extras outside the contract. Each view ALSO receives its dictionary slice
+ * (accessible names, on-drawing text) and presentation-only props from the
+ * step component that mounts it: `labels` (ComplexScheme2D, ApartmentPlan2D),
+ * `t` + `common` (Facade2D, FloorPlan2D), `className`, `maxHeight`,
+ * `orientation`. A 3D twin is mounted by the same step component and takes
+ * the same extras, so its zones get the same aria-labels without new strings.
+ * Keep dictionaries out of these interfaces: they are the data/selection
+ * contract, and each viewer's text needs differ.
  */
 import type { Locale } from '@/i18n/config';
 import type {
@@ -28,6 +43,8 @@ export interface ComplexViewProps {
   locale: Locale;
   buildingStats: Record<string, AvailabilityStats>;
   activeBuildingId?: string | null;
+  /** Building pressed by a tap / click / Enter (its info card is open). */
+  selectedBuildingId?: string | null;
   onHoverBuilding?: (buildingId: string | null) => void;
   onSelectBuilding: (buildingId: string) => void;
 }
@@ -62,4 +79,7 @@ export interface ApartmentViewProps {
   locale: Locale;
   activeRoomId?: string | null;
   onHoverRoom?: (roomId: string | null) => void;
+  /** Room pinned by a tap / click / Enter (touch has no hover). */
+  pinnedRoomId?: string | null;
+  onSelectRoom?: (roomId: string) => void;
 }

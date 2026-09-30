@@ -58,6 +58,8 @@ export async function POST(req: Request) {
     `📞 ${escapeHtml(d.phone)}`,
     d.email ? `✉️ ${escapeHtml(d.email)}` : '',
     d.project ? `🏢 Проект: ${escapeHtml(d.project)}` : '',
+    // Already reads "Квартира №34, Блок 3, этаж 7" (in the buyer's language).
+    d.apartment ? `🔑 ${escapeHtml(d.apartment)}` : '',
     d.method ? `💬 Связь: ${d.method}` : '',
     d.subject ? `📌 Тема: ${escapeHtml(d.subject)}` : '',
     d.comment ? `📝 ${escapeHtml(d.comment)}` : '',

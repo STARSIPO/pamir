@@ -10,6 +10,11 @@
  *
  * Only the structure is authored by hand (plates, slots, buildings); units are
  * generated deterministically so the demo is stable across builds.
+ *
+ * Room counts stay inside the published facts («Типы квартир: 1–3 комнаты»,
+ * content/projects.ts): the wide corner units and the penthouses are large
+ * 3-room flats, not 4-room ones. Selector chips, the calculator's room choice
+ * (pricing.json roomCoefficients) and the recommender all derive from this.
  */
 import type { Apartment, Building, FeatureKey, FloorPlate, FloorSlot, ProjectInventory } from '@/lib/inventory/types';
 import { generatePlan } from '@/lib/inventory/plan-generator';
@@ -46,7 +51,7 @@ const plates: FloorPlate[] = [
     core: { x: 21.8, y: 0, w: 5.6, h: D },
     corridor: { x: 0, y: CORRIDOR_Y, w: 40, h: 1.8 },
     slots: [
-      slot('n1', 0, 0, 13.2, D, 'north', 4, 'corner', 'balcony', ['corner']),
+      slot('n1', 0, 0, 13.2, D, 'north', 3, 'corner', 'balcony', ['corner']),
       slot('n2', 13.2, 0, 8.6, D, 'north', 2, 'standard', 'balcony'),
       slot('n3', 27.4, 0, 6.2, D, 'north', 1, 'standard', 'balcony'),
       slot('n4', 33.6, 0, 6.4, D, 'north', 1, 'corner', 'balcony', ['corner']),
@@ -62,9 +67,9 @@ const plates: FloorPlate[] = [
     core: { x: 21.8, y: 0, w: 5.6, h: D },
     corridor: { x: 0, y: CORRIDOR_Y, w: 40, h: 1.8 },
     slots: [
-      slot('n1', 0, 0, 21.8, D, 'north', 4, 'penthouse', 'terrace', ['corner']),
+      slot('n1', 0, 0, 21.8, D, 'north', 3, 'penthouse', 'terrace', ['corner']),
       slot('n2', 27.4, 0, 12.6, D, 'north', 3, 'corner', 'balcony', ['corner']),
-      slot('s1', 0, SOUTH_Y, 20.0, D, 'south', 4, 'penthouse', 'terrace', ['corner', 'courtyard-view']),
+      slot('s1', 0, SOUTH_Y, 20.0, D, 'south', 3, 'penthouse', 'terrace', ['corner', 'courtyard-view']),
       slot('s2', 20.0, SOUTH_Y, 11.4, D, 'south', 3, 'standard', 'balcony', ['courtyard-view']),
       slot('s3', 31.4, SOUTH_Y, 8.6, D, 'south', 2, 'corner', 'balcony', ['corner', 'courtyard-view']),
     ],
@@ -81,7 +86,7 @@ const plates: FloorPlate[] = [
       slot('s1', 0, SOUTH_Y, 8.6, D, 'south', 2, 'corner', 'balcony', ['corner', 'street-view']),
       slot('s2', 8.6, SOUTH_Y, 6.2, D, 'south', 1, 'standard', 'balcony', ['street-view']),
       slot('s3', 14.8, SOUTH_Y, 6.2, D, 'south', 1, 'standard', 'balcony', ['street-view']),
-      slot('s4', 21.0, SOUTH_Y, 13.0, D, 'south', 4, 'corner', 'balcony', ['corner', 'street-view']),
+      slot('s4', 21.0, SOUTH_Y, 13.0, D, 'south', 3, 'corner', 'balcony', ['corner', 'street-view']),
     ],
   },
   {
@@ -90,10 +95,10 @@ const plates: FloorPlate[] = [
     core: { x: 20.0, y: 0, w: 5.6, h: D },
     corridor: { x: 0, y: CORRIDOR_Y, w: 34, h: 1.8 },
     slots: [
-      slot('n1', 0, 0, 20.0, D, 'north', 4, 'penthouse', 'terrace', ['corner', 'courtyard-view']),
+      slot('n1', 0, 0, 20.0, D, 'north', 3, 'penthouse', 'terrace', ['corner', 'courtyard-view']),
       slot('n2', 25.6, 0, 8.4, D, 'north', 2, 'corner', 'balcony', ['corner', 'courtyard-view']),
       slot('s1', 0, SOUTH_Y, 14.8, D, 'south', 3, 'corner', 'balcony', ['corner', 'street-view']),
-      slot('s2', 14.8, SOUTH_Y, 19.2, D, 'south', 4, 'penthouse', 'terrace', ['corner', 'street-view']),
+      slot('s2', 14.8, SOUTH_Y, 19.2, D, 'south', 3, 'penthouse', 'terrace', ['corner', 'street-view']),
     ],
   },
 ];

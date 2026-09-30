@@ -50,4 +50,14 @@ export const commonRu = {
   back: 'Назад',
   backToProject: 'К проекту',
   allProjects: 'Проекты',
+  // Integration: project page, lead form.
+  /** Floorplans section of a project with a selector → its first step. */
+  viewOnFloorPlan: 'Смотреть все квартиры на плане этажа',
+  /** Caption of the apartment context line above the lead form's fields. */
+  leadContext: 'Заявка по квартире',
+  /** Floorplans section of a project with a selector → its first step, the complex scheme. */
+  viewOnScheme: 'Смотреть квартиры на схеме комплекса',
+  /** Floorplans subtitle when the selector and the calculator are on the page (instead of «уточняйте у отдела продаж»). */
+  plansSubtitle:
+    'Типы квартир по числу комнат. Площадь и цена каждой квартиры — в выборе на схеме, расчёт с рассрочкой — в калькуляторе ниже.',
 };

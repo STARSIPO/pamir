@@ -52,4 +52,10 @@ export const commonRo: typeof commonRu = {
   back: 'Înapoi',
   backToProject: 'La proiect',
   allProjects: 'Proiecte',
+  // Integration: project page, lead form.
+  viewOnFloorPlan: 'Vezi toate apartamentele pe planul etajului',
+  leadContext: 'Cerere pentru apartament',
+  viewOnScheme: 'Vezi apartamentele pe schema complexului',
+  plansSubtitle:
+    'Tipurile de apartamente după numărul de camere. Suprafața și prețul fiecărui apartament — în selectorul de pe schemă, calculul cu plata în rate — în calculatorul de mai jos.',
 };

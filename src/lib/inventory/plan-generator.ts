@@ -34,6 +34,15 @@ function outerBand(rooms: number, type: ApartmentType): Band[] {
       { type: 'living', weight: 0.36 },
       { type: 'kitchen', weight: 0.28 },
     ];
+  // A 3-room penthouse is wide enough for a separate kitchen beside the living
+  // room (3 rooms = living + 2 bedrooms; the kitchen is not counted).
+  if (rooms === 3 && type === 'penthouse')
+    return [
+      { type: 'bedroom', weight: 0.24 },
+      { type: 'living', weight: 0.3 },
+      { type: 'kitchen', weight: 0.18 },
+      { type: 'bedroom', weight: 0.28 },
+    ];
   if (rooms === 3)
     return [
       { type: 'bedroom', weight: 0.3 },

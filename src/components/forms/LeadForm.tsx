@@ -9,6 +9,7 @@ import type { Dictionary } from '@/i18n/dictionaries';
 import { projects } from '@/content/projects';
 import { routes } from '@/i18n/routing';
 import { formatMoldovaPhone } from '@/lib/validation';
+import { track } from '@/lib/analytics';
 import { cn } from '@/lib/utils';
 import { NBSP, typo } from '@/lib/text';
 import { getLenis } from '@/lib/smooth-scroll';
@@ -86,6 +87,14 @@ function splitConsent(consent: string, policyTitle: string): [string, string] | 
  * `tone="light"` — on the dark band (light text); `tone="dark"` — on canvas.
  * On the band every state is drawn in band-fg, never the accent: the band is
  * near-black in all themes and the stone accent would vanish on it.
+ *
+ * `apartment` — the unit the request is about, as one readable line
+ * ("Квартира №34, Блок 3, этаж 7"). It is shown above the fields, so the buyer
+ * sees what they are asking about, and posted with the request (a hidden
+ * `apartment` field, also picked up by any plain form handler).
+ *
+ * `submitLabel` — the button's name when the request is a specific one
+ * («Оставить заявку», «Узнать о снятии брони»); defaults to the variant's.
  */
 export function LeadForm({
   locale,
@@ -94,6 +103,7 @@ export function LeadForm({
   tone = 'dark',
   projectName = '',
   apartment = '',
+  submitLabel,
   className,
 }: {
   locale: Locale;
@@ -101,8 +111,10 @@ export function LeadForm({
   variant?: Variant;
   tone?: Tone;
   projectName?: string;
-  /** Apartment the lead is about; sent with the request (wired in the integration step). */
+  /** Apartment the lead is about ("Квартира №34, Блок 3, этаж 7"); shown and sent with the request. */
   apartment?: string;
+  /** Submit button label; defaults to «Получить консультацию» / «Отправить сообщение». */
+  submitLabel?: string;
   className?: string;
 }) {
   const router = useRouter();
@@ -158,6 +170,7 @@ export function LeadForm({
       phone: String(fd.get('phone') ?? ''),
       email: String(fd.get('email') ?? ''),
       project: String(fd.get('project') ?? ''),
+      apartment: String(fd.get('apartment') ?? ''),
       subject: String(fd.get('subject') ?? ''),
       comment: String(fd.get('comment') ?? fd.get('message') ?? ''),
       method: variant === 'lead' ? method : undefined,
@@ -192,8 +205,19 @@ export function LeadForm({
 
     setSubmitting(true);
 
+    // What was asked about, never who asked: no name or phone in analytics.
+    const submitted = () =>
+      track('lead_submit', {
+        variant,
+        locale,
+        method: payload.method,
+        project: payload.project || undefined,
+        apartment: payload.apartment || undefined,
+      });
+
     // Static demo build (GitHub Pages) has no /api backend — succeed gracefully.
     if (process.env.NEXT_PUBLIC_STATIC === '1') {
+      submitted();
       if (variant === 'lead') router.push(routes.thankyou(locale));
       else setDone(true);
       setSubmitting(false);
@@ -207,6 +231,7 @@ export function LeadForm({
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error('failed');
+      submitted();
       if (variant === 'lead') {
         router.push(routes.thankyou(locale));
       } else {
@@ -270,6 +295,20 @@ export function LeadForm({
       className={cn('flex flex-col gap-9 [container-type:inline-size]', className)}
       noValidate
     >
+      {/* The apartment this request is about: a caption and one line between
+          two hairlines, set like the fields' own labels — context, not a
+          control. The hidden input carries it with the form. */}
+      {apartment && (
+        <div className={cn('border-y py-5', onBand ? 'border-band-fg/15' : 'border-line/15')}>
+          <p className={cn('label flex items-center gap-2.5', muted)}>
+            <span aria-hidden="true" className={cn('h-1.5 w-1.5 shrink-0', onBand ? 'bg-band-fg' : 'bg-accent')} />
+            {dict.inventory.common.leadContext}
+          </p>
+          <p className={cn('mt-2.5 text-pretty text-base leading-snug md:text-[1.0625rem]', fg)}>{typo(apartment)}</p>
+          <input type="hidden" name="apartment" value={apartment} />
+        </div>
+      )}
+
       <div className={pairCls}>
         <div>
           <label htmlFor={fid('name')} className={labelCls}>
@@ -510,7 +549,9 @@ export function LeadForm({
         aria-busy={submitting || undefined}
         className="w-full"
       >
-        {submitting ? dict.form.submitting : variant === 'lead' ? dict.form.submit : dict.form.submitContact}
+        {submitting
+          ? dict.form.submitting
+          : (submitLabel ?? (variant === 'lead' ? dict.form.submit : dict.form.submitContact))}
       </Button>
     </form>
   );
