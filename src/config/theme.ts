@@ -5,8 +5,8 @@
  * │  To switch the whole site, change SITE_THEME below. Nothing else.   │
  * └──────────────────────────────────────────────────────────────────────┘
  *
- *   'warm'  — Variant 1 · Warm Architectural (default)
- *   'dark'  — Variant 2 · Premium Dark
+ *   'warm'  — Variant 1 · Warm Architectural
+ *   'dark'  — Variant 2 · Premium Dark (live since 2026-09-30, client's choice)
  *   'stone' — Variant 3 · Modern Stone
  *
  * The value lands on <html data-theme="…">; every colour on the site is a CSS
@@ -20,7 +20,7 @@
 export const THEMES = ['warm', 'dark', 'stone'] as const;
 export type ThemeName = (typeof THEMES)[number];
 
-export const SITE_THEME: ThemeName = 'warm';
+export const SITE_THEME: ThemeName = 'dark';
 
 /** Browser-chrome colour per theme (matches --canvas in globals.css). */
 export const THEME_COLOR: Record<ThemeName, string> = {

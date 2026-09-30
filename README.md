@@ -18,13 +18,13 @@ Three complete colour themes. Switch the whole site by changing **one line** in
 `src/config/theme.ts`:
 
 ```ts
-export const SITE_THEME: ThemeName = 'warm'; // 'warm' | 'dark' | 'stone'
+export const SITE_THEME: ThemeName = 'dark'; // 'warm' | 'dark' | 'stone'
 ```
 
 | Theme | Name | Palette |
 |---|---|---|
-| `warm` | Variant 1 — Warm Architectural (default) | #F2EFE9 · #E5E0D7 · #171717 · #6A6863 · accent #9A8264 |
-| `dark` | Variant 2 — Premium Dark | #111210 · #1B1C19 · #F4F1EA · #AAA79F · accent #B39A73 / #70614D |
+| `warm` | Variant 1 — Warm Architectural | #F2EFE9 · #E5E0D7 · #171717 · #6A6863 · accent #9A8264 |
+| `dark` | Variant 2 — Premium Dark (live) | #111210 · #1B1C19 · #F4F1EA · #AAA79F · accent #B39A73 / #70614D |
 | `stone` | Variant 3 — Modern Stone | #E9E9E5 · #D5D6D0 · #161816 · #696D68 · accent #59665B |
 
 Preview any theme without rebuilding: add `?theme=dark` (or `warm`, `stone`) to a
