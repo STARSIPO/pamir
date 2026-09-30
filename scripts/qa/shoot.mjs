@@ -40,7 +40,7 @@ await send('Page.navigate', { url: target });
 await sleep(2500);
 // Walk the page so scroll reveals fire, then return to the top.
 const total = await evalJs('document.documentElement.scrollHeight');
-for (let y = 0; y < total; y += Math.round(height * 0.6)) { await evalJs(`window.scrollTo(0, ${y})`); await sleep(160); }
+for (let y = 0; y < total; y += Math.round(height * 0.5)) { await evalJs(`window.scrollTo(0, ${y})`); await sleep(350); }
 await evalJs('window.scrollTo(0, document.documentElement.scrollHeight)'); await sleep(900);
 await evalJs('window.scrollTo(0, 0)'); await sleep(1600);
 const full = await evalJs('document.documentElement.scrollHeight');
