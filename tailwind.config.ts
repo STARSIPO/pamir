@@ -72,8 +72,8 @@ const config: Config = {
       },
       spacing: {
         // Vertical rhythm between sections, and the grid gutter.
-        section: 'clamp(5.5rem, 11vw, 11rem)',
-        'section-sm': 'clamp(4rem, 7vw, 7rem)',
+        section: 'clamp(4.5rem, 8.5vw, 8.5rem)',
+        'section-sm': 'clamp(3.5rem, 6vw, 6rem)',
         gutter: 'clamp(1rem, 2.2vw, 2.25rem)',
         header: 'var(--header-h)',
       },
