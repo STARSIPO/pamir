@@ -23,8 +23,9 @@ const jobs = [
   { src: 'botanic-star/g3.jpg', out: 'botanic-star/gallery-2.jpg', width: 1600 },
   { src: 'botanic-star/g4.jpg', out: 'botanic-star/gallery-3.jpg', width: 1600 },
   { src: 'botanic-star/g5.jpg', out: 'botanic-star/gallery-4.jpg', width: 1600 },
-  { src: 'botanic-park/cover.jpg', out: 'botanic-park/cover.jpg', width: 1800 },
-  { src: 'botanic-park/g1.jpg', out: 'botanic-park/gallery-1.jpg', width: 1600 },
+  // Tree-framed facade; the bottom 11.5% (van, lamp heads, sale sign) is cut.
+  // The street shot (botanic-park/cover.jpg: pole, cables, cars) is not used.
+  { src: 'botanic-park/g1.jpg', out: 'botanic-park/cover-v2.jpg', crop: [0, 0, 1800, 1059], width: 1800 },
   { src: 'botanic-park/g2.jpg', out: 'botanic-park/gallery-2.jpg', width: 1600 },
 ];
 

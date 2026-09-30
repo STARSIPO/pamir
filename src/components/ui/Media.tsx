@@ -124,7 +124,7 @@ function Placeholder({
         </g>
       </svg>
       {label && <span className="label relative z-10 max-w-[22ch] px-4 text-center text-muted">{label}</span>}
-      {showTag && <span className="label absolute bottom-3 right-3 z-10 text-muted/70">demo</span>}
+      {showTag && <span className="label absolute bottom-3 right-3 z-10 text-muted">demo</span>}
     </div>
   );
 }

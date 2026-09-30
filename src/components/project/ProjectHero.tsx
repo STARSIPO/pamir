@@ -34,7 +34,7 @@ const ART: Record<string, Art> = {
   'botanic-star-2-block-2': { aspect: 1.375, portrait: '50% 50%', landscape: '50% 30%', inset: '50% 50%' },
   'botanic-star-2-block-1': { aspect: 2.165, portrait: '57% 50%', landscape: '50% 50%' },
   'botanic-star': { aspect: 0.67, portrait: '50% 50%', landscape: '50% 16%', inset: '50% 6%' },
-  'botanic-park': { aspect: 1.51, portrait: '44% 50%', landscape: '50% 38%' },
+  'botanic-park': { aspect: 1.7, portrait: '44% 50%', landscape: '50% 25%' },
 };
 const CENTRE: Art = { aspect: 1.5, portrait: '50% 50%', landscape: '50% 45%' };
 

@@ -75,7 +75,7 @@ export function Accordion({
                 onKeyDown={(e) => onKeyDown(e, i)}
                 // The focus ring is drawn inside the row: the global 4px offset
                 // would lay its lower edge across the first line of an open answer.
-                className="group flex w-full items-start gap-5 py-7 text-left focus-visible:outline-offset-[-2px] md:gap-8 md:py-9"
+                className="group -mx-3 flex w-[calc(100%+1.5rem)] items-start gap-5 px-3 py-7 text-left focus-visible:outline-offset-[-2px] md:gap-8 md:py-9"
               >
                 {/* Decorative index: kept out of the button's accessible name. */}
                 <span

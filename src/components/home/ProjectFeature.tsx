@@ -129,7 +129,7 @@ export function ProjectFeature({
         <Reveal variant="mask">
           <Media
             src={project.cover}
-            alt={name}
+            alt=""
             aspect={aspect}
             label={name}
             seed={index}

@@ -169,11 +169,17 @@ body {
 }
 
 /* 2px: at DPR 1 a 1.5px outline rasterises to a hairline. --focus is never
-   set on :root, so the fallback resolves --accent at the focused element and
+   set on :root, so the fallback resolves --accent-strong at the focused element
+   (≥3:1 on canvas-alt, where plain --accent is 2.8:1) and
    follows the dark-ground remap below. */
 :focus-visible {
-  outline: 2px solid rgb(var(--focus, var(--accent)));
+  outline: 2px solid rgb(var(--focus, var(--accent-strong)));
   outline-offset: 4px;
+}
+
+/* Keyboard focus and anchor jumps land below the fixed compact header. */
+html {
+  scroll-padding-top: calc(var(--header-h-compact) + 1rem);
 }
 
 /* ------------------------------------------------------------

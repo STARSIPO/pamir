@@ -30,7 +30,8 @@ placeholder tagged **DEMO** whenever no `src` is set (floor plans). To replace:
      respective components (`src/components/home/*`, `company/page.tsx`).
 3. `next/image` then serves optimized AVIF/WebP automatically.
 
-**Logo:** rebuilt as SVG (`src/components/brand/Logo.tsx`, `public/favicon.svg`)
+**Logo:** rebuilt as SVG (`src/components/brand/Logo.tsx`; site icons in
+`src/app/icon.svg` and `src/app/apple-icon.png`, served by Next's file conventions)
 from the original “Pamir peak + skyline” mark, now single-colour (`currentColor`)
 so it follows the active theme. Replace with the official vector if the brand
 archive provides one.

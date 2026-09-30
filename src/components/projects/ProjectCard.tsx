@@ -57,7 +57,7 @@ export function ProjectCard({
       <Reveal variant="mask">
         <Media
           src={project.cover}
-          alt={project.name[locale]}
+          alt=""
           aspect={aspect}
           seed={index}
           priority={priority}

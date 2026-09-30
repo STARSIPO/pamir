@@ -17,6 +17,7 @@ import { Media } from '@/components/ui/Media';
 import { ProjectCard } from '@/components/projects/ProjectCard';
 import { LeadSection } from '@/components/home/LeadSection';
 import { cn } from '@/lib/utils';
+import { typo } from '@/lib/text';
 
 export function generateStaticParams() {
   return locales.flatMap((locale) => projects.map((p) => ({ locale, slug: p.slug })));
@@ -196,7 +197,7 @@ export default async function ProjectPage(props: { params: Promise<{ locale: str
           <div className={aboutSrc ? 'lg:col-span-6' : 'lg:col-span-7'}>
             {statement && (
               <Reveal>
-                <p className="font-display text-display-md font-light text-pretty text-ink">{statement[locale]}</p>
+                <p className="font-display text-display-md font-light text-pretty text-ink">{typo(statement[locale])}</p>
               </Reveal>
             )}
             {rest.length > 0 && (
@@ -204,7 +205,7 @@ export default async function ProjectPage(props: { params: Promise<{ locale: str
                 {rest.map((p, i) => (
                   <Reveal key={i} delay={0.08 * (i + 1)}>
                     <p className="max-w-[58ch] text-pretty text-base leading-relaxed text-muted md:text-[1.0625rem]">
-                      {p[locale]}
+                      {typo(p[locale])}
                     </p>
                   </Reveal>
                 ))}
@@ -368,7 +369,7 @@ export default async function ProjectPage(props: { params: Promise<{ locale: str
                   src={mapEmbed}
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
-                  className="absolute inset-0 h-full w-full grayscale contrast-[1.05] [[data-theme=dark]_&]:invert [[data-theme=dark]_&]:contrast-[0.9]"
+                  className="map-treat absolute inset-0 h-full w-full"
                 />
               </Reveal>
             )}

@@ -68,8 +68,8 @@ export default async function ThankYouPage(props: { params: Promise<{ locale: st
           </div>
           <p className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-5">
             <span className="label shrink-0 whitespace-nowrap text-muted">{sales.label[locale]}</span>
-            <a href={telHref(sales.number)} className="link-line self-start whitespace-nowrap text-lead tabular text-ink sm:self-auto">
-              {sales.number}
+            <a href={telHref(sales.number)} className="group inline-flex min-h-11 items-center self-start whitespace-nowrap text-lead tabular text-ink sm:self-auto">
+              <span className="link-line">{sales.number}</span>
             </a>
           </p>
         </Reveal>

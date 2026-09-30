@@ -14,8 +14,8 @@
 | `botanic-star-2-block-1/cover.jpg` | Botanic Star 2, бл. 1 | рендер | `project/2019/10/site-1.jpg` |
 | `company/about.jpg` | Botanic Star 2, бл. 1 | рендер | `service/000023850447.jpg` |
 | `botanic-star/cover.jpg`, `gallery-1…4.jpg` | Botanic Star | фото | `plan/NIK_6989.jpg`, `NIK_6991`, `NIK_6983`, `NIK_6984`, `gggg.jpg` |
-| `botanic-park/cover.jpg`, `gallery-1…2.jpg` | Botanic Park | фото | `project/2020/07/park-1.jpg`, `plan/park.jpg`, `plan/bot.jpg` |
-| `botanic-park/cover-v2.jpg` | Botanic Park | фото; обложка и герой в контенте. Исходник `gallery-1` (`assets/photos-src/botanic-park/g1.jpg`, фасад в кадре из деревьев), кроп `[0, 0, 1800, 1059]` — снизу срезано 11,5 % (фургон, фонари, вывеска «Продажа торговых помещений», крыши машин), 1800×1059, mozjpeg q80. `cover.jpg` (столб, провода, машины) на сайте не используется, в контенте только `cover-v2.jpg` и `gallery-2.jpg` | `plan/park.jpg` |
+| `botanic-park/gallery-2.jpg` | Botanic Park | фото | `plan/bot.jpg` |
+| `botanic-park/cover-v2.jpg` | Botanic Park | фото; обложка и герой в контенте. Исходник `gallery-1` (`assets/photos-src/botanic-park/g1.jpg`, фасад в кадре из деревьев), кроп `[0, 0, 1800, 1059]` — снизу срезано 11,5 % (фургон, фонари, вывеска «Продажа торговых помещений», крыши машин), 1800×1059, mozjpeg q80. Уличный кадр `project/2020/07/park-1.jpg` (столб, провода, машины) не используется | `plan/park.jpg` |
 
 - Рендеры на сайте всегда подписаны «Визуализация / Vizualizare» (`coverKind: 'render'`).
 - Исходники (~15 МБ) лежат в `assets/photos-src/` (в `.gitignore`). Веб-версии собирает

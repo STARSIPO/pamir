@@ -74,12 +74,12 @@ const FULL = [92, 92, 92, 1540] as const;
  * and upscales it. Update an entry when a cover is re-cut.
  */
 const COVER_SIZE: Record<string, readonly [w: number, h: number]> = {
-  '/photos/projects/botanic-star-2-blocks-3-4/cover.jpg': [1300, 1074],
+  '/photos/projects/botanic-star-2-blocks-3-4/cover-v2.jpg': [1300, 1074],
   '/photos/projects/eco-house/cover.jpg': [1000, 1161],
   '/photos/projects/botanic-star-2-block-2/cover.jpg': [1400, 1018],
   '/photos/projects/botanic-star-2-block-1/cover.jpg': [2000, 924],
   '/photos/projects/botanic-star/cover.jpg': [1200, 1803],
-  '/photos/projects/botanic-park/cover.jpg': [1800, 1195],
+  '/photos/projects/botanic-park/cover-v2.jpg': [1800, 1059],
 };
 
 /**
