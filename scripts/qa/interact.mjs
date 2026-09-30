@@ -1,6 +1,7 @@
 // Viewport screenshots of interactive states via headless Edge + raw CDP.
 // Usage: node interact.mjs <url> <width> <height> <outPrefix> [--mobile] [--theme=dark] --steps='<json>'
 // steps: array of { "scroll": <y> } | { "eval": "<js expression>" } | { "click": "<css selector>" }
+//        | { "hover": "<css selector>" } (real mouse move to the element centre) | { "tap": "<css selector>" } (touch)
 //        | { "key": "Escape" } | { "wait": <ms> } | { "shot": "<name>" } | { "log": "<js expression>" }
 // Prints JSON with screenshot paths and log values. Screenshots are viewport-only.
 import { spawn } from 'node:child_process';
@@ -38,6 +39,18 @@ for (const s of steps) {
   if (s.scroll !== undefined) { await evalJs(`window.scrollTo(0, ${s.scroll})`); await sleep(700); }
   else if (s.eval) { await evalJs(s.eval); await sleep(300); }
   else if (s.click) { const r = await evalJs(`(() => { const el = document.querySelector(${JSON.stringify(s.click)}); if (!el) return 'NOT FOUND'; el.scrollIntoView({block:'center'}); el.click(); return 'ok'; })()`); out.logs.push({ click: s.click, r }); await sleep(700); }
+  else if (s.hover || s.tap) {
+    const sel = s.hover || s.tap;
+    const c = await evalJs(`(() => { const el = document.querySelector(${JSON.stringify(sel)}); if (!el) return null; el.scrollIntoView({block:'center'}); const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()`);
+    await sleep(400);
+    if (!c) out.logs.push({ [s.hover ? 'hover' : 'tap']: sel, r: 'NOT FOUND' });
+    else if (s.hover) { await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: c[0], y: c[1] }); await sleep(700); }
+    else {
+      await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: c[0], y: c[1] }] });
+      await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      await sleep(800);
+    }
+  }
   else if (s.key) { await send('Input.dispatchKeyEvent', { type: 'keyDown', key: s.key, code: s.key, windowsVirtualKeyCode: s.key === 'Escape' ? 27 : s.key === 'Tab' ? 9 : s.key === 'ArrowRight' ? 39 : s.key === 'ArrowLeft' ? 37 : 0 }); await send('Input.dispatchKeyEvent', { type: 'keyUp', key: s.key, code: s.key }); await sleep(500); }
   else if (s.wait) { await sleep(s.wait); }
   else if (s.log) { out.logs.push({ expr: s.log, value: await evalJs(s.log) }); }

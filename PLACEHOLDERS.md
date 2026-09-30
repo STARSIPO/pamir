@@ -54,6 +54,20 @@ archive provides one.
 
 Each project also carries an `unconfirmed: [...]` list documenting its open items.
 
+## 2a. Apartment selector — DEMO inventory and prices
+
+The interactive selector (project → building → floor → apartment, calculators,
+recommendations) runs on **invented data** for Botanic Star 2, blocks 3–4
+(`src/content/inventory/botanic-star-2-blocks-3-4.ts`, `demo: true`) and demo
+prices (`src/config/pricing.json`, `demo: true`). Every selector page shows a
+«Демо-данные» notice and is `noindex`, excluded from the sitemap.
+
+To go live, the owner supplies one sheet per project — building, floor,
+apartment no., rooms, m², balcony m², bathrooms, status (available / reserved /
+sold), price — plus real floor-plan drawings if available. Replace the module
+(same shape, see `docs/INVENTORY.md`), set `demo: false` in both files and put
+the real base prices and coefficients into `pricing.json`.
+
 ## 3. Forms & notifications
 
 Lead/contact forms POST to `/api/lead` (validation, MD phone mask, honeypot,
