@@ -1,4 +1,5 @@
 import type { Dictionary } from './ru';
+import { inventoryRo } from './inventory';
 
 /** Romanian UI strings. Must mirror the RU shape (checked by `satisfies`). */
 export const ro: Dictionary = {
@@ -264,4 +265,5 @@ export const ro: Dictionary = {
       },
     },
   },
+  inventory: inventoryRo,
 };

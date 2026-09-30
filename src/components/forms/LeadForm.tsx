@@ -93,6 +93,7 @@ export function LeadForm({
   variant = 'lead',
   tone = 'dark',
   projectName = '',
+  apartment = '',
   className,
 }: {
   locale: Locale;
@@ -100,6 +101,8 @@ export function LeadForm({
   variant?: Variant;
   tone?: Tone;
   projectName?: string;
+  /** Apartment the lead is about; sent with the request (wired in the integration step). */
+  apartment?: string;
   className?: string;
 }) {
   const router = useRouter();

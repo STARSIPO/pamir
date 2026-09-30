@@ -31,7 +31,9 @@ export function Header({ locale, dict }: { locale: Locale; dict: Dictionary }) {
   const pathname = usePathname();
   const parsed = parsePathname(pathname);
   const isHome = !parsed?.key && pathname.replace(/\/$/, '') === `/${locale}`;
-  const isProjectDetail = parsed?.key === 'projects' && !!parsed.slug;
+  // Only the project page itself opens on a full-bleed photo; the apartment
+  // selector and apartment pages below it start on the canvas.
+  const isProjectDetail = parsed?.key === 'projects' && !!parsed.slug && !parsed.rest?.length;
   const overHero = isHome || isProjectDetail;
 
   const [scrolled, setScrolled] = useState(false);

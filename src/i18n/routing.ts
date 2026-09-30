@@ -58,6 +58,14 @@ export const routes = {
   contacts: (l: Locale) => href(l, 'contacts'),
   privacy: (l: Locale) => href(l, 'privacy'),
   thankyou: (l: Locale) => href(l, 'thankyou'),
+
+  // Apartment selector: project → building → floor → apartment.
+  // Sub-segments are language-neutral; only the "projects" segment is localized.
+  selector: (l: Locale, slug: string) => `${href(l, 'projects', slug)}/select`,
+  building: (l: Locale, slug: string, building: string) => `${href(l, 'projects', slug)}/select/${building}`,
+  floor: (l: Locale, slug: string, building: string, floor: number | string) =>
+    `${href(l, 'projects', slug)}/select/${building}/${floor}`,
+  apartment: (l: Locale, slug: string, apartmentId: string) => `${href(l, 'projects', slug)}/apartments/${apartmentId}`,
 };
 
 /**
@@ -98,6 +106,8 @@ export interface ParsedPath {
   locale: Locale;
   key?: RouteKey;
   slug?: string;
+  /** Segments below a project page, e.g. ['select','b3','7'] or ['apartments','b3-34']. */
+  rest?: string[];
 }
 
 /** Parse a browser pathname like "/ro/proiecte/botanic-star" into its parts. */
@@ -112,7 +122,8 @@ export function parsePathname(pathname: string): ParsedPath | null {
     ? (routeKeyFromSegment(locale, parts[1]) ?? routeKeyFromSegment('ru', parts[1]))
     : undefined;
   const slug = key === 'projects' ? parts[2] : undefined;
-  return { locale, key, slug };
+  const rest = key === 'projects' && parts.length > 3 ? parts.slice(3) : undefined;
+  return { locale, key, slug, rest };
 }
 
 /**
@@ -121,5 +132,7 @@ export function parsePathname(pathname: string): ParsedPath | null {
  */
 export function switchLocalePath(targetLocale: Locale, current: ParsedPath | null): string {
   if (!current) return href(targetLocale);
-  return href(targetLocale, current.key, current.slug);
+  const base = href(targetLocale, current.key, current.slug);
+  // Keep the buyer on the same building / floor / apartment.
+  return current.rest?.length ? `${base}/${current.rest.join('/')}` : base;
 }

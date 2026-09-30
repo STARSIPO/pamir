@@ -1,0 +1,42 @@
+{
+  "currency": "EUR",
+  "demo": true,
+  "roundTo": 100,
+  "projects": {
+    "botanic-star-2-blocks-3-4": {
+      "basePricePerSqm": 1320,
+      "buildingCoefficients": { "b3": 1.0, "b4": 1.02 },
+      "floorCoefficients": [
+        { "from": 1, "to": 2, "k": 0.96 },
+        { "from": 3, "to": 4, "k": 0.99 },
+        { "from": 5, "to": 7, "k": 1.02 },
+        { "from": 8, "to": 99, "k": 1.05 }
+      ],
+      "roomCoefficients": { "1": 1.06, "2": 1.0, "3": 0.98, "4": 0.97 },
+      "typeCoefficients": { "standard": 1.0, "corner": 1.03, "penthouse": 1.1 },
+      "outdoorShare": { "none": 0, "balcony": 0.5, "terrace": 0.35 },
+      "parking": { "none": 0, "surface": 6000, "underground": 12000 }
+    },
+    "eco-house": {
+      "basePricePerSqm": 1180,
+      "buildingCoefficients": {},
+      "floorCoefficients": [
+        { "from": 1, "to": 2, "k": 0.96 },
+        { "from": 3, "to": 6, "k": 1.0 },
+        { "from": 7, "to": 99, "k": 1.04 }
+      ],
+      "roomCoefficients": { "1": 1.06, "2": 1.0, "3": 0.98, "4": 0.97 },
+      "typeCoefficients": { "standard": 1.0, "corner": 1.03, "penthouse": 1.1 },
+      "outdoorShare": { "none": 0, "balcony": 0.5, "terrace": 0.35 },
+      "parking": { "none": 0, "surface": 5000, "underground": 11000 }
+    }
+  },
+  "installment": {
+    "terms": [12, 24, 36, 48, 60],
+    "defaultTerm": 36,
+    "minDownPaymentPercent": 20,
+    "maxDownPaymentPercent": 90,
+    "defaultDownPaymentPercent": 30,
+    "annualInterestRate": 0
+  }
+}

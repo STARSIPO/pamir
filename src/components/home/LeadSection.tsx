@@ -51,12 +51,15 @@ export function LeadSection({
   locale,
   dict,
   projectName,
+  apartment,
   id = 'lead',
   index = projectName ? undefined : '06',
 }: {
   locale: Locale;
   dict: Dictionary;
   projectName?: string;
+  /** Apartment context ("Квартира №34, Блок 3, этаж 7") when sent from an apartment page. */
+  apartment?: string;
   id?: string;
   index?: string;
 }) {
@@ -126,7 +129,7 @@ export function LeadSection({
         </Reveal>
 
         <Reveal delay={0.12} className="mt-16 md:mt-20 lg:col-span-5 lg:col-start-8 lg:row-start-2 lg:mt-20">
-          <LeadForm locale={locale} dict={dict} variant="lead" tone="light" projectName={projectName} />
+          <LeadForm locale={locale} dict={dict} variant="lead" tone="light" projectName={projectName} apartment={apartment} />
         </Reveal>
       </div>
     </Section>
