@@ -1,4 +1,4 @@
-import type { Project } from './types';
+import type { KeyValue, Localized, Project } from './types';
 
 /**
  * Project catalogue. Structure mirrors a headless-CMS schema so the owner can
@@ -17,7 +17,13 @@ import type { Project } from './types';
  * dash never opens a line and the "2" never leaves "Star".
  */
 
-const TBD = { ru: 'Уточняется', ro: 'Se precizează' };
+/** Neutral value for a fact the owner has not confirmed yet. */
+export const TBD: Localized = { ru: 'Уточняется', ro: 'Se precizează' };
+
+/** True for an unconfirmed value: it must never be shown as a fact in a summary. */
+export function isTbd(value: Localized): boolean {
+  return value.ru === TBD.ru;
+}
 
 export const projects: Project[] = [
   {
@@ -337,3 +343,26 @@ export function getFeaturedProjects(): Project[] {
 }
 
 export const projectSlugs = projects.map((p) => p.slug);
+
+/**
+ * Up to `limit` confirmed specs for a short summary (the homepage feature
+ * row): no status or district, which the meta line above it already shows,
+ * and nothing still "Уточняется".
+ */
+export function summarySpecs(project: Project, limit = 3): KeyValue[] {
+  return project.specs
+    .filter((s) => s.key !== 'status' && s.key !== 'district' && !isTbd(s.value))
+    .slice(0, limit);
+}
+
+/** The districts the catalogue covers, in catalogue order, each once. */
+export function getDistricts(): Localized[] {
+  const seen = new Set<string>();
+  return projects
+    .map((p) => p.district)
+    .filter((d) => {
+      if (seen.has(d.ru)) return false;
+      seen.add(d.ru);
+      return true;
+    });
+}

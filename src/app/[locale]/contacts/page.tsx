@@ -26,6 +26,7 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
  *   PageHero
  *   ┌ contact rows (phones, office + route, hours, email) ┐  ┌ write to us ──────┐
  *   │ social row                                           │  │ title, lead, form │
+ *   │ what happens next (1280–1468px only)                 │  │                   │
  *   └──────────────────────────────────────────────────────┘  └───────────────────┘
  *   ┌ map, wide letterbox ─────────────────────────────────────────────────────────┐
  *   └──────────────────────────────────────────────────────────────────────────────┘
@@ -65,6 +66,26 @@ export default async function ContactsPage(props: { params: Promise<{ locale: st
                 </ul>
               </div>
             )}
+            {/* What happens after a request, on the same 11rem legend column
+                as the rows above. It fills the height the form panel has
+                over the rows (~285–290px) only while the form's field pairs
+                stack (the form's own container query, 28rem): from 1469px
+                they sit side by side, the panel gets shorter, and the list
+                steps aside. Not below xl: at 1024–1279 the text column is
+                too narrow, the lines wrap to three and the list runs past
+                the panel. The spacing is tight (mt-8, py-3.5) for the same
+                reason. The label sits on the first item's baseline. */}
+            <div className="mt-8 hidden gap-x-gutter xl:grid xl:grid-cols-[minmax(0,11rem)_minmax(0,1fr)] xl:items-baseline min-[1469px]:hidden">
+              <p className="label text-muted">{dict.design.fill.contacts.nextTitle}</p>
+              <ol className="border-b border-line/15">
+                {dict.design.fill.contacts.next.map((t, i) => (
+                  <li key={i} className="flex items-baseline gap-4 border-t border-line/15 py-3.5">
+                    <span className="label tabular w-6 shrink-0 text-muted">{String(i + 1).padStart(2, '0')}</span>
+                    <span className="text-pretty text-base leading-relaxed text-ink">{typo(t)}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
           </Reveal>
 
           {/* Write to us — a raised plane beside the rows. */}

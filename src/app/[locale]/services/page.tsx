@@ -5,8 +5,9 @@ import { getDictionary, type Dictionary } from '@/i18n/dictionaries';
 import { buildMetadata } from '@/lib/seo';
 import { routes } from '@/i18n/routing';
 import { cn } from '@/lib/utils';
-import { typo } from '@/lib/text';
+import { splitWords, typo } from '@/lib/text';
 import { services } from '@/content/services';
+import { steps } from '@/content/home';
 import { getProject } from '@/content/projects';
 import type { Project, Service } from '@/content/types';
 import { PageHero } from '@/components/shared/PageHero';
@@ -42,14 +43,24 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
  *   └────────────────────────────────────────────────────────────────────┘
  *   НА ИЗОБРАЖЕНИИ: BOTANIC STAR 2 — БЛОК 1
  *
- *   01   Строительство жилых           Полный цикл возведения…
- *        комплексов                    ─────────────────────────
- *                                      Монолитно-каркасное…
+ *   01   Строительство жилых           ─────────────────────────
+ *        комплексов                    — Монолитно-каркасное…
+ *        Полный цикл возведения…       ─────────────────────────
+ *                                      — …
  *   ───────────────────────────────────────────────────────────
  *   …05
  *
- *   НА ИЗОБРАЖЕНИИ:          ┌ upright photograph ┐
- *   BOTANIC STAR             └────────────────────┘
+ *        ЭТАПЫ РАБОТЫ                  ┌ upright photograph ┐
+ *        Путь от выбора до ключей      │                    │
+ *        Покупка квартиры проходит…    │                    │
+ *                                      │                    │
+ *        ───────────────────────       │                    │
+ *        01  Выбор комплекса           │                    │
+ *        ───────────────────────       │                    │
+ *        …06 Получение ключей          │                    │
+ *        ───────────────────────       └────────────────────┘
+ *                                      НА ИЗОБРАЖЕНИИ: BOTANIC STAR
+ *   (the steps column is lg+ only; below lg the photo stands alone)
  *
  *   06 … 08
  *   CtaBand
@@ -96,27 +107,67 @@ export default async function ServicesPage(props: { params: Promise<{ locale: st
 
         {/* ── An upright photograph between the two groups ──────────────── */}
         {upright && (
-          <figure className="grid gap-y-5 py-section-sm lg:grid-cols-12 lg:items-end lg:gap-x-gutter">
-            <Reveal
-              variant="mask"
-              className="relative aspect-[4/5] lg:col-span-6 lg:col-start-7 lg:row-start-1"
+          <div className="grid gap-y-12 py-section-sm lg:grid-cols-12 lg:gap-x-gutter">
+            <figure className="lg:col-span-6 lg:col-start-7 lg:row-start-1">
+              <Reveal variant="mask" className="relative aspect-[4/5]">
+                <Media
+                  src={upright.cover}
+                  alt={upright.name[locale]}
+                  fill
+                  position="50% 42%"
+                  sizes="(max-width: 1023px) 100vw, (max-width: 1680px) 50vw, 820px"
+                  caption={upright.coverKind === 'render' ? dict.design.render : undefined}
+                />
+              </Reveal>
+              <OnImage project={upright} locale={locale} dict={dict} className="mt-5" />
+            </figure>
+
+            {/* Beside the photograph (lg+): the buyer's path, the same six
+                steps as on the homepage but set quieter — label indices, text
+                titles — so the service titles keep the lead. The group opens
+                on the photo's top line and the list closes on its bottom
+                line: the bottom padding is the caption under the photo
+                (mt-5 + one label line, 0.72rem × 1.2 + the link's pb-1).
+                Step descriptions only from xl: at 1024–1279 the frame is too
+                short for them. */}
+            <section
+              aria-labelledby="services-path"
+              className="hidden lg:col-span-5 lg:col-start-2 lg:row-start-1 lg:flex lg:flex-col lg:justify-between lg:gap-12 lg:pb-[calc(1.25rem_+_0.864rem_+_0.25rem)]"
             >
-              <Media
-                src={upright.cover}
-                alt={upright.name[locale]}
-                fill
-                position="50% 42%"
-                sizes="(max-width: 1023px) 100vw, (max-width: 1680px) 50vw, 820px"
-                caption={upright.coverKind === 'render' ? dict.design.render : undefined}
-              />
-            </Reveal>
-            <OnImage
-              project={upright}
-              locale={locale}
-              dict={dict}
-              className="lg:col-span-4 lg:col-start-2 lg:row-start-1 lg:flex-col lg:items-start lg:gap-3"
-            />
-          </figure>
+              <div>
+                <Reveal className="label text-muted">{dict.steps.eyebrow}</Reveal>
+                <Reveal stagger className="mt-6">
+                  <h2 id="services-path" className="font-display text-display-sm font-light text-balance text-ink">
+                    {splitWords(dict.steps.title)}
+                  </h2>
+                </Reveal>
+                <Reveal delay={0.08}>
+                  <p className="mt-5 max-w-[40ch] text-pretty text-base leading-relaxed text-muted md:text-[1.0625rem]">
+                    {typo(dict.design.fill.stepsNote)}
+                  </p>
+                </Reveal>
+              </div>
+
+              <ol className="border-b border-line/15">
+                {steps.map((s, i) => (
+                  <Reveal
+                    as="li"
+                    key={s.n}
+                    delay={(i % 3) * 0.06}
+                    className="grid grid-cols-[2.5rem_minmax(0,1fr)] items-baseline gap-x-4 border-t border-line/15 py-4"
+                  >
+                    <span className="label tabular text-muted">{s.n}</span>
+                    <div>
+                      <h3 className="text-base text-ink">{typo(s.title[locale])}</h3>
+                      <p className="mt-1 hidden text-pretty text-base leading-relaxed text-muted xl:block">
+                        {typo(s.text[locale])}
+                      </p>
+                    </div>
+                  </Reveal>
+                ))}
+              </ol>
+            </section>
+          </div>
         )}
 
         <ServiceRows items={services.slice(BUILD_COUNT)} offset={BUILD_COUNT} locale={locale} />
@@ -128,9 +179,9 @@ export default async function ServicesPage(props: { params: Promise<{ locale: st
 }
 
 /**
- * One group of schedule rows. Through lg the title and the text split 5/6;
- * from xl the text narrows to four columns and one empty column separates it
- * from the title.
+ * One group of schedule rows: the title with its summary on the left, the
+ * points on the right. Through lg the two sides split 5/6; from xl the points
+ * narrow to four columns and one empty column separates them from the title.
  */
 function ServiceRows({ items, offset, locale }: { items: Service[]; offset: number; locale: Locale }) {
   return (
@@ -146,14 +197,13 @@ function ServiceRows({ items, offset, locale }: { items: Service[]; offset: numb
                 title keeps some air on its right. */}
             <Reveal delay={0.04} className="md:col-span-5 md:col-start-2 md:pr-4 lg:pr-10 xl:col-span-6 xl:pr-0">
               <h2 className="font-display text-display-md font-light text-balance text-ink">{typo(s.title[locale])}</h2>
+              <p className="mt-5 max-w-[42ch] text-pretty text-lead text-muted">{typo(s.summary[locale])}</p>
             </Reveal>
 
+            {/* md:mt-2 puts the first hairline on the title's cap line. */}
             <Reveal delay={0.12} className="md:col-span-6 md:col-start-7 xl:col-span-4 xl:col-start-9">
-              <p className="text-pretty text-base leading-relaxed text-muted md:pt-2 md:text-[1.0625rem]">
-                {typo(s.summary[locale])}
-              </p>
               {s.points.length > 0 && (
-                <ul className="mt-8 border-t border-line/15 md:mt-10">
+                <ul className="border-t border-line/15 md:mt-2">
                   {s.points.map((pt, j) => (
                     <li
                       key={j}

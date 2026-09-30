@@ -3,6 +3,7 @@ import type { Locale } from '@/i18n/config';
 import type { Dictionary } from '@/i18n/dictionaries';
 import type { Project } from '@/content/types';
 import { routes } from '@/i18n/routing';
+import { summarySpecs } from '@/content/projects';
 import { cn } from '@/lib/utils';
 import { typo } from '@/lib/text';
 import { Media } from '@/components/ui/Media';
@@ -71,6 +72,12 @@ export function splitTied(text: string): React.ReactNode {
  * The link is named by the heading alone (aria-labelledby) and described by
  * the status line: left to itself it would read out the alt text, the render
  * caption, the address, the name a second time and the excerpt.
+ *
+ * `facts` (mirrored row only, from 1360px) holds the text column by both edges
+ * of the photo: counter, meta, name and the first description paragraph at
+ * the top, a table of confirmed specs and the link on the photo's bottom edge.
+ * The excerpt lists the same facts as the table, so there it gives way to the
+ * description. Below 1360px — and without confirmed specs — nothing changes.
  */
 export function ProjectFeature({
   project,
@@ -83,6 +90,7 @@ export function ProjectFeature({
   position,
   imgClassName,
   sizes,
+  facts = false,
   className,
 }: {
   project: Project;
@@ -99,6 +107,8 @@ export function ProjectFeature({
   imgClassName?: string;
   /** Overrides the default `sizes` (needed when imgClassName enlarges the photo). */
   sizes?: string;
+  /** Mirrored row only: from 1360px, a spec table on the photo's bottom edge. */
+  facts?: boolean;
   className?: string;
 }) {
   const name = project.name[locale];
@@ -108,6 +118,11 @@ export function ProjectFeature({
   const pad = (n: number) => String(n).padStart(2, '0');
   const titleId = `feature-${project.slug}-title`;
   const metaId = `feature-${project.slug}-meta`;
+  // Confirmed specs only (no status/district, nothing "Уточняется"); the
+  // treatment is designed for the mirrored row's top-aligned text.
+  const specs = facts && reverse ? summarySpecs(project) : [];
+  const lede = facts ? project.description[0]?.[locale] : undefined;
+  const wide = specs.length > 0;
 
   return (
     <Link
@@ -158,6 +173,10 @@ export function ProjectFeature({
           reverse
             ? 'md:ml-auto md:w-2/3 lg:col-start-1 lg:ml-0 lg:w-auto lg:self-start lg:pr-[12%] lg:pt-[clamp(2rem,6vw,7rem)]'
             : 'lg:col-start-8 lg:self-end lg:pl-[12%]',
+          // Stretched to the photo's height, the column's last group can sit
+          // on its bottom edge (default align-items keeps the counter's rule
+          // full width).
+          wide && 'min-[1360px]:flex min-[1360px]:flex-col min-[1360px]:self-stretch',
         )}
       >
         <div className="flex items-center gap-5 text-muted" aria-hidden="true">
@@ -182,12 +201,45 @@ export function ProjectFeature({
           {typesetName(name)}
         </h3>
 
-        <p className="mt-6 max-w-[38ch] text-pretty text-base leading-relaxed text-muted md:text-[1.0625rem]">
+        <p
+          className={cn(
+            'mt-6 max-w-[38ch] text-pretty text-base leading-relaxed text-muted md:text-[1.0625rem]',
+            wide && 'min-[1360px]:hidden',
+          )}
+        >
           {/* typo(): "Botanic Star 2" and the short words never break. */}
           {typo(project.excerpt[locale])}
         </p>
 
-        <ArrowLabel className="mt-10 text-ink md:mt-12">{dict.common.viewProject}</ArrowLabel>
+        {wide && (
+          <>
+            {/* The excerpt names the same facts as the table below, so here
+                the description's lifestyle-and-location paragraph stands in. */}
+            {lede && (
+              <p className="mt-6 hidden max-w-[38ch] text-pretty text-base leading-relaxed text-muted md:text-[1.0625rem] min-[1360px]:block">
+                {typo(lede)}
+              </p>
+            )}
+            <div className="hidden min-[1360px]:mt-auto min-[1360px]:block min-[1360px]:pt-10">
+              <p className="label text-muted">{dict.projectDetail.specsTitle}</p>
+              <dl className="mt-5 border-b border-line/15">
+                {specs.map((s) => (
+                  <div
+                    key={s.key}
+                    className="flex items-baseline justify-between gap-6 border-t border-line/15 py-3"
+                  >
+                    <dt className="text-sm text-muted">{s.label[locale]}</dt>
+                    <dd className="text-right text-base text-ink md:text-[1.0625rem]">{s.value[locale]}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          </>
+        )}
+
+        <ArrowLabel className={cn('mt-10 text-ink md:mt-12', wide && 'self-start')}>
+          {dict.common.viewProject}
+        </ArrowLabel>
       </Reveal>
     </Link>
   );

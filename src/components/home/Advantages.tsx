@@ -5,6 +5,7 @@ import { SectionHeading } from '@/components/ui/SectionHeading';
 import { Reveal } from '@/components/ui/Reveal';
 import { Counter } from '@/components/ui/Counter';
 import { advantages, getStats } from '@/content/home';
+import { values } from '@/content/company';
 import { NBSP, splitWords, typo } from '@/lib/text';
 
 /**
@@ -21,7 +22,11 @@ import { NBSP, splitWords, typo } from '@/lib/text';
  *
  *   ПОЧЕМУ PAMIR         01 ── Полный цикл …        От проектирования …
  *   Причины              02 ── Контроль качества    Проверяем материалы …
- *   доверять нам         …
+ *   доверять нам         03 ── …
+ *
+ *   ЦЕННОСТИ             04 ── …
+ *   Качество · Надёжность ·
+ *   Профессионализм · …
  *
  * The figures are light numerals at display size, each on its own vertical
  * hairline, like dimension lines on a drawing. Unconfirmed figures carry an
@@ -93,6 +98,26 @@ export function Advantages({ locale, dict }: { locale: Locale; dict: Dictionary 
             <h3 className="font-display text-display-lg font-light text-balance text-ink lg:max-w-[12ch]">
               {splitWords(dict.why.title)}
             </h3>
+          </Reveal>
+
+          {/* Values colophon: fills the pinned column under the heading on
+              wide screens, where the reasons list runs far below it. One
+              quiet run of text — no rules, no grid, no accent — so it does
+              not echo the 2×4 grid of the Quality section that follows.
+              Each value is tied with no-break spaces so «Внимание к деталям»
+              never splits, and the no-break space before each middot lets a
+              middot end a line but never start one. Below lg the heading and
+              the list stack, so there is no empty column to fill. */}
+          <Reveal delay={0.12} className="mt-12 hidden lg:mt-16 lg:block">
+            <p className="label text-muted">{dict.companyPage.valuesTitle}</p>
+            <ul className="mt-4 max-w-sm text-pretty text-base leading-relaxed text-muted md:text-[1.0625rem]">
+              {values.map((v, i) => (
+                <li key={v.ru} className="inline">
+                  {typo(v[locale]).replace(/ /g, NBSP)}
+                  {i < values.length - 1 && <span aria-hidden="true">{NBSP}· </span>}
+                </li>
+              ))}
+            </ul>
           </Reveal>
         </div>
 

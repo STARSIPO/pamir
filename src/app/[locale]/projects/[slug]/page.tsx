@@ -4,6 +4,7 @@ import { locales, isLocale, type Locale } from '@/i18n/config';
 import { getDictionary } from '@/i18n/dictionaries';
 import { buildMetadata } from '@/lib/seo';
 import { projects, getProject } from '@/content/projects';
+import { getStats } from '@/content/home';
 import { routes } from '@/i18n/routing';
 import { Section } from '@/components/ui/Section';
 import { SectionHeading } from '@/components/ui/SectionHeading';
@@ -55,13 +56,20 @@ const pad = (n: number) => String(n).padStart(2, '0');
  * the bay-window column and the yellow fin — cut off above the lower floors,
  * so there is no ground, no park and no whole-tower silhouette to echo the
  * hero. 1.6× keeps the 1400px source near native size in the lg frame.
+ *
+ * With three or more spare pictures, About takes one of them — `src`, or the
+ * last one — and the gallery keeps the rest. Botanic Star shows the courtyard
+ * head-on (the playground, the benches, the spruce in the middle): it sits
+ * beside the "landscaped courtyard" row of the facts, and its centred
+ * composition already holds a 4:5 crop.
  */
-type Frame = { aspect?: number; position?: string; zoom?: number; origin?: string };
+type Frame = { src?: string; aspect?: number; position?: string; zoom?: number; origin?: string };
 const ABOUT_FRAME: Record<string, Frame> = {
   'botanic-star-2-blocks-3-4': { aspect: 1.21, position: '80% 55%', zoom: 1.25, origin: '65% 75%' },
   'botanic-star-2-block-2': { aspect: 1.375, position: '50% 50%', zoom: 1.6, origin: '36% 14%' },
   'eco-house': { aspect: 0.861, position: '40% 50%' },
   'botanic-star-2-block-1': { aspect: 1.78, position: '49% 50%' },
+  'botanic-star': { src: '/photos/projects/botanic-star/gallery-3.jpg', aspect: 1.5, position: '50% 50%' },
 };
 
 /**
@@ -85,12 +93,13 @@ const advantageCell = (n: number, i: number) =>
  *
  *   Hero (full-bleed photograph, huge name; a split at xl for small renders)
  *   01 About      statement + specs as a hairline table; a tall picture beside
- *                 them when the project has too few for a gallery
+ *                 them unless exactly two pictures make the gallery
  *   02 Advantages hairline grid, thin icons (≤2 items: rows under the specs)
  *   03 Gallery    editorial image grid + lightbox        (2+ pictures)
  *   04 Plans      drawings in 1px frames                 (only with plans)
  *   05 Location   district, nearby list, route, map
- *   06 More       two projects, asymmetric
+ *   06 More       two projects, asymmetric; a portfolio note (counts) in
+ *                 the room the offset card leaves (md+)
  *   Lead          contrast band, runs into the footer
  */
 export default async function ProjectPage(props: { params: Promise<{ locale: string; slug: string }> }) {
@@ -108,14 +117,21 @@ export default async function ProjectPage(props: { params: Promise<{ locale: str
   // shows full-bleed (the cover counts: Eco House's second render lives there).
   // Two or more make a gallery. Fewer, and About carries the picture itself —
   // the spare one, or a detail of the hero — so no page runs from the hero to
-  // the map without a photograph.
+  // the map without a photograph. Three or more, and About still takes one
+  // (the frame's pick, else the last) while the rest stay a gallery: a
+  // statement alone beside the facts left a dead band under it.
   const heroSrc = project.hero ?? project.cover;
   const pictures = Array.from(
     new Set([project.cover, ...project.gallery].filter((src): src is string => !!src)),
   ).filter((src) => src !== heroSrc);
-  const gallery = pictures.length >= 2 ? pictures : [];
-  const aboutSrc = pictures.length >= 2 ? undefined : (pictures[0] ?? heroSrc);
   const aboutFrame = ABOUT_FRAME[project.slug] ?? {};
+  const aboutSrc =
+    pictures.length < 2
+      ? (pictures[0] ?? heroSrc)
+      : pictures.length >= 3
+        ? (pictures.find((src) => src === aboutFrame.src) ?? pictures[pictures.length - 1])
+        : undefined;
+  const gallery = pictures.length >= 2 ? pictures.filter((src) => src !== aboutSrc) : [];
 
   // One or two advantages do not carry a section and a display heading of
   // their own: they join the specs as rows.
@@ -129,6 +145,8 @@ export default async function ProjectPage(props: { params: Promise<{ locale: str
   const others = [1, 2]
     .map((k) => projects[(at + k) % projects.length])
     .filter((p, i, list) => p.slug !== project.slug && list.indexOf(p) === i);
+  // Counts derived from the project list; the demo placeholders stay out.
+  const portfolioStats = getStats().filter((s) => !s.placeholder);
 
   const mapEmbed = project.mapQuery
     ? `https://www.google.com/maps?q=${encodeURIComponent(project.mapQuery)}&z=15&output=embed`
@@ -201,7 +219,7 @@ export default async function ProjectPage(props: { params: Promise<{ locale: str
               </Reveal>
             )}
             {rest.length > 0 && (
-              <div className="mt-10 space-y-6 md:mt-14 md:pl-[14.3%]">
+              <div className={cn('mt-10 space-y-6 md:mt-14 md:pl-[14.3%]', aboutSrc && 'lg:hidden')}>
                 {rest.map((p, i) => (
                   <Reveal key={i} delay={0.08 * (i + 1)}>
                     <p className="max-w-[58ch] text-pretty text-base leading-relaxed text-muted md:text-[1.0625rem]">
@@ -219,13 +237,25 @@ export default async function ProjectPage(props: { params: Promise<{ locale: str
           </div>
 
           {aboutSrc ? (
-            <AboutPicture
-              src={aboutSrc}
-              alt={name}
-              caption={renderCaption}
-              frame={aboutFrame}
-              className="md:ml-auto md:w-2/3 lg:col-span-5 lg:col-start-8 lg:ml-0 lg:w-auto"
-            />
+            <div className="md:ml-auto md:w-2/3 lg:col-span-5 lg:col-start-8 lg:ml-0 lg:w-auto">
+              <AboutPicture src={aboutSrc} alt={name} caption={renderCaption} frame={aboutFrame} />
+              {/* At lg the second paragraph moves under the picture, so the
+                  left column (statement, specs) and the right one (picture,
+                  paragraph) end together. Below lg it stays in the reading
+                  order above; display:none keeps the idle copy out of the
+                  accessibility tree, so it is read once. */}
+              {rest.length > 0 && (
+                <div className="mt-12 hidden space-y-6 lg:block">
+                  {rest.map((p, i) => (
+                    <Reveal key={i} delay={0.08 * (i + 1)}>
+                      <p className="max-w-[44ch] text-pretty text-base leading-relaxed text-muted md:text-[1.0625rem]">
+                        {typo(p[locale])}
+                      </p>
+                    </Reveal>
+                  ))}
+                </div>
+              )}
+            </div>
           ) : (
             facts && (
               <Reveal delay={0.12} className="lg:col-span-4 lg:col-start-9">
@@ -276,7 +306,8 @@ export default async function ProjectPage(props: { params: Promise<{ locale: str
         </Section>
       )}
 
-      {/* 03 — Gallery, only when there are two or more pictures beyond the hero. */}
+      {/* 03 — Gallery, only with two or more pictures beyond the hero and
+          the one About shows. */}
       {gallery.length > 0 && (
         <Section id="gallery" spacing="sm" className="pb-section">
           <SectionHeading
@@ -400,7 +431,7 @@ export default async function ProjectPage(props: { params: Promise<{ locale: str
               aspect="4 / 3"
               size="lg"
               sizes="(max-width: 1024px) 100vw, 58vw"
-              className="col-span-4 md:col-span-12 lg:col-span-7"
+              className="col-span-4 md:col-span-12 lg:col-span-7 lg:col-start-1 lg:row-start-1 lg:self-start"
             />
             {others[1] && (
               <ProjectCard
@@ -410,8 +441,38 @@ export default async function ProjectPage(props: { params: Promise<{ locale: str
                 index={1}
                 aspect="4 / 5"
                 sizes="(max-width: 768px) 100vw, (max-width: 1024px) 66vw, 42vw"
-                className="col-span-4 md:col-span-8 md:col-start-5 lg:col-span-5 lg:col-start-8 lg:mt-[clamp(8rem,16vw,16rem)]"
+                className="col-span-4 md:col-span-8 md:col-start-5 lg:col-span-5 lg:col-start-8 lg:row-span-2 lg:row-start-1 lg:mt-[clamp(8rem,16vw,16rem)] lg:self-start"
               />
+            )}
+            {/* The room the offset right card leaves under the left one (at
+                md, beside it): a line on the portfolio and the two counts
+                derived from the catalogue — never the placeholder stats.
+                At lg the note has a row of its own under the left card while
+                the right card spans both rows: where the offset leaves room
+                the note ends level with the right card's last line, and where
+                it does not (a two-line name, widths near 1024) the row gap
+                still keeps it clear of the card's link. self-start keeps both
+                cards' link boxes from stretching over the empty rows. */}
+            {others.length === 2 && (
+              <Reveal
+                delay={0.1}
+                className="hidden md:col-span-4 md:col-start-1 md:row-start-2 md:block md:self-end lg:col-span-5 lg:col-start-1 lg:row-start-2 lg:max-w-[26rem]"
+              >
+                <p className="text-pretty text-base leading-relaxed text-muted md:text-[1.0625rem]">
+                  {typo(dict.featured.subtitle)}
+                </p>
+                <dl className="mt-6 border-b border-line/15">
+                  {portfolioStats.map((s) => (
+                    <div
+                      key={s.label.ru}
+                      className="flex items-baseline justify-between gap-6 border-t border-line/15 py-3.5"
+                    >
+                      <dt className="text-sm text-muted">{s.label[locale]}</dt>
+                      <dd className="font-display text-display-sm font-light tabular text-ink">{pad(s.value)}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </Reveal>
             )}
           </div>
         </Section>

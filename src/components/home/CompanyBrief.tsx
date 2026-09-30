@@ -22,14 +22,19 @@ const PHOTO_PROJECT = 'botanic-star-2-block-1';
  *   │                        │        Дом — это
  *   │   render, portrait     │        крепость.
  *   │   (mask reveal,        │
- *   │    slow hover zoom)    │
+ *   │    slow hover zoom)    │        ──────────────────────────
+ *   │                        │        standfirst (lead, muted)
+ *   │                        │
  *   │                        │        intro, muted
  *   │                        │        Подробнее о компании ──→
  *   └────────────────────────┘
  *
  * The quote sits at the top of its column and the intro at the bottom, so the
  * text column is held by the photograph's edges rather than floating beside
- * it. The section has no bottom padding: Steps continues the same chapter.
+ * it. From xl the second intro paragraph stands between them on a hairline,
+ * as a gloss of the quote: quote (display, ink) > standfirst (lead, muted) >
+ * intro (base, muted). The section has no bottom padding: Steps continues the
+ * same chapter.
  */
 export function CompanyBrief({ locale, dict }: { locale: Locale; dict: Dictionary }) {
   const photoProject = getProject(PHOTO_PROJECT);
@@ -80,6 +85,15 @@ export function CompanyBrief({ locale, dict }: { locale: Locale; dict: Dictionar
               </blockquote>
             </Reveal>
           </figure>
+
+          {/* Standfirst: the second intro paragraph glosses the quote. From
+              xl only: at lg (1024–1279) the photo is too short to hold three
+              blocks with 64px between them (the column ran ~140px past the
+              photo's bottom edge), and the gap there is under a void anyway;
+              at md the quote and the intro share a row; phones stay compact. */}
+          <Reveal delay={0.08} className="hidden border-t border-line/15 pt-8 xl:block">
+            <p className="max-w-[40ch] text-pretty text-lead text-muted">{typo(companyIntro[1][locale])}</p>
+          </Reveal>
 
           <Reveal delay={0.12} className="md:col-span-6 md:col-start-7 md:self-end lg:self-auto">
             <p className="max-w-md text-pretty text-base leading-relaxed text-muted md:text-[1.0625rem]">

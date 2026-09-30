@@ -10,6 +10,11 @@ import { splitWords, typo } from '@/lib/text';
  *
  * A calm process row: six columns on wide screens, 3 × 2 on tablets, a list
  * on phones. Every step stands on a 1px rule; the numeral is the only accent.
+ * From lg a supporting line sits beside the title on the col-9 line, as in
+ * SectionHeading.
+ *
+ *   Путь от выбора                                    supporting line,
+ *   до ключей                                         muted
  *
  *   ───────────  ───────────  ───────────  ───────────  ───────────  ───────────
  *   01           02           03           04           05           06
@@ -28,11 +33,20 @@ export function Steps({ locale, dict }: { locale: Locale; dict: Dictionary }) {
         <Reveal className="label shrink-0 text-muted">{dict.steps.eyebrow}</Reveal>
         <span aria-hidden="true" className="rule-draw h-px flex-1 bg-line/15" />
       </div>
-      <Reveal stagger className="mt-8 md:mt-12">
-        <h2 id="steps-title" className="max-w-[16ch] font-display text-display-lg font-light text-balance text-ink">
-          {splitWords(dict.steps.title)}
-        </h2>
-      </Reveal>
+      <div className="mt-8 md:mt-12 lg:grid lg:grid-cols-12 lg:items-end lg:gap-x-gutter">
+        <Reveal stagger className="lg:col-span-8 lg:min-w-0">
+          <h2 id="steps-title" className="max-w-[16ch] font-display text-display-lg font-light text-balance text-ink">
+            {splitWords(dict.steps.title)}
+          </h2>
+        </Reveal>
+        {/* SectionHeading's subtitle slot: col 9–12, on the title's last
+            line. Wide screens only; phones go straight to the list. */}
+        <Reveal delay={0.12} className="hidden lg:col-span-4 lg:col-start-9 lg:block lg:min-w-0 lg:pb-3">
+          <p className="max-w-[40ch] text-pretty text-base leading-relaxed text-muted md:text-[1.0625rem]">
+            {typo(dict.design.fill.stepsNote)}
+          </p>
+        </Reveal>
+      </div>
 
       <ol className="mt-12 grid border-b border-line/15 md:mt-20 md:grid-cols-3 md:gap-x-gutter md:gap-y-16 md:border-b-0 xl:grid-cols-6">
         {steps.map((s, i) => (

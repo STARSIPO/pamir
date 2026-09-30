@@ -239,6 +239,36 @@ export const ru = {
     amenitiesEyebrow: 'Удобства',
     apartmentsEyebrow: 'Квартиры',
     portfolioEyebrow: 'Портфолио',
+    /**
+     * Connective copy for the filled layout gaps (client decision 2026-09-30,
+     * DESIGN-SYSTEM §3). General lines only: no figures, dates or claims about
+     * a project. Facts shown beside them come from src/content.
+     */
+    fill: {
+      /** Beside «Путь от выбора до ключей»: home Steps and the services buyer path. */
+      stepsNote: 'Покупка квартиры проходит шаг за шагом, и на каждом этапе вам помогают специалисты компании.',
+      home: {
+        /** Label over the index of completed projects under 01 About. */
+        builtLabel: 'Сданные объекты',
+      },
+      company: {
+        principlesLead: 'Правила, которым мы следуем в каждом проекте.',
+        valuesLead: 'То, что мы вкладываем в каждый наш дом.',
+        /** Key-facts row label; the values are the project districts. */
+        districtsLabel: 'Районы',
+      },
+      contacts: {
+        nextTitle: 'Что дальше',
+        next: [
+          'Связываемся с вами и уточняем, что вас интересует.',
+          'Подбираем подходящие варианты и показываем доступные планировки.',
+          'Согласуем удобное время просмотра квартиры или объекта.',
+        ],
+      },
+      privacy: {
+        lead: 'Какие данные мы получаем через формы на сайте, для чего их используем и какие права у вас есть.',
+      },
+    },
   },
 };
 

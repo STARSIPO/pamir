@@ -4,9 +4,10 @@ import { isLocale, type Locale } from '@/i18n/config';
 import { getDictionary } from '@/i18n/dictionaries';
 import { buildMetadata } from '@/lib/seo';
 import { routes } from '@/i18n/routing';
-import { splitWords, typo } from '@/lib/text';
+import { NBSP, splitWords, typo } from '@/lib/text';
 import { companyIntro, companyQuote, principles, values } from '@/content/company';
-import { projects } from '@/content/projects';
+import { getStats } from '@/content/home';
+import { getDistricts, projects } from '@/content/projects';
 import { companyLegalName } from '@/content/site';
 import { PageHero } from '@/components/shared/PageHero';
 import { Section } from '@/components/ui/Section';
@@ -35,10 +36,11 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
  * Company page.
  *
  *   PageHero      label, H1, lead
- *   History       the intro as one large statement, then the quote set huge
+ *   History       the intro as one large statement, the second paragraph
+ *                 beside a key-facts table, then the quote set huge
  *   Photograph    a wide render, mask reveal
- *   Principles    sticky title left, a hairline 2×2 grid right
- *   Values        the same split, an indexed hairline list
+ *   Principles    sticky title, lead and services link left, a hairline 2×2 grid right
+ *   Values        the same split with a lead, an indexed hairline list
  *   Quality       shared with the homepage
  *   Projects      completed projects, large cards
  *   CtaBand       closing call to action on the band
@@ -51,6 +53,18 @@ export default async function CompanyPage(props: { params: Promise<{ locale: str
   // The project the photograph belongs to, so the caption can name it.
   const pictured = projects.find((p) => p.gallery.includes(COMPANY_IMAGE) || p.cover === COMPANY_IMAGE);
   const [quoteOpen, quoteClose] = locale === 'ro' ? ['„', '”'] : ['«', '»'];
+  // The separator stays at the end of a line if the districts wrap.
+  const facts = [
+    ...getStats()
+      .filter((s) => !s.placeholder)
+      .map((s) => ({ label: s.label[locale], value: pad(s.value) })),
+    {
+      label: dict.design.fill.company.districtsLabel,
+      value: getDistricts()
+        .map((d) => d[locale])
+        .join(`${NBSP}· `),
+    },
+  ];
 
   return (
     <>
@@ -79,10 +93,33 @@ export default async function CompanyPage(props: { params: Promise<{ locale: str
             </p>
           </Reveal>
           {companyIntro.slice(1).map((p, i) => (
-            <Reveal key={i} delay={0.08} className="md:col-span-7 md:col-start-6 md:mt-10 lg:col-span-5 lg:col-start-7">
+            <Reveal
+              key={i}
+              delay={0.08}
+              className="md:col-span-7 md:col-start-6 md:row-start-2 md:mt-10 lg:col-span-5 lg:col-start-7"
+            >
               <p className="text-lead text-pretty text-muted">{typo(p[locale])}</p>
             </Reveal>
           ))}
+          {/* Key facts in the left half beside the second paragraph, all
+              computed from content: the confirmed counts only (never the
+              placeholder stats), then the districts the projects stand in.
+              On phones they follow the paragraph. */}
+          <Reveal delay={0.08} className="md:col-span-5 md:col-start-1 md:row-start-2 md:mt-10 lg:col-span-4">
+            <dl>
+              {facts.map((f) => (
+                <div
+                  key={f.label}
+                  className="flex items-baseline justify-between gap-6 border-t border-line/15 py-4 last:border-b md:py-5"
+                >
+                  <dt className="label text-muted">{f.label}</dt>
+                  <dd className="text-right font-display text-display-sm font-light tabular text-balance text-ink">
+                    {f.value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </Reveal>
         </div>
 
         {/* The quote: one line of the company's own voice, set as large as a title. */}
@@ -138,12 +175,26 @@ export default async function CompanyPage(props: { params: Promise<{ locale: str
       {/* ── Principles & values ──────────────────────────────────────── */}
       <Section spacing="none" className="pb-section" aria-labelledby="company-principles">
         <div className="grid gap-y-14 lg:grid-cols-12 lg:gap-x-gutter">
+          {/* The pinned block: title, a one-line lead and the way on to the
+              services. It stays shorter than the 2×2 list beside it. */}
           <div className="lg:col-span-4">
-            <Reveal stagger className="lg:sticky lg:top-32">
-              <h2 id="company-principles" className="font-display text-display-lg font-light text-balance text-ink">
-                {splitWords(dict.companyPage.principlesTitle)}
-              </h2>
-            </Reveal>
+            <div className="lg:sticky lg:top-32">
+              <Reveal stagger>
+                <h2 id="company-principles" className="font-display text-display-lg font-light text-balance text-ink">
+                  {splitWords(dict.companyPage.principlesTitle)}
+                </h2>
+              </Reveal>
+              <Reveal delay={0.08}>
+                <p className="mt-8 max-w-[32ch] text-pretty text-base leading-relaxed text-muted md:text-[1.0625rem]">
+                  {typo(dict.design.fill.company.principlesLead)}
+                </p>
+              </Reveal>
+              <Reveal delay={0.16}>
+                <Button href={routes.services(locale)} variant="ghost" arrow className="mt-10">
+                  {dict.servicesPage.title}
+                </Button>
+              </Reveal>
+            </div>
           </div>
 
           <ol className="grid gap-x-gutter gap-y-14 md:grid-cols-2 md:gap-y-20 lg:col-span-8">
@@ -168,6 +219,11 @@ export default async function CompanyPage(props: { params: Promise<{ locale: str
               <h2 className="font-display text-display-lg font-light text-balance text-ink">
                 {splitWords(dict.companyPage.valuesTitle)}
               </h2>
+            </Reveal>
+            <Reveal delay={0.08}>
+              <p className="mt-6 max-w-[32ch] text-pretty text-base leading-relaxed text-muted md:text-[1.0625rem]">
+                {typo(dict.design.fill.company.valuesLead)}
+              </p>
             </Reveal>
           </div>
 
@@ -195,6 +251,9 @@ export default async function CompanyPage(props: { params: Promise<{ locale: str
         <SectionHeading
           eyebrow={dict.featured.eyebrow}
           title={dict.companyPage.projectsTitle}
+          // The line names Botanica, so it drops out if a completed project
+          // elsewhere is ever added.
+          subtitle={completed.every((p) => p.district.ru === 'Ботаника') ? dict.design.moreSubtitle : undefined}
           action={
             <Button href={routes.projects(locale)} variant="ghost" arrow className="self-start">
               {dict.common.viewAllProjects}

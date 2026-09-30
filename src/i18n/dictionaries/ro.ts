@@ -241,5 +241,27 @@ export const ro: Dictionary = {
     amenitiesEyebrow: 'Facilități',
     apartmentsEyebrow: 'Apartamente',
     portfolioEyebrow: 'Portofoliu',
+    fill: {
+      stepsNote: 'Achiziția apartamentului decurge pas cu pas, iar la fiecare etapă vă ajută specialiștii companiei.',
+      home: {
+        builtLabel: 'Obiecte finalizate',
+      },
+      company: {
+        principlesLead: 'Regulile pe care le urmăm în fiecare proiect.',
+        valuesLead: 'Ceea ce punem în fiecare casă pe care o construim.',
+        districtsLabel: 'Sectoare',
+      },
+      contacts: {
+        nextTitle: 'Ce urmează',
+        next: [
+          'Vă contactăm și aflăm ce vă interesează.',
+          'Selectăm variantele potrivite și vă arătăm planurile disponibile.',
+          'Stabilim o oră comodă pentru vizionarea apartamentului sau a obiectului.',
+        ],
+      },
+      privacy: {
+        lead: 'Ce date primim prin formularele de pe site, în ce scop le folosim și ce drepturi aveți.',
+      },
+    },
   },
 };

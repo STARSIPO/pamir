@@ -76,3 +76,12 @@ export const faq: FaqItem[] = [
     },
   },
 ];
+
+/**
+ * The two questions set beside the lead form (LeadSection, from lg): the
+ * current price and booking a viewing. Both answers lead to the form next to
+ * them, and neither repeats the Steps list that precedes the form on the
+ * homepage (payment and mortgage are step 04 there). Picked by position:
+ * keep in step if the list above is reordered.
+ */
+export const leadFaq: FaqItem[] = [faq[6], faq[7]];

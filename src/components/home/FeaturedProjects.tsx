@@ -31,14 +31,16 @@ export const FEATURED_SLUGS = ['botanic-star-2-blocks-3-4', 'eco-house'] as cons
  * beside the sharp row above. `[scale:…]` is the standalone CSS property, so
  * it composes with the hover zoom and the mask reveal (both set `transform`);
  * `sizes` grows by the same 1.2 so an optimised build would not upscale it.
+ * The portrait row carries a short spec table from 1360px (see ProjectFeature).
  */
-const ROWS: { aspect: string; position?: string; imgClassName?: string; sizes?: string }[] = [
+const ROWS: { aspect: string; position?: string; imgClassName?: string; sizes?: string; facts?: boolean }[] = [
   { aspect: '5 / 4', position: '40% 50%' },
   {
     aspect: '4 / 5',
     position: '100% 0%',
     imgClassName: '[scale:1.2] origin-top-right',
     sizes: '(max-width: 767px) 120vw, (max-width: 1023px) 80vw, 60vw',
+    facts: true,
   },
 ];
 
@@ -75,6 +77,7 @@ export function FeaturedProjects({ locale, dict }: { locale: Locale; dict: Dicti
               position={row.position}
               imgClassName={row.imgClassName}
               sizes={row.sizes}
+              facts={row.facts}
             />
           );
         })}

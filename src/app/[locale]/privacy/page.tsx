@@ -81,7 +81,11 @@ export default async function PrivacyPage(props: { params: Promise<{ locale: str
 
   return (
     <>
-      <PageHero eyebrow={dict.privacyPage.eyebrow} title={softHyphenate(dict.privacyPage.title)} />
+      <PageHero
+        eyebrow={dict.privacyPage.eyebrow}
+        title={softHyphenate(dict.privacyPage.title)}
+        subtitle={dict.design.fill.privacy.lead}
+      />
 
       <Section spacing="none" className="pb-section">
         <div className="grid gap-y-12 lg:grid-cols-12 lg:gap-x-gutter">

@@ -10,8 +10,9 @@ import { contact } from '@/content/site';
 import { PageHero } from '@/components/shared/PageHero';
 import { Section } from '@/components/ui/Section';
 import { Reveal } from '@/components/ui/Reveal';
-import { Button } from '@/components/ui/Button';
+import { ArrowLabel, Button } from '@/components/ui/Button';
 import { Accordion } from '@/components/shared/Accordion';
+import { mapLinks } from '@/components/shared/ContactInfo';
 import { CtaBand } from '@/components/shared/CtaBand';
 
 export async function generateMetadata(props: { params: Promise<{ locale: string }> }): Promise<Metadata> {
@@ -23,8 +24,9 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
 
 /**
  * FAQ: the questions take the wide right column; on large screens a small
- * sales block stays pinned on the left while the list scrolls. On phones and
- * tablets that block is left out — the CtaBand below carries the same number.
+ * sales block (number, contact link, office address and route) stays pinned
+ * on the left while the list scrolls. On phones and tablets that block is
+ * left out — the CtaBand below carries the same number.
  */
 export default async function FaqPage(props: { params: Promise<{ locale: string }> }) {
   const params = await props.params;
@@ -75,6 +77,24 @@ export default async function FaqPage(props: { params: Promise<{ locale: string 
                 >
                   {dict.common.contactUs}
                 </Button>
+              </div>
+              {/* The office and a route to it: the standing answer to "where
+                  is the sales department?" (Q09). The address is already tied
+                  with no-break spaces in content, so it is not run through
+                  typo(). No hours: they are not confirmed yet. */}
+              <div className="mt-12 border-t border-line/15 pt-7">
+                <p className="label text-muted">{dict.contactsPage.officeTitle}</p>
+                <p className="mt-4 max-w-[30ch] text-pretty text-base leading-relaxed text-ink">
+                  {contact.address[locale]}
+                </p>
+                <a
+                  href={mapLinks.route}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group mt-2 inline-flex min-h-11 items-center"
+                >
+                  <ArrowLabel>{dict.contactBlock.routeCta}</ArrowLabel>
+                </a>
               </div>
             </Reveal>
           </aside>
