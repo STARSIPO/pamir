@@ -66,8 +66,13 @@ export function Advantages({ locale, dict }: { locale: Locale; dict: Dictionary 
             <dt className="label mt-5 text-muted max-sm:tracking-[0.1em] md:mt-7">{bindShortWords(s.label[locale])}</dt>
             <dd className="font-display text-display-xl font-light text-ink">
               <Counter value={s.value} suffix={s.suffix} locale={locale} />
+              {/* Sized and raised relative to the numeral (em), so the mark
+                  sits on the figure's shoulder at every display size. It is
+                  lifted with position:relative, not vertical-align, which
+                  would grow the line box and drop this figure below the
+                  unmarked ones beside it. */}
               {s.placeholder && (
-                <span className="ml-0.5 inline-block align-top text-lead leading-none text-muted">*</span>
+                <sup className="relative -top-[1.1em] ml-[0.06em] align-baseline text-[0.32em] font-normal leading-none text-muted">*</sup>
               )}
             </dd>
           </Reveal>
