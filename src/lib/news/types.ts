@@ -68,6 +68,8 @@ export interface NewsArticle {
   content: NewsBlock[];
   /** ISO date (YYYY-MM-DD). */
   date: string;
+  /** ISO date (YYYY-MM-DD) of the last real edit; feeds dateModified and the sitemap. Omit when never edited. */
+  updatedAt?: string;
   category: NewsCategory;
   coverImage: NewsImage;
   /** Extra images attached to the article (admin "gallery" upload). */

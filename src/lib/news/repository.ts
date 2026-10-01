@@ -49,7 +49,10 @@ export function relatedNews(article: NewsArticle, limit = 3): NewsArticle[] {
   const others = published().filter((a) => a.slug !== article.slug);
   const score = (a: NewsArticle) =>
     (article.relatedProject && a.relatedProject === article.relatedProject ? 2 : 0) + (a.category === article.category ? 1 : 0);
-  return [...others].sort((a, b) => score(b) - score(a) || (a.date < b.date ? 1 : -1)).slice(0, limit);
+  // Ties return 0, so the stable sort keeps published()'s date-then-id order.
+  return [...others]
+    .sort((a, b) => score(b) - score(a) || (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
+    .slice(0, limit);
 }
 
 /** Static params for /[locale]/news/[slug]. */

@@ -5,7 +5,7 @@ import type { NewsBlock, NewsImage } from '@/lib/news/types';
 import { getProject } from '@/content/projects';
 import { routes } from '@/i18n/routing';
 import { typo } from '@/lib/text';
-import { cn } from '@/lib/utils';
+import { asset, cn } from '@/lib/utils';
 import { Media } from '@/components/ui/Media';
 import { ArrowLabel } from '@/components/ui/Button';
 
@@ -49,12 +49,22 @@ function Block({ block: b, locale, dict }: { block: NewsBlock; locale: Locale; d
     case 'gallery':
       return (
         <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6">
-          {b.images.map((img, k) => (
-            <figure key={img.src + k} className={cn(b.images.length % 2 === 1 && k === 0 && 'sm:col-span-2')}>
-              <Media src={img.src} alt={img.alt[locale]} aspect={b.images.length % 2 === 1 && k === 0 ? '16 / 9' : '4 / 3'} sizes="(max-width: 640px) 92vw, 46vw" zoom />
-              {caption(img, locale, dict) && <figcaption className="label mt-3 text-muted">{caption(img, locale, dict)}</figcaption>}
-            </figure>
-          ))}
+          {b.images.map((img, k) => {
+            // An odd count opens with one full-width image; the rest pair up.
+            const full = b.images.length % 2 === 1 && k === 0;
+            return (
+              <figure key={img.src + k} className={cn(full && 'sm:col-span-2')}>
+                <Media
+                  src={img.src}
+                  alt={img.alt[locale]}
+                  aspect={full ? '16 / 9' : '4 / 3'}
+                  sizes={full ? '(max-width: 1680px) 92vw, 1540px' : '(max-width: 640px) 92vw, (min-width: 1680px) 770px, 46vw'}
+                  zoom
+                />
+                {caption(img, locale, dict) && <figcaption className="label mt-3 text-muted">{caption(img, locale, dict)}</figcaption>}
+              </figure>
+            );
+          })}
         </div>
       );
     case 'quote':
@@ -67,7 +77,8 @@ function Block({ block: b, locale, dict }: { block: NewsBlock; locale: Locale; d
     case 'list': {
       const Tag = b.ordered ? 'ol' : 'ul';
       return (
-        <Tag className={cn(PROSE, 'border-b border-line/15')}>
+        // Preflight strips list-style; role="list" keeps the semantics in WebKit.
+        <Tag role="list" className={cn(PROSE, 'border-b border-line/15')}>
           {b.items.map((it, k) => (
             <li key={k} className="flex gap-5 border-t border-line/15 py-4 text-[1.0625rem] leading-relaxed text-ink/90">
               <span aria-hidden="true" className="label tabular pt-1.5 text-muted">
