@@ -10,6 +10,7 @@ import { MoreProjects } from '@/components/home/MoreProjects';
 import { CompanyBrief } from '@/components/home/CompanyBrief';
 import { Steps } from '@/components/home/Steps';
 import { LeadSection } from '@/components/home/LeadSection';
+import { LatestNews } from '@/components/home/LatestNews';
 
 /**
  * Homepage — architecture first.
@@ -39,6 +40,7 @@ export default async function HomePage(props: { params: Promise<{ locale: string
       <MoreProjects locale={locale} dict={dict} />
       <CompanyBrief locale={locale} dict={dict} />
       <Steps locale={locale} dict={dict} />
+      <LatestNews locale={locale} dict={dict} />
       <LeadSection locale={locale} dict={dict} />
     </>
   );

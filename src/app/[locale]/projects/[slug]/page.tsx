@@ -18,6 +18,7 @@ import { Media } from '@/components/ui/Media';
 import { ProjectRow, rowSizes } from '@/components/projects/ProjectRow';
 import { catalogueAvailability } from '@/lib/inventory/availability';
 import { LeadSection } from '@/components/home/LeadSection';
+import { ProjectNews } from '@/components/project/ProjectNews';
 import { SelectorTeaser } from '@/components/inventory/selector/SelectorTeaser';
 import { DemoNotice } from '@/components/inventory/DemoNotice';
 import { CostCalculator } from '@/components/inventory/calculator/CostCalculator';
@@ -522,6 +523,8 @@ export default async function ProjectPage(props: { params: Promise<{ locale: str
           </div>
         </Section>
       )}
+
+      <ProjectNews locale={locale} dict={dict} projectSlug={project.slug} />
 
       {/* 07 — More projects: framed rows, like every project list on the site. */}
       {others.length > 0 && (

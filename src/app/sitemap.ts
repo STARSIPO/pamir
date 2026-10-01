@@ -3,6 +3,7 @@ import { locales, type Locale } from '@/i18n/config';
 import { href, alternates, routes, type RouteKey } from '@/i18n/routing';
 import { projects } from '@/content/projects';
 import { listInventories, residentialFloors } from '@/lib/inventory/repository';
+import { listNews } from '@/lib/news/repository';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://pamirconstruct.md';
 
@@ -59,6 +60,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const staticKeys: (RouteKey | undefined)[] = [
     undefined, // home
     'projects',
+    'news',
     'company',
     'services',
     'faq',
@@ -85,6 +87,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
         changeFrequency: 'weekly',
         priority: 0.8,
         alternates: { languages: langMap('projects', project.slug) },
+      });
+    }
+  }
+
+  // Demo articles are noindex, so only real ones are listed.
+  for (const a of listNews()) {
+    if (a.demo) continue;
+    for (const locale of locales) {
+      entries.push({
+        url: abs(href(locale, 'news', a.slug)),
+        lastModified: a.date,
+        changeFrequency: 'monthly',
+        priority: 0.6,
+        alternates: { languages: langMap('news', a.slug) },
       });
     }
   }
