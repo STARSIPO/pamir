@@ -42,8 +42,6 @@ const nextConfig = isExport
           { source: '/', destination: '/ru', permanent: false },
           { source: '/ru/contact', destination: '/ru/contacts', permanent: true },
           { source: '/ro/contact', destination: '/ro/contacte', permanent: true },
-          { source: '/ru/news', destination: '/ru', permanent: true },
-          { source: '/ro/news', destination: '/ro', permanent: true },
           { source: '/ro/projects', destination: '/ro/proiecte', permanent: true },
           { source: '/ro/services', destination: '/ro/servicii', permanent: true },
           { source: '/ro/company', destination: '/ro/despre-companie', permanent: true },

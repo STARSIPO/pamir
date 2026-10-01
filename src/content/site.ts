@@ -79,6 +79,7 @@ export interface NavItem {
 export const primaryNav: NavItem[] = [
   { route: 'company', label: { ru: 'О компании', ro: 'Despre companie' } },
   { route: 'projects', label: { ru: 'Проекты', ro: 'Proiecte' } },
+  { route: 'news', label: { ru: 'Новости', ro: 'Noutăți' } },
   { route: 'services', label: { ru: 'Услуги', ro: 'Servicii' } },
   { route: 'faq', label: { ru: 'FAQ', ro: 'Întrebări' } },
   { route: 'contacts', label: { ru: 'Контакты', ro: 'Contacte' } },

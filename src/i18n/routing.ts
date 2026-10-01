@@ -7,7 +7,8 @@ export type RouteKey =
   | 'faq'
   | 'contacts'
   | 'privacy'
-  | 'thankyou';
+  | 'thankyou'
+  | 'news';
 
 /**
  * Localized URL path segments per route.
@@ -26,6 +27,7 @@ const LOCALIZED: Record<RouteKey, Record<Locale, string>> = {
   contacts: { ru: 'contacts', ro: 'contacte' },
   privacy: { ru: 'privacy', ro: 'confidentialitate' },
   thankyou: { ru: 'thank-you', ro: 'multumim' },
+  news: { ru: 'news', ro: 'noutati' },
 };
 
 const STATIC_CANONICAL = Object.fromEntries(
@@ -58,6 +60,8 @@ export const routes = {
   contacts: (l: Locale) => href(l, 'contacts'),
   privacy: (l: Locale) => href(l, 'privacy'),
   thankyou: (l: Locale) => href(l, 'thankyou'),
+  news: (l: Locale) => href(l, 'news'),
+  newsArticle: (l: Locale, slug: string) => href(l, 'news', slug),
 
   // Apartment selector: project → building → floor → apartment.
   // Sub-segments are language-neutral; only the "projects" segment is localized.
@@ -121,7 +125,7 @@ export function parsePathname(pathname: string): ParsedPath | null {
   const key = parts[1]
     ? (routeKeyFromSegment(locale, parts[1]) ?? routeKeyFromSegment('ru', parts[1]))
     : undefined;
-  const slug = key === 'projects' ? parts[2] : undefined;
+  const slug = key === 'projects' || key === 'news' ? parts[2] : undefined;
   const rest = key === 'projects' && parts.length > 3 ? parts.slice(3) : undefined;
   return { locale, key, slug, rest };
 }

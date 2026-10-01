@@ -1,4 +1,5 @@
 import { inventoryRu } from './inventory';
+import { newsRu } from './news';
 
 /** Russian UI strings. This file is the source of truth for the Dictionary shape. */
 export const ru = {
@@ -299,6 +300,8 @@ export const ru = {
   },
   /** Apartment selector, calculators, recommendations — see src/i18n/dictionaries/inventory. */
   inventory: inventoryRu,
+  /** News section — see src/i18n/dictionaries/news. */
+  news: newsRu,
 };
 
 export type Dictionary = typeof ru;
