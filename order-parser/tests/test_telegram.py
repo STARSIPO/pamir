@@ -120,3 +120,19 @@ def test_normalize_phone(phone, normalized):
     from order_parser.sources.telegram import normalize_phone
 
     assert normalize_phone(phone) == normalized
+
+
+@pytest.mark.parametrize(
+    ("text", "budget"),
+    [
+        ("Нужен telegram бот на aiogram\nБюджет до 100 тысяч рублей", "100 тысяч рублей"),
+        ("Оплата 300 долларов", "300 долларов"),
+        ("Бюджет: 7 000 ₽ — 12 000 ₽", "7 000 ₽ — 12 000 ₽"),
+        ("Нужен telegram бот для канала на 2к подписчиков, бюджет обсуждаем", ""),
+        ("Нужен парсер Wildberries, 5k товаров в день", ""),
+        ("Сайт-портфолио, 4K видео на главной", ""),
+        ("Бюджет 50 т.р.", "50 т.р."),
+    ],
+)
+def test_extract_budget_round2(text, budget):
+    assert extract_budget(text) == budget

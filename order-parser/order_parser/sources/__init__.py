@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -20,7 +21,12 @@ SOURCE_META: dict[str, tuple[str, str]] = {
 SITE_SOURCES = ("fl", "kwork", "habr", "freelancer")
 
 
-def build_site_sources(settings: Settings, config: AppConfig, only: set[str] | None = None) -> list[Source]:
+def build_site_sources(
+    settings: Settings,
+    config: AppConfig,
+    only: set[str] | None = None,
+    keywords: Callable[[], list[str]] | None = None,
+) -> list[Source]:
     """Создаёт включённые в .env источники-сайты (Telegram запускается отдельно)."""
     from order_parser.sources.fl import FlSource
     from order_parser.sources.freelancer import FreelancerSource
@@ -33,7 +39,7 @@ def build_site_sources(settings: Settings, config: AppConfig, only: set[str] | N
         "fl": lambda: FlSource(config.fl, **http_kwargs),
         "kwork": lambda: KworkSource(config.kwork, **http_kwargs),
         "habr": lambda: HabrSource(config.habr, **http_kwargs),
-        "freelancer": lambda: FreelancerSource(config.freelancer, **http_kwargs),
+        "freelancer": lambda: FreelancerSource(config.freelancer, keywords, **http_kwargs),
     }
     sources: list[Source] = []
     for name in SITE_SOURCES:

@@ -10,8 +10,6 @@ import signal
 import sys
 from datetime import timedelta
 from logging.handlers import RotatingFileHandler
-from pathlib import Path
-
 import yaml
 
 from order_parser import __version__
@@ -202,8 +200,6 @@ async def run(args: argparse.Namespace) -> int:
         log.error("Заполните BOT_TOKEN и ADMIN_ID в .env (или запустите с --dry-run для проверки в консоли)")
         return 2
     site_names, want_telegram = selected_sources(args, settings)
-    if args.once:
-        want_telegram = False
 
     bot = None
     db = Database(":memory:" if dry_run else resolve_path(settings.db_path))
@@ -229,10 +225,15 @@ async def run(args: argparse.Namespace) -> int:
                             dry_run=dry_run, retry_forever=not args.once)
         await notifier.restore_state()
         processor = OrderProcessor(db, order_filter, notifier, use_baseline=not dry_run)
-        sources = build_site_sources(settings, config, site_names)
+        sources = build_site_sources(settings, config, site_names, keywords=lambda: keywords.include.words)
         scheduler = Scheduler(sources, processor, db, interval=settings.poll_interval, jitter=settings.poll_jitter)
 
         if args.once:
+            if want_telegram:
+                # в разовом режиме Telegram читается как обычный источник: последние сообщения чатов
+                telegram = await prepare_telegram(settings, config, processor, db)
+                if telegram is not None:
+                    scheduler.sources.append(telegram)
             return await run_once(scheduler, notifier)
 
         if not dry_run:
@@ -285,9 +286,10 @@ async def prepare_telegram(settings: Settings, config: AppConfig, processor: Ord
         log.warning("Telegram-источник пропущен: %s", reason)
         await db.record_error("telegram", reason)
         return None
-    # Код спрашиваем только при самом первом входе (файла сессии ещё нет). Если сессия есть, но
-    # недействительна, при автозапуске нельзя зависать на вводе кода — остальные источники должны работать.
-    first_login = not Path(f"{resolve_path(settings.tg_session)}.session").exists()
+    # Код спрашиваем, пока вход ни разу не удавался. Если вход уже был, а сессия стала недействительной,
+    # при автозапуске нельзя зависать на вводе кода — остальные источники должны работать.
+    # (По наличию .session судить нельзя: Telethon создаёт файл ещё до входа.)
+    first_login = await db.get_flag("telegram_logged_in") != "1"
     telegram = make_telegram_source(settings, config, processor, db)
     from telethon.errors import RPCError
 
@@ -305,6 +307,8 @@ async def prepare_telegram(settings: Settings, config: AppConfig, processor: Ord
     except Exception as exc:  # noqa: BLE001 — сеть: источник сам переподключится в run()
         log.warning("Telegram: нет связи при запуске (%s), буду пробовать подключиться", exc)
         await db.record_error("telegram", f"нет связи при запуске: {exc}")
+        return telegram
+    await db.set_flag("telegram_logged_in", "1")
     return telegram
 
 

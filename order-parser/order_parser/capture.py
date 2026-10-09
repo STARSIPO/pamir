@@ -15,7 +15,8 @@ from datetime import datetime
 
 import httpx
 
-from order_parser.config import BASE_DIR, load_app_config, load_settings
+from order_parser.config import BASE_DIR, load_app_config, load_settings, resolve_path
+from order_parser.filters import KeywordStore
 from order_parser.sources import SITE_SOURCES, build_site_sources
 from order_parser.sources.base import HttpSource, describe_error
 
@@ -36,7 +37,8 @@ async def capture(names: list[str]) -> int:
     settings = load_settings()
     config = load_app_config(settings.config_file)
     only = set(names) if names else None
-    sources = build_site_sources(settings, config, only)
+    store = KeywordStore.load(resolve_path(settings.keywords_file))
+    sources = build_site_sources(settings, config, only, keywords=lambda: store.include.words)
     if not sources:
         print(f"Нет источников. Доступны: {', '.join(SITE_SOURCES)}")
         return 2

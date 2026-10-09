@@ -16,6 +16,7 @@ from typing import Any
 
 from order_parser.models import Order
 from order_parser.sources import SOURCE_META
+from order_parser.sources.base import Source
 
 log = logging.getLogger(__name__)
 
@@ -27,13 +28,17 @@ _BUDGET_WORDS = (
     r"оплат\w*|payment",
 )
 _AMOUNT = r"\d[\d\s.,]*\d|\d"
-_SCALE = r"(?:\s?(?:k|к|тыс\.?)(?![а-яa-z]))"
-_CURRENCY = r"(?:₽|руб\.?|рублей|р\.|\$|usd|€|eur|грн|₴|₸|тенге|usdt)"  # «тг» в чатах — это Telegram
+# множитель: 15к, 15k, 15 тыс., 100 тысяч, 5 т.р., 1.5 млн
+_SCALE = r"(?:\s?(?:k|к|тыс\w*\.?|т\.\s?р\.?|млн\w*\.?)(?![а-яa-z]))"
+# валюта; «тг» сюда не входит: в Telegram-чатах «10 ТГ каналов» — это Телеграм, а не тенге
+_CURRENCY = (r"(?:₽|рубл\w*|руб\.?|р\.|\$|usd\w*|доллар\w*|бакс\w*|€|eur\w*|евро|грн|гривен\w*|₴|₸|тенге|"
+             r"usdt|byn|kzt|uah)")
 _MONEY = re.compile(
-    rf"(?:(?:[$€£]\s?)?(?:{_AMOUNT}){_SCALE}?\s?[-–—]\s?)?"  # необязательное начало диапазона
+    rf"(?:(?:[$€£]\s?)?(?:{_AMOUNT}){_SCALE}?\s?(?:{_CURRENCY}\s?)?[-–—]\s?)?"  # начало диапазона «7 000 ₽ — »
     rf"(?:[$€£]\s?(?:{_AMOUNT}){_SCALE}?|(?:{_AMOUNT}){_SCALE}?\s?{_CURRENCY}|(?:{_AMOUNT}){_SCALE})",
     re.IGNORECASE,
 )
+_HAS_CURRENCY = re.compile(rf"{_CURRENCY}|[$€£]", re.IGNORECASE)
 _BIG_NUMBER = re.compile(r"\d[\d\s]{2,}\d|\d{3,}")
 
 
@@ -45,8 +50,9 @@ def _budget_lines(text: str, words: str):
 def extract_budget(text: str) -> str:
     """Ищет бюджет в свободном тексте объявления: «Бюджет: 10 000 ₽», «Оплата 300$», «цена 15к».
 
-    В строке после «бюджет/цена/оплата» берётся сумма (с валютой, «к/тыс» или число от 100);
-    «договорная» без суммы — бюджет не указан.
+    В строке после «бюджет/цена/стоимость/оплата» берётся сумма (с валютой, «к/тыс» или число от 100).
+    Вне такой строки суммой считается только число с валютой: «2к подписчиков» — не бюджет.
+    «Договорная» без суммы — бюджет не указан.
     """
     negotiable = False
     for words in _BUDGET_WORDS:
@@ -58,9 +64,9 @@ def extract_budget(text: str) -> str:
             if number:
                 return " ".join(number.group(0).split())
             negotiable = negotiable or bool(re.search(r"договор", value, re.IGNORECASE))
-    money = _MONEY.search(text)
-    if money and re.search(rf"{_CURRENCY}|[$€£]|{_SCALE}", money.group(0), re.IGNORECASE):
-        return " ".join(money.group(0).split())
+    for money in _MONEY.finditer(text):
+        if _HAS_CURRENCY.search(money.group(0)):
+            return " ".join(money.group(0).split())
     return "договорная" if negotiable else ""
 
 
@@ -173,9 +179,13 @@ def interruptible_prompt():
         signal.signal(signal.SIGINT, previous)
 
 
-class TelegramSource:
+class TelegramSource(Source):
+    """Основной режим — run(): слушает новые сообщения. fetch() — последние сообщения чатов
+    (общий интерфейс источников; используется в режиме --once)."""
+
     name = "telegram"
     emoji, title = SOURCE_META["telegram"]
+    fetch_limit = 20
 
     def __init__(
         self,
@@ -260,6 +270,22 @@ class TelegramSource:
             log.info("Telegram: слушаю %s", display_name(entity) or original)
         return ids, errors
 
+    async def fetch(self) -> list[Order]:
+        """Последние fetch_limit сообщений каждого чата (нужно подключение: сначала login())."""
+        if not self.chat_ids:
+            self.chat_ids, errors = await self.resolve_chats()
+            if not self.chat_ids:
+                raise RuntimeError("нет доступных чатов" + (f": {'; '.join(errors)}" if errors else ""))
+        orders: list[Order] = []
+        for chat_id in self.chat_ids:
+            async for message in self.client.iter_messages(chat_id, limit=self.fetch_limit):
+                if getattr(message, "out", False):
+                    continue
+                order = message_to_order(message, await message.get_chat(), await message.get_sender())
+                if order is not None:
+                    orders.append(order)
+        return orders
+
     async def _handle(self, event: Any) -> None:
         try:
             chat = await event.get_chat()
@@ -290,9 +316,9 @@ class TelegramSource:
                     if not self.chat_ids:
                         detail = f" ({'; '.join(errors)})" if errors else ""
                         raise _NoChats(f"нет доступных чатов для прослушивания{detail}")
-                    await self._report(None)
                     if errors:
                         await self._report("не найдены: " + "; ".join(errors))
+                await self._report(None)  # подключены и слушаем — в том числе после переподключения
                 if not handler_added:
                     # incoming=True: свои сообщения (например, ваши объявления в чатах) — не заказы
                     self.client.add_event_handler(self._handle, events.NewMessage(chats=self.chat_ids, incoming=True))

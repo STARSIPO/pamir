@@ -15,6 +15,8 @@
 from __future__ import annotations
 
 import logging
+import re
+from collections.abc import Callable
 from datetime import datetime, timezone
 from typing import Any
 
@@ -111,14 +113,27 @@ class FreelancerSource(HttpSource):
     name = "freelancer"
     emoji, title = SOURCE_META["freelancer"]
 
-    def __init__(self, cfg: FreelancerConfig | None = None, **kwargs) -> None:
+    def __init__(
+        self, cfg: FreelancerConfig | None = None, keywords: Callable[[], list[str]] | None = None, **kwargs
+    ) -> None:
         super().__init__(**kwargs)
         self.cfg = cfg or FreelancerConfig()
+        self.keywords = keywords
+        """Текущие include-слова (keywords.yaml); используются, если freelancer.queries пуст."""
         self._use_sort = True
 
+    def queries(self) -> list[str | None]:
+        if self.cfg.queries:
+            return list(self.cfg.queries)
+        # Заказы на Freelancer.com почти только на английском — ищем по латинским словам из keywords.yaml,
+        # так новые слова из /add_kw сразу попадают и в поиск.
+        words = [w.strip('"').strip() for w in (self.keywords() if self.keywords else [])]
+        latin = [w for w in words if re.search(r"[a-z]", w, re.IGNORECASE) and not re.search(r"[а-яё]", w, re.IGNORECASE)]
+        return list(dict.fromkeys(latin)) or [None]
+
     async def fetch(self) -> list[Order]:
-        queries: list[str | None] = list(self.cfg.queries) or [None]
-        return await self.gather_pages(queries, self._fetch_query, pause=1.0)
+        queries = self.queries()
+        return await self.gather_pages(queries, self._fetch_query, pause=1.0, feed_key=lambda q: q or "*")
 
     def params(self, query: str | None) -> dict[str, str]:
         params = {

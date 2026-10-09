@@ -335,3 +335,15 @@ def test_bot_refuses_to_overwrite_broken_file(tmp_path):
     with pytest.raises(KeywordFileError):
         store.add_include(["angular"])
     assert "\t- svelte" in path.read_text(encoding="utf-8")  # ручная правка не затёрта
+
+
+@pytest.mark.parametrize(("text", "value"), [("100 тысяч рублей", 100_000), ("50 т.р.", 50_000), ("1.5 млн", 1_500_000)])
+def test_parse_budget_scales(text, value):
+    assert parse_budget(text)[0] == pytest.approx(value)
+
+
+def test_exclude_phrase_joined_spelling(tmp_path):
+    f = make_filter(tmp_path, include=[], exclude=["full time"])
+    assert not f.check(order("Fulltime job")).ok
+    assert not f.check(order("full-time position")).ok
+    assert f.check(order("full timer app")).ok

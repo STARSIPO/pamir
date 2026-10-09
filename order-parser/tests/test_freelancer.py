@@ -111,8 +111,8 @@ async def test_queries_deduplicated(payload):
     source = FreelancerSource(FreelancerConfig(queries=["react", "python"]), retries=0)
     original = source.gather_pages
 
-    async def no_pause(items, fetch_one, pause=0):
-        return await original(items, fetch_one, pause=0)
+    async def no_pause(items, fetch_one, pause=0, **kwargs):
+        return await original(items, fetch_one, pause=0, **kwargs)
 
     source.gather_pages = no_pause  # type: ignore[method-assign]
     try:
@@ -120,3 +120,13 @@ async def test_queries_deduplicated(payload):
     finally:
         await source.aclose()
     assert len(orders) == 5
+
+
+def test_queries_follow_keywords_when_config_empty():
+    words = ["telegram бот", "бот", "aiogram", "telegram bot", "mini app", "сайт", "next.js", '"react"', "web app"]
+    source = FreelancerSource(FreelancerConfig(), keywords=lambda: words)
+    assert source.queries() == ["aiogram", "telegram bot", "mini app", "next.js", "react", "web app"]
+    words.append("website")  # /add_kw website — сразу попадает в поиск
+    assert source.queries()[-1] == "website"
+    assert FreelancerSource(FreelancerConfig(queries=["python"]), keywords=lambda: words).queries() == ["python"]
+    assert FreelancerSource(FreelancerConfig()).queries() == [None]
