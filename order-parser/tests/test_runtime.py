@@ -456,8 +456,10 @@ async def test_first_login_prompt_until_success(db, tmp_path, monkeypatch):
     settings = Settings(_env_file=None, tg_api_id=1, tg_api_hash="h", tg_session=str(tmp_path / "s"))
     config = AppConfig.model_validate({"telegram": {"chats": ["@orders"]}})
     assert await app_main.prepare_telegram(settings, config, None, db) is None
-    assert await app_main.prepare_telegram(settings, config, None, db) is not None
-    assert await app_main.prepare_telegram(settings, config, None, db) is not None
+    for _ in range(2):
+        source = await app_main.prepare_telegram(settings, config, None, db)
+        assert source is not None
+        await source.aclose()
     assert calls == [True, True, False]  # пока вход не удался — спрашиваем код; после успеха — нет
 
 

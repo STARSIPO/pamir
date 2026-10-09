@@ -353,5 +353,5 @@ class TelegramSource(Source):
             log.info("Telegram: переподключение...")
 
     async def aclose(self) -> None:
-        if self.client.is_connected():
-            await self.client.disconnect()
+        # disconnect() закрывает и файл сессии — даже если соединения не было
+        await self.client.disconnect()
