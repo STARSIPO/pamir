@@ -154,8 +154,8 @@ class _NoChats(RuntimeError):
 def normalize_phone(phone: str) -> str:
     """«+7 (999) 123–45–67», «8 999 123 45 67» → «79991234567». Пусто, если номер не распознан."""
     digits = re.sub(r"\D", "", phone or "")
-    if len(digits) == 11 and digits.startswith("8"):
-        digits = "7" + digits[1:]  # российский «8...» → «+7...»
+    if not (phone or "").strip().startswith("+") and len(digits) == 11 and digits.startswith("8"):
+        digits = "7" + digits[1:]  # российский «8 999 ...» → «+7 999 ...» (но не «+81 ...» — это Япония)
     return digits if len(digits) >= 10 else ""
 
 
