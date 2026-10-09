@@ -1,0 +1,301 @@
+{
+ "status": "success",
+ "result": {
+  "projects": [
+   {
+    "id": 40678044,
+    "owner_id": null,
+    "title": "Finalize React Native App Build -- 2",
+    "status": "active",
+    "seo_url": "mobile-app-development/Finalize-React-Native-App-Build",
+    "currency": {
+     "id": 11,
+     "code": "INR",
+     "sign": "₹",
+     "name": "Indian Rupee",
+     "exchange_rate": 0.0114,
+     "country": "IN"
+    },
+    "description": "My in-house team has brought our React Native mobile app close to the finish line, but we still need an experienced developer to push it over. The remaining work is entirely on the front end: polishing outstanding features, fixing the small bugs that pop up during edge-case testing, and—most importantly—making sure every screen matches the approved Figma design pixel-for-pixel.\n\nI will continue handling the backend and API endpoints, so your focus stays on React Native UI logic, component optimisation, and any native module tweaks needed for a smooth release on both iOS and Android. Once you are done, I expect a clean codebase, updated Figma-accurate layouts, and store-ready builds for TestFlight and Play Console.\n\nIf you have a strong eye for detail, know your way around React Navigation, Redux (or Context), and you are comfortable pushing final builds for both platforms, let’s talk—I’m ready to hand over the repo and design files so you can get started right away.",
+    "preview_description": "My in-house team has brought our React Native mobile app close to the finish line, but we still need an experienced developer to push it over. The remaining work is entirely on the front end: polishing outstanding features, fixing the small",
+    "deleted": false,
+    "nonpublic": false,
+    "hidebids": false,
+    "type": "fixed",
+    "bidperiod": 7,
+    "budget": {
+     "minimum": 12500.0,
+     "maximum": 37500.0
+    },
+    "featured": false,
+    "urgent": false,
+    "bid_stats": {
+     "bid_count": 52
+    },
+    "submitdate": 1787995738,
+    "time_submitted": 1787995738,
+    "time_updated": 1787995738,
+    "language": "en",
+    "frontend_project_status": "open",
+    "jobs": [
+     {
+      "name": "Mobile App Development"
+     },
+     {
+      "name": "iPhone"
+     },
+     {
+      "name": "PhoneGap"
+     },
+     {
+      "name": "Ionic Framework"
+     },
+     {
+      "name": "iOS Development"
+     },
+     {
+      "name": "Frontend Development"
+     },
+     {
+      "name": "React Native"
+     },
+     {
+      "name": "Figma"
+     }
+    ]
+   },
+   {
+    "id": 40675411,
+    "owner_id": null,
+    "title": "Fix React & Python Performance",
+    "status": "active",
+    "seo_url": "docker/Fix-React-Python-Performance",
+    "currency": {
+     "id": 1,
+     "code": "USD",
+     "sign": "$",
+     "name": "US Dollar",
+     "exchange_rate": 1,
+     "country": "US"
+    },
+    "description": "My web app runs a React front end on top of a Python back end, and the whole thing has slowed to a crawl. The interface often stops responding, so the core of this job is to remove every performance bottleneck on both sides of the stack.\n\nI need you to profile the React code, trace what is blocking the main thread, streamline state management, and optimise the bundle. At the same time, audit the Python endpoints for slow queries or blocking calls that could be starving the UI of data. Once you have solid numbers on where the lag originates, apply the fixes, refactor where it makes sense, and push the changes to the Git repository on a dedicated branch.\n\nYou will have Docker-based local setup instructions, existing automated tests, and direct access to me for quick feedback.\n\nDeliverables  \n• A responsive UI with no noticeable input lag under typical load  \n• Back-end endpoints that return within acceptable latency thresholds  \n• A short before/after report summarising the changes and measured gains  \n\nIf you are comfortable jumping between React debugging tools and Python profilers, this should be a straightforward but rewarding task.",
+    "preview_description": "My web app runs a React front end on top of a Python back end, and the whole thing has slowed to a crawl. The interface often stops responding, so the core of this job is to remove every performance bottleneck on both sides of the stack.\n\nI",
+    "deleted": false,
+    "nonpublic": false,
+    "hidebids": false,
+    "type": "fixed",
+    "bidperiod": 7,
+    "budget": {
+     "minimum": 30.0,
+     "maximum": 250.0
+    },
+    "featured": false,
+    "urgent": false,
+    "bid_stats": {
+     "bid_count": 186
+    },
+    "submitdate": 1787992718,
+    "time_submitted": 1787992718,
+    "time_updated": 1787992718,
+    "language": "en",
+    "frontend_project_status": "open",
+    "jobs": [
+     {
+      "name": "JavaScript"
+     },
+     {
+      "name": "Python"
+     },
+     {
+      "name": "Django"
+     },
+     {
+      "name": "Software Architecture"
+     },
+     {
+      "name": "Docker"
+     },
+     {
+      "name": "Backend Development"
+     },
+     {
+      "name": "Frontend Development"
+     },
+     {
+      "name": "Web Application"
+     }
+    ]
+   },
+   {
+    "id": 40678412,
+    "owner_id": null,
+    "title": "Social Media Reposting Service",
+    "status": "active",
+    "seo_url": "brand-management/Social-Media-Reposting-Service",
+    "currency": {
+     "id": 1,
+     "code": "USD",
+     "sign": "$",
+     "name": "US Dollar",
+     "exchange_rate": 1,
+     "country": "US"
+    },
+    "description": "I need help systematically reposting my existing social-media content so that it reaches fresh eyes and strengthens our brand presence. All source posts are already created; your job is to take those assets and publish them to both Facebook and Instagram on a consistent schedule that we will agree on together.\n\nThe work involves:  \n• Pulling approved posts from my shared folder or direct links.  \n• Copy-pasting captions exactly as supplied (minor tweaks for platform fit are fine, but no rewriting).  \n• Uploading the correct creative, tagging the page, adding hashtags when relevant, and double-checking links.  \n• Scheduling or publishing at the optimal times we decide on to maximise brand awareness.  \n\nYou should already know the basics of Facebook Business Suite / Meta Business Manager and Instagram Creator Studio (or equivalent scheduling tools). Familiarity with insights will be valued because once a week I’d like a quick note on which reposts performed best.\n\nDeliverable each week: a simple spreadsheet or screenshot showing what was posted, the date/time, and any observations.\n\nThat’s it—straightforward work, but reliability and attention to detail are a must because consistent exposure is what will keep the brand top of mind. Let me know your experience handling Facebook and Instagram reposting and how soon you can start.",
+    "preview_description": "I need help systematically reposting my existing social-media content so that it reaches fresh eyes and strengthens our brand presence. All source posts are already created; your job is to take those assets and publish them to both Facebook",
+    "deleted": false,
+    "nonpublic": false,
+    "hidebids": false,
+    "type": "hourly",
+    "bidperiod": 7,
+    "budget": {
+     "minimum": 15.0,
+     "maximum": 25.0
+    },
+    "featured": false,
+    "urgent": false,
+    "bid_stats": {
+     "bid_count": 10
+    },
+    "submitdate": 1788011795,
+    "time_submitted": 1788011795,
+    "time_updated": 1788011795,
+    "language": "en",
+    "frontend_project_status": "open",
+    "jobs": [
+     {
+      "name": "Facebook Marketing"
+     },
+     {
+      "name": "Digital Marketing"
+     },
+     {
+      "name": "Content Marketing"
+     },
+     {
+      "name": "Social Media Management"
+     },
+     {
+      "name": "Brand Management"
+     },
+     {
+      "name": "Instagram Marketing"
+     },
+     {
+      "name": "Content Creation"
+     },
+     {
+      "name": "Community Management"
+     }
+    ]
+   },
+   {
+    "id": 40678438,
+    "owner_id": null,
+    "title": "Build 200 relevant SEO backlinks for AskAstro ",
+    "status": "active",
+    "seo_url": "seo/Build-relevant-SEO-backlinks-for-40678438",
+    "currency": {
+     "id": 11,
+     "code": "INR",
+     "sign": "₹",
+     "name": "Indian Rupee",
+     "exchange_rate": 0.0114,
+     "country": "IN"
+    },
+    "description": "I need 200 relevant, manually reviewed backlinks for Ask Astro (https://askastro.co.in), a Vedic astrology and AI birth-chart website.\n\nScope:\n- Build exactly 200 relevant backlinks within 1 week.\n- Prioritize genuine, relevant websites and pages related to astrology, horoscopes, birth charts, numerology, spirituality, wellness, relationships, and Indian audiences.\n- Use a natural mix of branded, URL, partial-match, and informational anchor text. Do not use keyword stuffing.\n- Target the most relevant Ask Astro pages, including the homepage, birth-chart/personality analysis, horoscope pages, numerology, Panchang, Dasha, Dosha, and Ashtakoota marriage compatibility pages.\n- Provide a complete spreadsheet with each backlink URL, target URL, anchor text, link type, website/page topic, placement status, and date published.\n- Obtain links through legitimate outreach, contextual placements, niche edits, resource pages, or quality guest contributions. Follow Google Search Essentials and disclose any paid/sponsored placements where required.\n- No automated spam, PBNs, hacked sites, comment/profile/forum spam, bulk directories, spun content, AI-generated junk, redirects, or links from adult/gambling/pharma/harmful websites.\n- Do not guarantee rankings. Replace any removed, broken, or clearly irrelevant link during the delivery period.\n\nAcceptance criteria:\n- 200 live, relevant, crawlable backlinks or a clearly documented status for any pending placement.\n- Submit the spreadsheet and the outreach/source details used.\n- Share sample placements before completing the full batch so quality can be checked.\n- No access to production credentials is required; any content must be approved before publication.\n\nBudget: ₹1,500–₹2,000 fixed price. Deadline: maximum 1 week. Please share examples of comparable white-hat backlink campaigns and explain how you will source 200 relevant links within this budget.",
+    "preview_description": "I need 200 relevant, manually reviewed backlinks for Ask Astro (https://askastro.co.in), a Vedic astrology and AI birth-chart website.\n\nScope:\n- Build exactly 200 relevant backlinks within 1 week.\n- Prioritize genuine, relevant websites and",
+    "deleted": false,
+    "nonpublic": false,
+    "hidebids": false,
+    "type": "fixed",
+    "bidperiod": 7,
+    "budget": {
+     "minimum": 1000.0,
+     "maximum": 1500.0
+    },
+    "featured": false,
+    "urgent": false,
+    "bid_stats": {
+     "bid_count": 9
+    },
+    "submitdate": 1788011850,
+    "time_submitted": 1788011850,
+    "time_updated": 1788011850,
+    "language": "en",
+    "frontend_project_status": "open",
+    "jobs": [
+     {
+      "name": "SEO"
+     },
+     {
+      "name": "Link Building"
+     }
+    ]
+   },
+   {
+    "id": 40678238,
+    "owner_id": null,
+    "title": "PHP Developer Needed to Fix Web Scraper",
+    "status": "active",
+    "seo_url": "curl/PHP-Developer-Needed-Fix-Web",
+    "currency": {
+     "id": 1,
+     "code": "USD",
+     "sign": "$",
+     "name": "US Dollar",
+     "exchange_rate": 1,
+     "country": "US"
+    },
+    "description": "I am looking for an experienced PHP developer with strong web-scraping and database experience to fix an existing scraper.\n\nThe website structure was recently changed by the client, and the current PHP scraper is no longer retrieving and storing all products correctly in the database. The scraper is located in the attached file:\n\nprd_ss_ap.php\n\nFor example, the Napkins category and its subcategories are currently missing from the database, along with other items that are not being captured.\nRequired Work\n\n    Review and understand the existing prd_ss_ap.php scraper.\n\n    Identify why some categories, subcategories, and products are no longer being retrieved.\n\n    Update or repair the PHP code to ensure all items are scraped correctly.\n\n    Ensure that every product is retrieved under the correct Category → Subcategory structure.\n\n    Confirm that all scraped data is stored correctly in the database.\n\n    Test the scraper thoroughly against the updated website.\n\n    Provide the updated PHP file and any required instructions for installation or use.\n\nRequired Skills\n\n    Strong PHP experience.\n\n    Proven experience with web scraping and HTML/XML parsing.\n\n    Experience handling website structure changes.\n\n    Knowledge of cURL, DOMDocument, XPath, regular expressions, or similar scraping methods.\n\n    Experience working with MySQL databases.\n\n    Ability to troubleshoot category, subcategory, pagination, and dynamic-content issues.\n\n    Clear communication and reliable turnaround.\n\nImportant Payment Requirement\n\nPlease submit your final and complete bid for this work. The amount you bid is the amount you will be paid if the project requirements remain as described.\n\nIf the price changes after you are selected, the work will not be awarded. Please review the requirements carefully and ask any questions before submitting your bid.\nFuture Work\n\nUpon successful completion of this project, I have at least three or four additional web-scraping projects that may need to be fixed or developed from the beginning. Good performance on this project may lead to ongoing work.",
+    "preview_description": "I am looking for an experienced PHP developer with strong web-scraping and database experience to fix an existing scraper.\n\nThe website structure was recently changed by the client, and the current PHP scraper is no longer retrieving and st",
+    "deleted": false,
+    "nonpublic": false,
+    "hidebids": false,
+    "type": "fixed",
+    "bidperiod": 7,
+    "budget": {
+     "minimum": 30.0,
+     "maximum": 250.0
+    },
+    "featured": false,
+    "urgent": false,
+    "bid_stats": {
+     "bid_count": 212
+    },
+    "submitdate": 1788004016,
+    "time_submitted": 1788004016,
+    "time_updated": 1788004016,
+    "language": "en",
+    "frontend_project_status": "open",
+    "jobs": [
+     {
+      "name": "PHP"
+     },
+     {
+      "name": "Web Scraping"
+     },
+     {
+      "name": "Troubleshooting"
+     },
+     {
+      "name": "Software Architecture"
+     },
+     {
+      "name": "MySQL"
+     },
+     {
+      "name": "Regular Expressions"
+     },
+     {
+      "name": "cURL"
+     },
+     {
+      "name": "Database Management"
+     }
+    ]
+   }
+  ],
+  "total_count": 5714
+ },
+ "request_id": "reconstructed-fixture"
+}
