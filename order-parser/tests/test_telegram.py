@@ -114,7 +114,7 @@ def test_extract_budget_review_cases(text, budget):
 @pytest.mark.parametrize(
     ("phone", "normalized"),
     [("+7 (999) 123–45–67", "79991234567"), ("8 999 123 45 67", "79991234567"), ("+380 50 123 4567", "380501234567"),
-     ("123", ""), ("", "")],
+     ("+81 3 1234 5678", "81312345678"), ("123", ""), ("", "")],
 )
 def test_normalize_phone(phone, normalized):
     from order_parser.sources.telegram import normalize_phone

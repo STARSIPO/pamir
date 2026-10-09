@@ -289,14 +289,22 @@ async def prepare_telegram(settings: Settings, config: AppConfig, processor: Ord
     # недействительна, при автозапуске нельзя зависать на вводе кода — остальные источники должны работать.
     first_login = not Path(f"{resolve_path(settings.tg_session)}.session").exists()
     telegram = make_telegram_source(settings, config, processor, db)
+    from telethon.errors import RPCError
+
+    from order_parser.sources.telegram import TelegramAuthError
+
     try:
         await telegram.login(interactive=first_login)
-    except Exception as exc:  # noqa: BLE001 — без Telegram остальные источники продолжают работать
+    except (TelegramAuthError, RPCError, EOFError) as exc:
+        # нет авторизации / неверный номер или код — без участия человека не исправить
         log.error("Telegram-источник не запущен: %s", exc)
         await db.record_error("telegram", f"вход не выполнен: {exc}")
         with contextlib.suppress(Exception):
             await telegram.aclose()
         return None
+    except Exception as exc:  # noqa: BLE001 — сеть: источник сам переподключится в run()
+        log.warning("Telegram: нет связи при запуске (%s), буду пробовать подключиться", exc)
+        await db.record_error("telegram", f"нет связи при запуске: {exc}")
     return telegram
 
 
