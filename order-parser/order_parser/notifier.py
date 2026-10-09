@@ -114,6 +114,7 @@ class Notifier:
         dry_run: bool = False,
         out: TextIO | None = None,
         max_attempts: int = 5,
+        retry_forever: bool = True,
     ) -> None:
         if not dry_run and (bot is None or not admin_id):
             raise ValueError("Для отправки нужны bot и admin_id (или включите dry_run)")
@@ -124,6 +125,8 @@ class Notifier:
         self.dry_run = dry_run
         self.out = out
         self.max_attempts = max_attempts
+        self.retry_forever = retry_forever
+        """False (режим --once): при недоступном Telegram не ждать, оставить заказ в очереди БД."""
         self.queue: asyncio.Queue[OutMessage] = asyncio.Queue()
         self._running = asyncio.Event()
         self._running.set()
@@ -158,9 +161,7 @@ class Notifier:
         while True:
             message = await self.queue.get()
             try:
-                await self._running.wait()
-                delivered = await self.deliver(message)
-                await self.db.set_state(message.source, message.external_id, STATE_SENT if delivered else STATE_FAILED)
+                await self._send_until_done(message)
             except asyncio.CancelledError:
                 raise
             except Exception:  # noqa: BLE001 — одна ошибка не должна останавливать очередь
@@ -170,7 +171,26 @@ class Notifier:
             if self.send_delay and not self.queue.empty():
                 await asyncio.sleep(self.send_delay)
 
-    async def deliver(self, message: OutMessage) -> bool:
+    async def _send_until_done(self, message: OutMessage) -> None:
+        """Пока Telegram недоступен, сообщение ждёт и не теряется (остаётся queued и в БД)."""
+        delay = 30.0
+        while True:
+            await self._running.wait()
+            delivered = await self.deliver(message)
+            if delivered is not None:
+                await self.db.set_state(message.source, message.external_id,
+                                        STATE_SENT if delivered else STATE_FAILED)
+                return
+            if not self.retry_forever:
+                log.error("Telegram недоступен: %s/%s останется в очереди и будет отправлен при следующем запуске",
+                          message.source, message.external_id)
+                return
+            log.warning("Telegram недоступен, повторю отправку через %.0f с", delay)
+            await asyncio.sleep(delay)
+            delay = min(delay * 2, 600)
+
+    async def deliver(self, message: OutMessage) -> bool | None:
+        """True — отправлено, False — Telegram отказал навсегда, None — временная ошибка связи."""
         if self.dry_run:
             out = self.out or sys.stdout
             print(message.plain, file=out)
@@ -179,7 +199,8 @@ class Notifier:
         assert self.bot is not None
         markup = _keyboard(message.url)
         text, parse_mode = message.html, "HTML"
-        for attempt in range(self.max_attempts):
+        network_errors = 0
+        while True:
             try:
                 await self.bot.send_message(self.admin_id, text, reply_markup=markup, parse_mode=parse_mode)
                 return True
@@ -187,12 +208,14 @@ class Notifier:
                 log.warning("Telegram просит подождать %s с (flood control)", exc.retry_after)
                 await asyncio.sleep(exc.retry_after + 1)
             except TelegramForbiddenError:
-                log.error(
-                    "Бот не может написать ADMIN_ID=%s: откройте бота в Telegram и нажмите /start", self.admin_id
-                )
+                self._log_cannot_write()
                 return False
             except TelegramBadRequest as exc:
-                if markup is not None and "button" in str(exc).lower():
+                error = str(exc).lower()
+                if "chat not found" in error or "user not found" in error:
+                    self._log_cannot_write()
+                    return False
+                if markup is not None and "button" in error:
                     log.warning("Telegram отклонил кнопку (%s), отправляю ссылку текстом", exc)
                     markup = None
                     text = f"{text}\n\n{html.escape(message.url)}" if parse_mode else f"{text}\n\n{message.url}"
@@ -203,9 +226,13 @@ class Notifier:
                     log.error("Не удалось отправить %s/%s: %s", message.source, message.external_id, exc)
                     return False
             except (TelegramNetworkError, TelegramServerError) as exc:
-                delay = min(60, 2 ** (attempt + 1))
+                network_errors += 1
+                if network_errors >= self.max_attempts:
+                    return None
+                delay = min(60, 2**network_errors)
                 log.warning("Ошибка связи с Telegram (%s), повтор через %s с", exc, delay)
                 await asyncio.sleep(delay)
-        log.error("Сообщение %s/%s не отправлено после %d попыток", message.source, message.external_id,
-                  self.max_attempts)
-        return False
+
+    def _log_cannot_write(self) -> None:
+        log.error("Бот не может написать ADMIN_ID=%s: откройте бота в Telegram и нажмите Start; "
+                  "проверьте ADMIN_ID (бот подскажет ваш ID в ответ на /start)", self.admin_id)

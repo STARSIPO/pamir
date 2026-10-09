@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import getpass
 import logging
 import re
+import signal
 import sys
+import threading
 from collections.abc import Awaitable, Callable
 from pathlib import Path
 from typing import Any
@@ -18,26 +21,47 @@ log = logging.getLogger(__name__)
 
 TITLE_LIMIT = 120
 
-_BUDGET_LINE = re.compile(
-    r"(?<!\w)(?:бюджет\w*|оплат\w*|цен[аы]|стоимост\w*|гонорар\w*|вознагражден\w*|budget|price|payment)"
-    r"(?!\w)\s*[:：\-—–]?\s*([^\n]{1,80})",
-    re.IGNORECASE,
+# Сначала «бюджет/цена/стоимость», потом «оплата» — в «Оплата: 50% предоплата» суммы нет.
+_BUDGET_WORDS = (
+    r"бюджет\w*|цен[аы]|стоимост\w*|гонорар\w*|вознагражден\w*|budget|price",
+    r"оплат\w*|payment",
 )
+_AMOUNT = r"\d[\d\s.,]*\d|\d"
+_SCALE = r"(?:\s?(?:k|к|тыс\.?)(?![а-яa-z]))"
+_CURRENCY = r"(?:₽|руб\.?|рублей|р\.|\$|usd|€|eur|грн|₴|₸|тенге|usdt)"  # «тг» в чатах — это Telegram
 _MONEY = re.compile(
-    r"(?:[$€£]\s?\d[\d\s.,]*(?:\s?(?:k|к|тыс\.?))?"
-    r"|\d[\d\s.,]*(?:\s?(?:k|к|тыс\.?))?\s?(?:₽|руб\.?|рублей|р\.|\$|usd|€|eur|грн|₴|тг|₸|usdt))",
+    rf"(?:(?:[$€£]\s?)?(?:{_AMOUNT}){_SCALE}?\s?[-–—]\s?)?"  # необязательное начало диапазона
+    rf"(?:[$€£]\s?(?:{_AMOUNT}){_SCALE}?|(?:{_AMOUNT}){_SCALE}?\s?{_CURRENCY}|(?:{_AMOUNT}){_SCALE})",
     re.IGNORECASE,
 )
+_BIG_NUMBER = re.compile(r"\d[\d\s]{2,}\d|\d{3,}")
+
+
+def _budget_lines(text: str, words: str):
+    pattern = re.compile(rf"(?<!\w)(?:{words})(?!\w)\s*[:：\-—–]?\s*([^\n]{{1,80}})", re.IGNORECASE)
+    return (m.group(1) for m in pattern.finditer(text))
 
 
 def extract_budget(text: str) -> str:
-    """Ищет бюджет в свободном тексте объявления: «Бюджет: 10 000 ₽», «Оплата 300$»."""
-    for match in _BUDGET_LINE.finditer(text):
-        value = match.group(1).strip(" .,;:-—–*_")
-        if re.search(r"\d|договор", value, re.IGNORECASE):
-            return value[:60]
+    """Ищет бюджет в свободном тексте объявления: «Бюджет: 10 000 ₽», «Оплата 300$», «цена 15к».
+
+    В строке после «бюджет/цена/оплата» берётся сумма (с валютой, «к/тыс» или число от 100);
+    «договорная» без суммы — бюджет не указан.
+    """
+    negotiable = False
+    for words in _BUDGET_WORDS:
+        for value in _budget_lines(text, words):
+            money = _MONEY.search(value)
+            if money:
+                return " ".join(money.group(0).split())
+            number = _BIG_NUMBER.search(value)
+            if number:
+                return " ".join(number.group(0).split())
+            negotiable = negotiable or bool(re.search(r"договор", value, re.IGNORECASE))
     money = _MONEY.search(text)
-    return " ".join(money.group(0).split()) if money else ""
+    if money and re.search(rf"{_CURRENCY}|[$€£]|{_SCALE}", money.group(0), re.IGNORECASE):
+        return " ".join(money.group(0).split())
+    return "договорная" if negotiable else ""
 
 
 def split_title(text: str) -> tuple[str, str]:
@@ -116,6 +140,37 @@ def normalize_chat_ref(ref: int | str) -> int | str:
 
 
 OrderHandler = Callable[[list[Order]], Awaitable[Any]]
+StatusHandler = Callable[[str | None, int], Awaitable[Any]]
+
+
+class TelegramAuthError(RuntimeError):
+    """Сессия не авторизована или отозвана — нужен интерактивный вход (--login)."""
+
+
+class _NoChats(RuntimeError):
+    pass
+
+
+def normalize_phone(phone: str) -> str:
+    """«+7 (999) 123–45–67», «8 999 123 45 67» → «79991234567». Пусто, если номер не распознан."""
+    digits = re.sub(r"\D", "", phone or "")
+    if len(digits) == 11 and digits.startswith("8"):
+        digits = "7" + digits[1:]  # российский «8...» → «+7...»
+    return digits if len(digits) >= 10 else ""
+
+
+@contextlib.contextmanager
+def interruptible_prompt():
+    """Во время input() в работающем asyncio Ctrl+C должен сразу прерывать ввод."""
+    if threading.current_thread() is not threading.main_thread():
+        yield
+        return
+    previous = signal.getsignal(signal.SIGINT)
+    signal.signal(signal.SIGINT, signal.default_int_handler)
+    try:
+        yield
+    finally:
+        signal.signal(signal.SIGINT, previous)
 
 
 class TelegramSource:
@@ -131,11 +186,12 @@ class TelegramSource:
         on_orders: OrderHandler,
         *,
         phone: str = "",
-        on_status: Callable[[str | None, int], Awaitable[Any]] | None = None,
+        on_status: StatusHandler | None = None,
     ) -> None:
         from telethon import TelegramClient
 
         Path(session_path).parent.mkdir(parents=True, exist_ok=True)
+        self.session_file = Path(f"{session_path}.session")
         self.client = TelegramClient(
             str(session_path), api_id, api_hash,
             device_model="order-parser", system_version=sys.platform, app_version="1.0",
@@ -144,7 +200,15 @@ class TelegramSource:
         self.chats = chats
         self.on_orders = on_orders
         self.on_status = on_status
+        """on_status(None, chats) — всё работает; on_status("текст ошибки", 0) — ошибка."""
         self.chat_ids: list[int] = []
+
+    async def _report(self, error: str | None) -> None:
+        if self.on_status is not None:
+            try:
+                await self.on_status(error, 0 if error else len(self.chat_ids))
+            except Exception:  # noqa: BLE001
+                log.exception("Telegram: не удалось сохранить статус")
 
     async def login(self, interactive: bool = True) -> None:
         """Подключение. Первый раз спросит код из Telegram в консоли, потом сессия хранится в файле."""
@@ -152,17 +216,25 @@ class TelegramSource:
         if await self.client.is_user_authorized():
             return
         if not interactive or not sys.stdin or not sys.stdin.isatty():
-            raise RuntimeError(
-                "Telegram-сессия не авторизована. Запустите один раз в консоли: python -m order_parser --login"
+            raise TelegramAuthError(
+                "Telegram-сессия не авторизована. Запустите один раз в консоли: run.bat --login (Windows) "
+                "или ./run.sh --login (Linux)"
             )
+        phone = normalize_phone(self.phone)
+        if self.phone and not phone:
+            print(f"TG_PHONE={self.phone!r} не похож на номер телефона — введите его вручную.")
         print("\n=== Вход в Telegram (userbot) — нужен один раз ===")
-        await self.client.start(
-            phone=lambda: self.phone or input("Номер телефона (+7...): ").strip(),
-            code_callback=lambda: input("Код из Telegram: ").strip(),
-            password=lambda: getpass.getpass("Пароль двухэтапной проверки (2FA): "),
-        )
+        try:
+            with interruptible_prompt():
+                await self.client.start(
+                    phone=lambda: phone or input("Номер телефона (+7...): ").strip(),
+                    code_callback=lambda: input("Код из Telegram: ").strip(),
+                    password=lambda: getpass.getpass("Пароль двухэтапной проверки (2FA): "),
+                )
+        except EOFError as exc:
+            raise TelegramAuthError("вход в Telegram отменён") from exc
         me = await self.client.get_me()
-        print(f"Готово: вошли как {display_name(me)}. Сессия сохранена.\n")
+        print(f"Готово: вошли как {display_name(me)}. Сессия сохранена в {self.session_file}.\n")
 
     async def resolve_chats(self) -> tuple[list[int], list[str]]:
         from telethon import utils
@@ -195,43 +267,55 @@ class TelegramSource:
             order = message_to_order(event.message, chat, sender)
             if order is not None:
                 await self.on_orders([order])
-                if self.on_status:
-                    await self.on_status(None, len(self.chat_ids))
         except Exception:  # noqa: BLE001
             log.exception("Telegram: ошибка обработки сообщения")
 
     async def run(self) -> None:
+        """Слушает чаты, переподключается при сбоях. Любая ошибка остаётся внутри источника."""
         from telethon import events
+        from telethon.errors import AuthKeyDuplicatedError, UnauthorizedError
 
-        if not self.client.is_connected():
-            await self.login(interactive=False)
-        self.chat_ids, errors = await self.resolve_chats()
-        if not self.chat_ids:
-            message = "нет доступных чатов для прослушивания" + (f" ({'; '.join(errors)})" if errors else "")
-            if self.on_status:
-                await self.on_status(message, 0)
-            log.error("Telegram: %s", message)
-            return
-        if self.on_status:
-            await self.on_status("; ".join(errors) if errors else None, len(self.chat_ids))
-        self.client.add_event_handler(self._handle, events.NewMessage(chats=self.chat_ids))
-        delay = 5
+        loop = asyncio.get_running_loop()
+        delay = 5.0
+        handler_added = False
         while True:
-            started = asyncio.get_running_loop().time()
+            started = loop.time()
             try:
                 if not self.client.is_connected():
                     await self.client.connect()
+                if not await self.client.is_user_authorized():
+                    raise TelegramAuthError("сессия не авторизована — запустите с --login")
+                if not self.chat_ids:
+                    self.chat_ids, errors = await self.resolve_chats()
+                    if not self.chat_ids:
+                        detail = f" ({'; '.join(errors)})" if errors else ""
+                        raise _NoChats(f"нет доступных чатов для прослушивания{detail}")
+                    await self._report(None)
+                    if errors:
+                        await self._report("не найдены: " + "; ".join(errors))
+                if not handler_added:
+                    # incoming=True: свои сообщения (например, ваши объявления в чатах) — не заказы
+                    self.client.add_event_handler(self._handle, events.NewMessage(chats=self.chat_ids, incoming=True))
+                    handler_added = True
                 await self.client.run_until_disconnected()
             except asyncio.CancelledError:
                 raise
+            except (TelegramAuthError, UnauthorizedError, AuthKeyDuplicatedError) as exc:
+                message = f"сессия недействительна ({exc.__class__.__name__}: {exc}) — выполните вход заново: --login"
+                log.error("Telegram: %s", message)
+                await self._report(message)
+                return
+            except _NoChats as exc:
+                log.error("Telegram: %s, повторю через 10 минут", exc)
+                await self._report(str(exc))
+                delay = max(delay, 600.0)
             except Exception as exc:  # noqa: BLE001
-                log.warning("Telegram: соединение потеряно (%s)", exc)
-                if self.on_status:
-                    await self.on_status(f"соединение потеряно: {exc}", len(self.chat_ids))
-            if asyncio.get_running_loop().time() - started > 300:
-                delay = 5
+                log.warning("Telegram: соединение потеряно (%s: %s)", exc.__class__.__name__, exc)
+                await self._report(f"соединение потеряно: {exc.__class__.__name__}: {exc}")
+            if loop.time() - started > 300:
+                delay = 5.0
             await asyncio.sleep(delay)
-            delay = min(delay * 2, 300)
+            delay = min(delay * 2, 600.0)
             log.info("Telegram: переподключение...")
 
     async def aclose(self) -> None:

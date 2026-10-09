@@ -39,15 +39,18 @@ freelancer:
   # Поисковые запросы к API Freelancer.com (каждый — отдельный запрос за цикл).
   # Это полнотекстовый поиск «через ИЛИ», окончательный отбор всё равно делает keywords.yaml.
   # Пустой список — один запрос без фильтра (свежие проекты всех категорий).
+  # На Freelancer.com заказы почти только на английском — добавьте английские слова и в keywords.yaml
+  # (например, /add_kw scraper, website, landing page), иначе такие проекты отсеются фильтром.
   queries:
     - telegram bot
+    - mini app
+    - web app
     - react
     - next.js
     - vue
+    - nuxt
     - fastapi
-    - web scraping
-    - landing page
-    - web app
+    - nestjs
   # Сколько последних проектов брать по каждому запросу (до 100).
   limit: 30
 

@@ -281,3 +281,57 @@ def test_short_inner_words_are_exact(tmp_path):
     f = make_filter(tmp_path, include=["вакансия в штат"], exclude=[])
     assert f.check(order("Вакансии в штат")).ok
     assert not f.check(order("Вакансия высокий штат")).ok
+
+
+# --- регрессии из ревью ---------------------------------------------------------
+
+
+@pytest.mark.parametrize("text", ["Telegram Mini‑App для кафе", "Разработка веб‑приложения", "web‐app"])
+def test_unicode_hyphens(tmp_path, text):
+    assert make_filter(tmp_path).check(order(text)).ok
+
+
+@pytest.mark.parametrize(
+    ("text", "excluded"),
+    [
+        ("Курсы React для начинающих", True),
+        ("Нужен бот, курс по python в подарок", True),
+        ("Сайт, где курсор меняет цвет", False),
+        ("Лендинг, заголовки курсивом", False),
+        ("Бот с обученной нейросетью", False),
+        ("Ищу работника для сайта", False),
+        ("Ищу работу: сделаю сайт", True),
+        ("Резюмирование статей ботом", False),
+    ],
+)
+def test_exclude_matches_word_forms_only(tmp_path, text, excluded):
+    result = make_filter(tmp_path).check(order(text))
+    assert (not result.ok and result.reason.startswith("стоп-слово")) is excluded, result
+
+
+def test_leading_dot_keyword(tmp_path):
+    f = make_filter(tmp_path, include=[".net"], exclude=[])
+    assert f.check(order("Backend на ASP.NET Core")).ok
+    assert f.check(order(".NET 8 сервис")).ok
+    assert not f.check(order("Настроить home network")).ok
+    assert not f.check(order("Интернет-магазин")).ok
+
+
+def test_tg_is_not_tenge():
+    assert parse_budget("10 ТГ каналов")[1] == "RUB"
+    assert parse_budget("5000 тенге") == (5000, "KZT")
+
+
+def test_bot_refuses_to_overwrite_broken_file(tmp_path):
+    import os
+
+    from order_parser.filters import KeywordFileError
+
+    path = tmp_path / "keywords.yaml"
+    store = KeywordStore.load(path)
+    path.write_text("include:\n\t- svelte\n", encoding="utf-8")
+    stat = path.stat()
+    os.utime(path, (stat.st_atime, stat.st_mtime + 5))
+    with pytest.raises(KeywordFileError):
+        store.add_include(["angular"])
+    assert "\t- svelte" in path.read_text(encoding="utf-8")  # ручная правка не затёрта

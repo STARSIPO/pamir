@@ -22,7 +22,16 @@ class ProcessResult:
     new: int = 0
     matched: int = 0
     queued: int = 0
-    baseline: bool = False
+    baselined: int = 0
+    """Сколько заказов помечено просмотренными без отправки (первый запуск источника/ленты)."""
+
+    @property
+    def baseline(self) -> bool:
+        return self.baselined > 0
+
+
+def feed_state_key(source: str, feed: str) -> str:
+    return f"{source}|{feed}"
 
 
 def _chronological(order: Order) -> datetime:
@@ -40,12 +49,28 @@ class OrderProcessor:
         self.notifier = notifier
         self.use_baseline = use_baseline
 
-    async def process(self, source: str, orders: list[Order], *, allow_baseline: bool = True) -> ProcessResult:
+    async def process(
+        self, source: str, orders: list[Order], *, allow_baseline: bool = True, feeds: list[str] | None = None
+    ) -> ProcessResult:
+        """feeds — ленты, успешно прочитанные в этом цикле. Первичная разметка делается для каждой
+        ленты отдельно: новая категория в config.yaml или лента, упавшая при первом опросе,
+        не вывалит в Telegram свой «хвост» старых заказов."""
         result = ProcessResult(total=len(orders))
-        if not orders:
+        if not orders and not feeds:
             return result
-        baseline = allow_baseline and self.use_baseline and not await self.db.is_initialized(source)
-        result.baseline = baseline
+        fresh: set[str] = set()
+        if allow_baseline and self.use_baseline:
+            keys = [feed_state_key(source, f) for f in feeds] if feeds else [source]
+            fresh = {k for k in keys if not await self.db.is_initialized(k)}
+
+        def is_baseline(order: Order) -> bool:
+            if not fresh:
+                return False
+            if not feeds:
+                return source in fresh
+            own = {feed_state_key(source, f) for f in order.feeds} or fresh
+            return own <= fresh  # заказ есть хотя бы в одной «старой» ленте — значит, он действительно новый
+
         new_ids = await self.db.unseen_ids(source, [o.external_id for o in orders])
         to_send = []
         # Старые раньше новых — чтобы в Telegram заказы шли в хронологическом порядке.
@@ -54,8 +79,9 @@ class OrderProcessor:
                 continue
             new_ids.discard(order.external_id)  # дубль внутри одной пачки
             result.new += 1
-            if baseline:
+            if is_baseline(order):
                 await self.db.add_seen(order, STATE_BASELINE, commit=False)
+                result.baselined += 1
                 continue
             check = self.filter.check(order)
             if not check.ok:
@@ -72,10 +98,11 @@ class OrderProcessor:
                 to_send.append(message)
                 log.info("%s: подходящий заказ «%s» (%s)", source, order.title, reason or "без фильтра слов")
         await self.db.commit()
-        if baseline:
-            await self.db.mark_initialized(source)
-            log.info("%s: первый запуск — %d текущих заказов помечены просмотренными без отправки",
-                     source, result.new)
+        for key in sorted(fresh):
+            await self.db.mark_initialized(key)
+        if fresh:
+            log.info("%s: первый опрос %s — %d текущих заказов помечены просмотренными без отправки",
+                     source, ", ".join(k.split("|", 1)[-1] for k in sorted(fresh)), result.baselined)
         for message in to_send:
             await self.notifier.enqueue(message)
         result.queued = len(to_send)

@@ -109,9 +109,8 @@ class HabrConfig(BaseModel):
     pages: int = Field(1, ge=1, le=10)
 
 
-DEFAULT_FREELANCER_QUERIES = [
-    "telegram bot", "react", "next.js", "vue", "fastapi", "web scraping", "landing page", "web app",
-]
+# Английские слова из ключевых слов по умолчанию: на Freelancer.com заказы почти только на английском.
+DEFAULT_FREELANCER_QUERIES = ["telegram bot", "mini app", "web app", "react", "next.js", "vue", "nuxt", "fastapi", "nestjs"]
 
 
 class FreelancerConfig(BaseModel):

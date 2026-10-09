@@ -19,12 +19,18 @@ if [ -z "$PY" ]; then
   exit 1
 fi
 
+# venv без pip остаётся после неудачной попытки (например, не был установлен python3-venv) — пересоздаём
+if [ -d .venv ] && ! .venv/bin/python -m pip --version >/dev/null 2>&1; then
+  echo "Окружение .venv повреждено — пересоздаю..."
+  rm -rf .venv
+fi
 if [ ! -x .venv/bin/python ]; then
   echo "Создаю виртуальное окружение .venv ($PY)..."
-  "$PY" -m venv .venv || {
+  if ! "$PY" -m venv .venv; then
+    rm -rf .venv
     echo "Не удалось создать venv. На Debian/Ubuntu: sudo apt install python3-venv" >&2
     exit 1
-  }
+  fi
 fi
 VENV_PY=.venv/bin/python
 
@@ -39,6 +45,7 @@ fi
 if [ ! -f .env ]; then
   cp .env.example .env
   echo "Создан файл .env из .env.example — заполните BOT_TOKEN, ADMIN_ID (и TG_* для Telegram) и запустите снова."
+  echo "Свой ADMIN_ID можно узнать так: укажите только BOT_TOKEN, запустите и напишите боту /start."
   echo "Проверить парсинг без бота можно так: ./run.sh --dry-run --once"
   exit 1
 fi

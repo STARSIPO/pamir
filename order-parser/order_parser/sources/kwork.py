@@ -71,9 +71,10 @@ def format_budget(price: float | None, possible: float | None) -> str:
 
 
 def _text(value: Any) -> str:
-    text = html.unescape(str(value or ""))
-    text = re.sub(r"<br\s*/?>", "\n", text, flags=re.IGNORECASE)
-    return _TAG.sub("", text).replace("\r\n", "\n").replace("\r", "\n").strip()
+    # сначала убираем настоящие теги, потом раскодируем сущности: «&lt;VueDatePicker&gt;» — это текст
+    text = re.sub(r"<br\s*/?>", "\n", str(value or ""), flags=re.IGNORECASE)
+    text = html.unescape(_TAG.sub("", text))
+    return text.replace("\r\n", "\n").replace("\r", "\n").strip()
 
 
 def _parse_msk(value: Any) -> datetime | None:

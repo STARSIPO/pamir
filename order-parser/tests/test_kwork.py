@@ -139,3 +139,12 @@ async def test_fetch_fails_when_both_methods_fail():
             await source.fetch()
     finally:
         await source.aclose()
+
+
+def test_escaped_angle_brackets_are_text():
+    from order_parser.sources.kwork import want_to_order
+
+    order = want_to_order({"id": 1, "name": "Починить &lt;VueDatePicker&gt;",
+                           "description": "Бюджет &lt; 3000, срок &gt; 2 дней<br>Строка 2"})
+    assert order.title == "Починить <VueDatePicker>"
+    assert order.description == "Бюджет < 3000, срок > 2 дней\nСтрока 2"

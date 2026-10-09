@@ -159,6 +159,9 @@ class HabrSource(HttpSource):
             raise SourceError(f"HTTP {exc.response.status_code}. {CLOSED_NOTE}") from exc
         if response.url.host != httpx.URL(BASE_URL).host or not response.url.path.startswith("/tasks"):
             raise SourceError(f"перенаправление на {response.url}. {CLOSED_NOTE}")
+        if "закрыли Хабр Фриланс" in response.text:
+            # заглушка после закрытия: «Мы закрыли Хабр Фриланс, но всегда ждем вас в наших других сервисах»
+            raise SourceError(f"сайт показывает заглушку о закрытии. {CLOSED_NOTE}")
         orders = parse_tasks_html(response.text)
         if orders or page > 1:
             return orders
