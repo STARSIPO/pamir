@@ -109,13 +109,9 @@ class HabrConfig(BaseModel):
     pages: int = Field(1, ge=1, le=10)
 
 
-# Английские слова из ключевых слов по умолчанию: на Freelancer.com заказы почти только на английском.
-DEFAULT_FREELANCER_QUERIES = ["telegram bot", "mini app", "web app", "react", "next.js", "vue", "nuxt", "fastapi", "nestjs"]
-
-
 class FreelancerConfig(BaseModel):
-    queries: list[str] = Field(default_factory=lambda: list(DEFAULT_FREELANCER_QUERIES))
-    """Поисковые запросы (каждый — отдельный запрос за цикл). Пусто — одна общая выборка свежих проектов."""
+    queries: list[str] = Field(default_factory=list)
+    """Поисковые запросы (каждый — отдельный запрос за цикл). Пусто — латинские слова из keywords.yaml."""
     limit: int = Field(30, ge=1, le=100)
 
 

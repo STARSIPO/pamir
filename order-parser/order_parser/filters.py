@@ -86,11 +86,12 @@ def _token_pattern(token: str, *, last: bool, exact: bool, mode: str) -> str:
         if stem == token and len(token) < 4 and not (last and mode == PREFIX):
             return re.escape(token)  # короткие слова внутри фразы: «в», «для», «на»
         if mode == INFLECT:
-            return _escape(stem) + rf"(?:{_RU_INFLECTIONS})?(?!\w)"
+            # граница слова — только после последнего слова фразы: «full time» найдёт и «fulltime»
+            return _escape(stem) + rf"(?:{_RU_INFLECTIONS})?" + (r"(?!\w)" if last else "")
         return _escape(stem) + r"\w*"
     body = _escape(token)
     if mode == INFLECT:
-        return body + r"(?:e?s|'s)?(?!\w)"
+        return body + r"(?:e?s|'s)?" + (r"(?!\w)" if last else "")
     return body if last else body + r"(?:e?s)?"
 
 
@@ -255,7 +256,7 @@ _CURRENCY_MARKERS: list[tuple[str, str]] = [
     (r"₹|\binr\b", "INR"),
 ]
 _NUMBER = re.compile(
-    r"(?<![\d.,])(\d{1,3}(?:[ \u00a0\u202f,.]\d{3})+(?!\d)|\d+)(?:[.,](\d{1,2})(?!\d))?\s*(тыс\.?|k\b|к\b)?",
+    r"(?<![\d.,])(\d{1,3}(?:[ \u00a0\u202f,.]\d{3})+(?!\d)|\d+)(?:[.,](\d{1,2})(?!\d))?\s*(тыс\w*\.?|т\.\s?р\.?|млн\w*\.?|k\b|к\b)?",
     re.IGNORECASE,
 )
 
@@ -282,7 +283,7 @@ def parse_budget(text: str, default_currency: str = "RUB") -> tuple[float | None
     for whole, frac, thousands in _NUMBER.findall(norm):
         number = float(re.sub(r"[\s,.]", "", whole) + (f".{frac}" if frac else ""))
         if thousands:
-            number *= 1000
+            number *= 1_000_000 if thousands.startswith("млн") else 1000
         values.append(number)
     return (max(values) if values else None), currency
 

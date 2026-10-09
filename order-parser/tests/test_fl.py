@@ -136,8 +136,8 @@ async def test_one_category_failing_keeps_others(fixtures):
     source = FlSource(FlConfig(categories=[5, 1]), retries=0)
     source_pause = source.gather_pages
 
-    async def no_pause(items, fetch_one, pause=0):
-        return await source_pause(items, fetch_one, pause=0)
+    async def no_pause(items, fetch_one, pause=0, **kwargs):
+        return await source_pause(items, fetch_one, pause=0, **kwargs)
 
     source.gather_pages = no_pause  # type: ignore[method-assign]
     try:

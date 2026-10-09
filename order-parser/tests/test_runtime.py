@@ -370,3 +370,91 @@ async def test_supervised_swallows_errors():
         raise RuntimeError("x")
 
     await app_main.supervised("test", boom())
+
+
+async def test_telegram_fetch_reads_recent_messages(tmp_path):
+    from telethon.tl.types import Channel
+
+    chat = Channel(id=1234567890, title="Заказы", photo=None, date=None, username="orders")
+
+    class Msg(SimpleNamespace):
+        async def get_chat(self):
+            return chat
+
+        async def get_sender(self):
+            return SimpleNamespace(id=5, username="client")
+
+    class Client(FakeClient):
+        async def iter_messages(self, chat_id, limit):
+            for i, (text, out) in enumerate([("Нужен бот\nБюджет 5000 руб", False), ("Моё объявление", True)]):
+                yield Msg(id=i + 1, message=text, out=out, chat_id=-1001234567890,
+                          date=datetime(2026, 10, 1, tzinfo=timezone.utc))
+
+    source = TelegramSource(1, "hash", tmp_path / "s", ["@orders"], on_orders=lambda o: None)
+    source.client = Client([])
+    orders = await source.fetch()
+    assert [o.title for o in orders] == ["Нужен бот"]
+    assert orders[0].budget == "5000 руб" and orders[0].url == "https://t.me/orders/1"
+
+
+async def test_send_delay_between_any_two_messages(db, monkeypatch):
+    sleeps = []
+    real_sleep = asyncio.sleep
+
+    async def record(delay, *args):
+        sleeps.append(delay)
+        await real_sleep(0)
+
+    monkeypatch.setattr(asyncio, "sleep", record)
+    notifier = Notifier(db, dry_run=True, out=io.StringIO(), send_delay=1.5)
+    worker = asyncio.create_task(notifier.run())
+    await notifier.enqueue(format_order(make_order(1)))
+    await notifier.drain()  # очередь опустела...
+    await notifier.enqueue(format_order(make_order(2)))  # ...и сразу пришёл следующий заказ
+    await notifier.drain()
+    worker.cancel()
+    assert any(1.0 < d <= 1.5 for d in sleeps), sleeps
+
+
+async def test_telegram_success_reported_after_reconnect(tmp_path, no_sleep):
+    statuses = []
+
+    async def on_status(error, chats):
+        statuses.append((error, chats))
+
+    class Reconnecting(FakeClient):
+        def __init__(self):
+            super().__init__([])
+            self.runs = 0
+
+        async def run_until_disconnected(self):
+            self.runs += 1
+            if self.runs == 1:
+                raise ConnectionError("lost")
+            raise asyncio.CancelledError
+
+    source = TelegramSource(1, "hash", tmp_path / "s", ["@orders"], on_orders=lambda o: None, on_status=on_status)
+    source.client = Reconnecting()
+    with pytest.raises(asyncio.CancelledError):
+        await source.run()
+    assert statuses[-1] == (None, 1)  # после переподключения статус снова «работает»
+    assert len(source.client.handlers) == 1  # обработчик не дублируется
+
+
+async def test_first_login_prompt_until_success(db, tmp_path, monkeypatch):
+    calls = []
+
+    async def fake_login(self, interactive=True):
+        calls.append(interactive)
+        if len(calls) == 1:
+            from order_parser.sources.telegram import TelegramAuthError
+
+            raise TelegramAuthError("код введён неверно")
+
+    monkeypatch.setattr(TelegramSource, "login", fake_login)
+    settings = Settings(_env_file=None, tg_api_id=1, tg_api_hash="h", tg_session=str(tmp_path / "s"))
+    config = AppConfig.model_validate({"telegram": {"chats": ["@orders"]}})
+    assert await app_main.prepare_telegram(settings, config, None, db) is None
+    assert await app_main.prepare_telegram(settings, config, None, db) is not None
+    assert await app_main.prepare_telegram(settings, config, None, db) is not None
+    assert calls == [True, True, False]  # пока вход не удался — спрашиваем код; после успеха — нет

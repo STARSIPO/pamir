@@ -158,18 +158,22 @@ class Notifier:
         await self.queue.join()
 
     async def run(self) -> None:
+        loop = asyncio.get_running_loop()
+        last_sent = float("-inf")
         while True:
             message = await self.queue.get()
             try:
+                wait = last_sent + self.send_delay - loop.time()
+                if wait > 0:
+                    await asyncio.sleep(wait)  # пауза между любыми двумя сообщениями (анти-флуд)
                 await self._send_until_done(message)
+                last_sent = loop.time()
             except asyncio.CancelledError:
                 raise
             except Exception:  # noqa: BLE001 — одна ошибка не должна останавливать очередь
                 log.exception("Ошибка при отправке %s/%s", message.source, message.external_id)
             finally:
                 self.queue.task_done()
-            if self.send_delay and not self.queue.empty():
-                await asyncio.sleep(self.send_delay)
 
     async def _send_until_done(self, message: OutMessage) -> None:
         """Пока Telegram недоступен, сообщение ждёт и не теряется (остаётся queued и в БД)."""
