@@ -10,6 +10,9 @@ import signal
 import sys
 from datetime import timedelta
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
+
+import yaml
 
 from order_parser import __version__
 from order_parser.config import AppConfig, Settings, load_app_config, load_settings, resolve_path
@@ -111,36 +114,91 @@ async def login_only(settings: Settings, config: AppConfig) -> int:
                 print(f"  ✗ {error}")
         else:
             print("В config.yaml пока нет чатов (telegram.chats).")
+    except Exception as exc:  # noqa: BLE001 — понятное сообщение вместо трейсбека
+        print(f"Не удалось войти в Telegram: {exc.__class__.__name__}: {exc}")
+        return 1
     finally:
         await source.aclose()
     return 0
 
 
-async def check_bot(settings: Settings):
+def create_bot(settings: Settings):
     from aiogram import Bot
     from aiogram.client.default import DefaultBotProperties
     from aiogram.enums import ParseMode
 
-    bot = Bot(settings.bot_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML,
+    return Bot(settings.bot_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML,
                                                                link_preview_is_disabled=True))
+
+
+async def verify_bot(bot, settings: Settings) -> bool:
+    """False — Telegram отверг токен. Нет сети — не фатально: бот подключится, когда связь появится."""
+    from aiogram.exceptions import TelegramNotFound, TelegramUnauthorizedError
+
     try:
-        me = await bot.get_me()
-    except Exception:
-        await bot.session.close()
-        raise
+        me = await bot.me()  # результат кэшируется и переиспользуется в start_polling
+    except (TelegramUnauthorizedError, TelegramNotFound):
+        log.error("Telegram отклонил BOT_TOKEN — проверьте токен от @BotFather в .env")
+        return False
+    except Exception as exc:  # noqa: BLE001
+        log.warning("Нет связи с api.telegram.org (%s). Продолжаю: сайты опрашиваются, уведомления уйдут, "
+                    "когда связь появится", exc)
+        return True
     log.info("Бот @%s готов, уведомления получает ADMIN_ID=%s", me.username, settings.admin_id)
-    return bot
+    return True
+
+
+async def discover_admin_id(settings: Settings) -> int:
+    """ADMIN_ID ещё не задан: бот отвечает на /start числовым ID собеседника."""
+    from aiogram import Dispatcher
+    from aiogram.utils.token import TokenValidationError
+
+    from order_parser.bot.handlers import create_router
+
+    try:
+        bot = create_bot(settings)
+    except TokenValidationError:
+        log.error("BOT_TOKEN в .env имеет неверный формат (ожидается 123456789:AA...)")
+        return 2
+    try:
+        if not await verify_bot(bot, settings):
+            return 2
+        log.warning("ADMIN_ID не задан. Откройте своего бота в Telegram и отправьте /start — он ответит вашим ID. "
+                    "Впишите его в ADMIN_ID в .env и перезапустите программу (Ctrl+C — выход).")
+        dp = Dispatcher()
+        dp.include_router(create_router(0))
+        await poll_bot(bot, dp)
+        return 0
+    finally:
+        await bot.session.close()
+
+
+async def supervised(name: str, coro) -> None:
+    """Ошибка одного компонента (например, Telegram-источника) не останавливает остальные."""
+    try:
+        await coro
+    except asyncio.CancelledError:
+        raise
+    except Exception:  # noqa: BLE001
+        log.exception("%s остановлен из-за ошибки, остальные источники продолжают работать", name)
 
 
 async def run(args: argparse.Namespace) -> int:
     settings = load_settings(args.env)
     setup_logging(args.log_level or settings.log_level, settings.logs_dir)
-    config = load_app_config(args.config or settings.config_file)
-    if args.login:
-        return await login_only(settings, config)
+    try:
+        config = load_app_config(args.config or settings.config_file)
+        if args.login:
+            return await login_only(settings, config)
+        keywords = KeywordStore.load(resolve_path(args.keywords or settings.keywords_file))
+    except (ValueError, yaml.YAMLError) as exc:
+        log.error("Ошибка в файле настроек: %s", exc)
+        return 2
 
     dry_run = args.dry_run
-    if not dry_run and (not settings.bot_token or not settings.admin_id):
+    if not dry_run and settings.bot_token and not settings.admin_id:
+        return await discover_admin_id(settings)
+    if not dry_run and not settings.bot_token:
         log.error("Заполните BOT_TOKEN и ADMIN_ID в .env (или запустите с --dry-run для проверки в консоли)")
         return 2
     site_names, want_telegram = selected_sources(args, settings)
@@ -148,26 +206,32 @@ async def run(args: argparse.Namespace) -> int:
         want_telegram = False
 
     bot = None
-    if not dry_run:
-        try:
-            bot = await check_bot(settings)
-        except Exception as exc:  # noqa: BLE001
-            log.error("Не удалось подключиться к боту (проверьте BOT_TOKEN и доступ к api.telegram.org): %s", exc)
-            return 2
-
     db = Database(":memory:" if dry_run else resolve_path(settings.db_path))
-    await db.connect()
-    keywords = KeywordStore.load(resolve_path(args.keywords or settings.keywords_file))
-    order_filter = OrderFilter(keywords, settings.min_budget, settings.skip_no_budget,
-                               config.filters.currency_rates)
-    notifier = Notifier(db, bot=bot, admin_id=settings.admin_id, send_delay=0 if dry_run else settings.send_delay,
-                        dry_run=dry_run)
-    await notifier.restore_state()
-    processor = OrderProcessor(db, order_filter, notifier, use_baseline=not dry_run)
-    sources = build_site_sources(settings, config, site_names)
-    scheduler = Scheduler(sources, processor, db, interval=settings.poll_interval, jitter=settings.poll_jitter)
+    sources: list = []
     telegram = None
     try:
+        if not dry_run:
+            from aiogram.utils.token import TokenValidationError
+
+            try:
+                bot = create_bot(settings)
+            except TokenValidationError:
+                log.error("BOT_TOKEN в .env имеет неверный формат (ожидается 123456789:AA...)")
+                return 2
+            if not await verify_bot(bot, settings):
+                return 2
+
+        await db.connect()
+        order_filter = OrderFilter(keywords, settings.min_budget, settings.skip_no_budget,
+                                   config.filters.currency_rates)
+        notifier = Notifier(db, bot=bot, admin_id=settings.admin_id,
+                            send_delay=0 if dry_run else settings.send_delay,
+                            dry_run=dry_run, retry_forever=not args.once)
+        await notifier.restore_state()
+        processor = OrderProcessor(db, order_filter, notifier, use_baseline=not dry_run)
+        sources = build_site_sources(settings, config, site_names)
+        scheduler = Scheduler(sources, processor, db, interval=settings.poll_interval, jitter=settings.poll_jitter)
+
         if args.once:
             return await run_once(scheduler, notifier)
 
@@ -194,9 +258,9 @@ async def run(args: argparse.Namespace) -> int:
             group.create_task(notifier.run(), name="notifier")
             group.create_task(scheduler.run_forever(), name="scheduler")
             if telegram is not None:
-                group.create_task(telegram.run(), name="telegram")
+                group.create_task(supervised("Telegram-источник", telegram.run()), name="telegram")
             if bot is not None:
-                group.create_task(run_bot(bot, ctx), name="bot")
+                group.create_task(supervised("Бот", run_bot(bot, ctx)), name="bot")
         return 0
     finally:
         for source in sources:
@@ -221,9 +285,12 @@ async def prepare_telegram(settings: Settings, config: AppConfig, processor: Ord
         log.warning("Telegram-источник пропущен: %s", reason)
         await db.record_error("telegram", reason)
         return None
+    # Код спрашиваем только при самом первом входе (файла сессии ещё нет). Если сессия есть, но
+    # недействительна, при автозапуске нельзя зависать на вводе кода — остальные источники должны работать.
+    first_login = not Path(f"{resolve_path(settings.tg_session)}.session").exists()
     telegram = make_telegram_source(settings, config, processor, db)
     try:
-        await telegram.login(interactive=True)
+        await telegram.login(interactive=first_login)
     except Exception as exc:  # noqa: BLE001 — без Telegram остальные источники продолжают работать
         log.error("Telegram-источник не запущен: %s", exc)
         await db.record_error("telegram", f"вход не выполнен: {exc}")
@@ -233,6 +300,32 @@ async def prepare_telegram(settings: Settings, config: AppConfig, processor: Ord
     return telegram
 
 
+async def poll_bot(bot, dp, on_ready=None, **kwargs) -> None:
+    """Long polling бота. Пока нет связи с Telegram — переподключается, не мешая остальным компонентам."""
+    from aiogram.exceptions import TelegramUnauthorizedError
+
+    ready = False
+    delay = 5.0
+    while True:
+        try:
+            await bot.me()
+            if not ready:
+                ready = True
+                if on_ready is not None:
+                    await on_ready()
+            await dp.start_polling(bot, handle_signals=False, close_bot_session=False, **kwargs)
+            return
+        except asyncio.CancelledError:
+            raise
+        except TelegramUnauthorizedError:
+            log.error("Telegram отклонил BOT_TOKEN — команды бота недоступны")
+            return
+        except Exception as exc:  # noqa: BLE001
+            log.warning("Бот: нет связи с Telegram (%s), повтор через %.0f с", exc, delay)
+            await asyncio.sleep(delay)
+            delay = min(delay * 2, 300.0)
+
+
 async def run_bot(bot, ctx: AppContext) -> None:
     from aiogram import Dispatcher
 
@@ -240,13 +333,19 @@ async def run_bot(bot, ctx: AppContext) -> None:
 
     dp = Dispatcher()
     dp.include_router(create_router(ctx.settings.admin_id))
-    with contextlib.suppress(Exception):
-        await bot.set_my_commands(COMMANDS)
-    names = ", ".join(SOURCE_META[s][1] for s in ctx.active_sources) or "нет"
-    with contextlib.suppress(Exception):
-        await bot.send_message(ctx.settings.admin_id, f"✅ Парсер заказов запущен.\nИсточники: {names}"
-                               + ("\n⏸ Уведомления на паузе (/resume)" if ctx.notifier.paused else ""))
-    await dp.start_polling(bot, handle_signals=False, close_bot_session=False, ctx=ctx)
+
+    async def greet() -> None:
+        with contextlib.suppress(Exception):
+            await bot.set_my_commands(COMMANDS)
+        names = ", ".join(SOURCE_META[s][1] for s in ctx.active_sources) or "нет"
+        pause_note = "\n⏸ Уведомления на паузе (/resume)" if ctx.notifier.paused else ""
+        try:
+            await bot.send_message(ctx.settings.admin_id, f"✅ Парсер заказов запущен.\nИсточники: {names}{pause_note}")
+        except Exception as exc:  # noqa: BLE001
+            log.warning("Не удалось отправить приветствие ADMIN_ID=%s: %s — откройте бота и нажмите Start",
+                        ctx.settings.admin_id, exc)
+
+    await poll_bot(bot, dp, greet, ctx=ctx)
 
 
 async def run_once(scheduler: Scheduler, notifier: Notifier) -> int:
@@ -266,7 +365,7 @@ async def run_once(scheduler: Scheduler, notifier: Notifier) -> int:
             print(f"  {emoji} {title}: ОШИБКА (см. лог выше)")
             continue
         ok += 1
-        note = " — первый запуск: помечены просмотренными" if result.baseline else ""
+        note = f" — первый опрос: {result.baselined} помечены просмотренными без отправки" if result.baselined else ""
         print(f"  {emoji} {title}: получено {result.total}, новых {result.new}, "
               f"подходящих {result.matched}, отправлено в очередь {result.queued}{note}")
     if not results:

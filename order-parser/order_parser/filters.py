@@ -9,7 +9,9 @@
 * фраза из нескольких слов допускает между словами пробелы, дефис, «_» или ничего:
   «mini app» найдёт «mini-app» и «miniapp»;
 * точка внутри слова необязательна: «next.js» найдёт «nextjs» и «next js»;
-* слово в двойных кавычках — точное совпадение целого слова: '"бот"' не найдёт «ботов».
+* слово в двойных кавычках — точное совпадение целого слова: '"бот"' не найдёт «ботов»;
+* стоп-слова (exclude) строже: допускаются только окончания того же слова — «курс» отсечёт
+  «курсы», «курса», но не «курсор» и не «курсив».
 """
 
 from __future__ import annotations
@@ -44,8 +46,21 @@ _RU_ENDINGS = (
 )
 
 
+# Любые «дефисы» (U+2010–2015, минус, неразрывный U+2011 — его ставят Kwork и FL.ru) → обычный «-».
+_DASHES = re.compile(r"[\u2010-\u2015\u2212\ufe58\ufe63\uff0d]")
+# Все окончания, которые допускаются после основы в режиме «только словоформы» (для стоп-слов).
+_RU_INFLECTIONS = "|".join(sorted(set(_RU_ENDINGS) | {"ии", "ию", "ую", "ою", "ым", "им", "ых", "их", "ям", "ами"},
+                                  key=len, reverse=True))
+
+PREFIX = "prefix"
+"""include: слово ищется с начала слова и может продолжаться («бот» → «ботов», «ботинок»)."""
+INFLECT = "inflect"
+"""exclude: только словоформы того же слова («курс» → «курса», «курсы», но не «курсор»)."""
+
+
 def normalize(text: str) -> str:
-    return unicodedata.normalize("NFKC", text).casefold().replace("ё", "е")
+    text = unicodedata.normalize("NFKC", text).casefold().replace("ё", "е").replace("\u00ad", "")
+    return _DASHES.sub("-", text)
 
 
 def ru_stem(word: str) -> str:
@@ -58,22 +73,28 @@ def ru_stem(word: str) -> str:
     return word
 
 
-def _token_pattern(token: str, *, last: bool, exact: bool) -> str:
+def _escape(token: str) -> str:
+    # точка между буквами необязательна: next.js = nextjs = next js; ведущая точка (.net) — обязательна
+    return re.sub(r"(?<=\w)\\\.(?=\w)", r"[.\\s]?", re.escape(token))
+
+
+def _token_pattern(token: str, *, last: bool, exact: bool, mode: str) -> str:
     if exact:
-        body = re.escape(token)
-    elif _CYRILLIC.search(token):
+        return re.escape(token)
+    if _CYRILLIC.search(token):
         stem = ru_stem(token)
-        if stem == token and len(token) < 4 and not last:
-            return re.escape(token)  # короткие предлоги внутри фразы: «в», «для», «на»
-        return re.escape(stem).replace(r"\.", r"[.\s]?") + r"\w*"
-    else:
-        body = re.escape(token).replace(r"\.", r"[.\s]?")
-    if last:
-        return body
-    return body if exact else body + r"(?:e?s)?"
+        if stem == token and len(token) < 4 and not (last and mode == PREFIX):
+            return re.escape(token)  # короткие слова внутри фразы: «в», «для», «на»
+        if mode == INFLECT:
+            return _escape(stem) + rf"(?:{_RU_INFLECTIONS})?(?!\w)"
+        return _escape(stem) + r"\w*"
+    body = _escape(token)
+    if mode == INFLECT:
+        return body + r"(?:e?s|'s)?(?!\w)"
+    return body if last else body + r"(?:e?s)?"
 
 
-def compile_keyword(keyword: str) -> re.Pattern[str] | None:
+def compile_keyword(keyword: str, mode: str = PREFIX) -> re.Pattern[str] | None:
     kw = keyword.strip()
     exact = len(kw) >= 2 and kw[0] == kw[-1] == '"'
     if exact:
@@ -81,16 +102,22 @@ def compile_keyword(keyword: str) -> re.Pattern[str] | None:
     tokens = [t for t in re.split(r"[\s\-_]+", normalize(kw)) if t]
     if not tokens:
         return None
-    body = _SEP.join(_token_pattern(t, last=i == len(tokens) - 1, exact=exact) for i, t in enumerate(tokens))
+    last = len(tokens) - 1
+    body = _SEP.join(_token_pattern(t, last=i == last, exact=exact, mode=mode) for i, t in enumerate(tokens))
     prefix = r"(?<!\w)" if re.match(r"\w", tokens[0][0]) else ""
     suffix = r"(?!\w)" if exact and re.match(r"\w", tokens[-1][-1]) else ""
     return re.compile(prefix + body + suffix)
 
 
+class KeywordFileError(RuntimeError):
+    """keywords.yaml с ошибкой: перезаписывать его из бота нельзя."""
+
+
 class KeywordSet:
     """Набор ключевых слов с предкомпилированными шаблонами."""
 
-    def __init__(self, words: list[str]) -> None:
+    def __init__(self, words: list[str], mode: str = PREFIX) -> None:
+        self.mode = mode
         self.words: list[str] = []
         self._patterns: list[tuple[str, re.Pattern[str]]] = []
         for word in words:
@@ -100,7 +127,7 @@ class KeywordSet:
         word = " ".join(str(word).split())
         if not word or normalize(word) in {normalize(w) for w in self.words}:
             return False
-        pattern = compile_keyword(word)
+        pattern = compile_keyword(word, self.mode)
         if pattern is None:
             return False
         self.words.append(word)
@@ -129,8 +156,10 @@ class KeywordStore:
     def __init__(self, path: str | Path, include: list[str] | None = None, exclude: list[str] | None = None) -> None:
         self.path = Path(path)
         self.include = KeywordSet(include if include is not None else DEFAULT_INCLUDE)
-        self.exclude = KeywordSet(exclude if exclude is not None else DEFAULT_EXCLUDE)
+        self.exclude = KeywordSet(exclude if exclude is not None else DEFAULT_EXCLUDE, INFLECT)
         self._mtime: float | None = None
+        self.load_error: str | None = None
+        """Ошибка разбора keywords.yaml при последней перезагрузке (тогда файл нельзя перезаписывать)."""
 
     @classmethod
     def load(cls, path: str | Path) -> KeywordStore:
@@ -148,8 +177,9 @@ class KeywordStore:
         if not isinstance(data, dict):
             raise ValueError(f"{self.path}: ожидались ключи include и exclude")
         self.include = KeywordSet([str(w) for w in data.get("include") or []])
-        self.exclude = KeywordSet([str(w) for w in data.get("exclude") or []])
+        self.exclude = KeywordSet([str(w) for w in data.get("exclude") or []], INFLECT)
         self._mtime = self.path.stat().st_mtime
+        self.load_error = None
         log.info("Ключевые слова: %d include, %d exclude", len(self.include), len(self.exclude))
 
     def maybe_reload(self) -> None:
@@ -161,9 +191,10 @@ class KeywordStore:
         if self._mtime is not None and mtime != self._mtime:
             try:
                 self.reload()
-            except Exception:  # noqa: BLE001 — битый файл не должен ронять фильтрацию
-                log.exception("Не удалось перечитать %s, оставляю прежние слова", self.path)
+            except Exception as exc:  # noqa: BLE001 — битый файл не должен ронять фильтрацию
+                log.error("Не удалось перечитать %s, оставляю прежние слова: %s", self.path, exc)
                 self._mtime = mtime
+                self.load_error = f"{exc.__class__.__name__}: {exc}"
 
     def save(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
@@ -175,7 +206,8 @@ class KeywordStore:
             "# Ключевые слова для отбора заказов (регистр не важен, RU/EN).\n"
             "# include — заказ подходит, если найдено хотя бы одно слово/фраза.\n"
             "# exclude — стоп-слова: заказ отбрасывается, даже если include совпал.\n"
-            "# Слово ищется с начала слова: «бот» найдёт «бота», «чат-бот», но не «работа».\n"
+            "# include: слово ищется с начала слова — «бот» найдёт «бота», «чат-бот», но не «работа».\n"
+            "# exclude: только формы того же слова — «курс» отсечёт «курсы», но не «курсор».\n"
             "# Точное совпадение целого слова — слово в двойных кавычках, в YAML: - '\"бот\"'\n"
             "# Файл можно править вручную или командами бота /add_kw, /del_kw.\n"
         )
@@ -189,13 +221,22 @@ class KeywordStore:
             raise
         self._mtime = self.path.stat().st_mtime
 
+    def _ensure_writable(self) -> None:
+        self.maybe_reload()
+        if self.load_error:
+            raise KeywordFileError(
+                f"{self.path.name} содержит ошибку, исправьте файл — иначе ваши правки будут потеряны: {self.load_error}"
+            )
+
     def add_include(self, words: list[str]) -> list[str]:
+        self._ensure_writable()
         added = [w for w in words if self.include.add(w)]
         if added:
             self.save()
         return added
 
     def remove_include(self, words: list[str]) -> list[str]:
+        self._ensure_writable()
         removed = [w for w in words if self.include.remove(w)]
         if removed:
             self.save()
@@ -210,7 +251,7 @@ _CURRENCY_MARKERS: list[tuple[str, str]] = [
     (r"€|\beur\b|евро", "EUR"),
     (r"£|\bgbp\b", "GBP"),
     (r"₴|грн|\buah\b", "UAH"),
-    (r"₸|\bтг\b|тенге|\bkzt\b", "KZT"),
+    (r"₸|тенге|\bkzt\b", "KZT"),  # «тг» не валюта: в чатах это «Телеграм»
     (r"₹|\binr\b", "INR"),
 ]
 _NUMBER = re.compile(

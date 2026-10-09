@@ -48,7 +48,7 @@ class Scheduler:
             await self._record_error(source, message)
             return None
         try:
-            result = await self.processor.process(source.name, orders)
+            result = await self.processor.process(source.name, orders, feeds=source.last_feeds)
             await self.db.record_success(source.name, len(orders))
         except asyncio.CancelledError:
             raise
@@ -56,11 +56,8 @@ class Scheduler:
             log.exception("%s: ошибка обработки заказов", source.title)
             await self._record_error(source, f"обработка: {describe_error(exc)}")
             return None
-        if result.baseline:
-            log.info("%s: получено %d (первый запуск, без отправки)", source.title, result.total)
-        else:
-            log.info("%s: получено %d, новых %d, подходящих %d", source.title, result.total, result.new,
-                     result.matched)
+        log.info("%s: получено %d, новых %d, подходящих %d%s", source.title, result.total, result.new,
+                 result.matched, f", помечено без отправки (первый опрос) {result.baselined}" if result.baselined else "")
         return result
 
     async def _record_error(self, source: Source, message: str) -> None:

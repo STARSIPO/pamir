@@ -12,6 +12,7 @@ from aiogram.types import BotCommand, Message
 
 from order_parser.context import AppContext
 from order_parser.db import STATE_PAUSED, parse_ts, utcnow
+from order_parser.filters import KeywordFileError
 from order_parser.sources import SOURCE_META
 
 COMMANDS = [
@@ -74,10 +75,15 @@ def chunks(text: str, limit: int = MESSAGE_LIMIT) -> list[str]:
 
 
 def create_router(admin_id: int) -> Router:
+    # Порядок важен: в aiogram обработчики самого роутера срабатывают раньше вложенных,
+    # поэтому и админские, и «чужие» команды живут во вложенных роутерах — сначала админ.
     router = Router(name="order-parser")
     admin = Router(name="admin")
     admin.message.filter(F.from_user.id == admin_id)
+    stranger = Router(name="stranger")
+    stranger.message.filter(F.from_user.id != admin_id)
     router.include_router(admin)
+    router.include_router(stranger)
 
     @admin.message(CommandStart())
     @admin.message(Command("help"))
@@ -171,8 +177,11 @@ def create_router(admin_id: int) -> Router:
         if not words:
             await message.answer("Использование: <code>/add_kw svelte, telegram mini app</code>")
             return
-        ctx.keywords.maybe_reload()
-        added = ctx.keywords.add_include(words)
+        try:
+            added = ctx.keywords.add_include(words)
+        except KeywordFileError as exc:
+            await message.answer(f"⚠️ {html.escape(str(exc))}")
+            return
         skipped = [w for w in words if w not in added]
         text = []
         if added:
@@ -187,8 +196,11 @@ def create_router(admin_id: int) -> Router:
         if not words:
             await message.answer("Использование: <code>/del_kw слово</code>")
             return
-        ctx.keywords.maybe_reload()
-        removed = ctx.keywords.remove_include(words)
+        try:
+            removed = ctx.keywords.remove_include(words)
+        except KeywordFileError as exc:
+            await message.answer(f"⚠️ {html.escape(str(exc))}")
+            return
         missing = [w for w in words if w not in removed]
         text = []
         if removed:
@@ -197,7 +209,7 @@ def create_router(admin_id: int) -> Router:
             text.append("Не найдено в include: " + ", ".join(f"<code>{html.escape(w)}</code>" for w in missing))
         await message.answer("\n".join(text))
 
-    @router.message(CommandStart())
+    @stranger.message(CommandStart())
     async def cmd_start_stranger(message: Message) -> None:
         user_id = message.from_user.id if message.from_user else 0
         await message.answer(

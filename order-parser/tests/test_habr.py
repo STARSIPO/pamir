@@ -112,3 +112,17 @@ async def test_redirect_away_is_closed():
             await source.fetch()
     finally:
         await source.aclose()
+
+
+@respx.mock
+async def test_closure_stub_detected_without_extra_requests():
+    stub = "<html><body><h1>Мы закрыли Хабр Фриланс, но всегда ждем вас в наших других сервисах.</h1></body></html>"
+    respx.get(TASKS_URL).mock(return_value=httpx.Response(200, text=stub))
+    rss = respx.get(RSS_URL).mock(return_value=httpx.Response(404))
+    source = HabrSource(retries=0)
+    try:
+        with pytest.raises(SourceError, match="заглушку"):
+            await source.fetch()
+    finally:
+        await source.aclose()
+    assert not rss.called

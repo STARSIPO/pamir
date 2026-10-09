@@ -28,6 +28,8 @@ class Source(abc.ABC):
     title: ClassVar[str]
     """Название для людей."""
     emoji: ClassVar[str]
+    last_feeds: list[str] | None = None
+    """Ленты (категории/запросы), успешно прочитанные в последнем fetch(); None — у источника одна лента."""
 
     @abc.abstractmethod
     async def fetch(self) -> list[Order]:
@@ -87,7 +89,11 @@ class HttpSource(Source):
             self._client = None
 
     async def gather_pages(
-        self, items: Iterable[T], fetch_one: Callable[[T], Awaitable[list[Order]]], pause: float = 1.0
+        self,
+        items: Iterable[T],
+        fetch_one: Callable[[T], Awaitable[list[Order]]],
+        pause: float = 1.0,
+        feed_key: Callable[[T], str] = str,
     ) -> list[Order]:
         """Обходит категории/запросы последовательно (бережно к сайту).
 
@@ -99,6 +105,7 @@ class HttpSource(Source):
         errors: list[str] = []
         succeeded = 0
         items = list(items)
+        self.last_feeds = []
         for i, item in enumerate(items):
             if i:
                 await asyncio.sleep(pause)
@@ -114,8 +121,12 @@ class HttpSource(Source):
                     break
                 continue
             succeeded += 1
+            key = feed_key(item)
+            self.last_feeds.append(key)
             for order in page:
-                orders.setdefault(order.external_id, order)
+                existing = orders.setdefault(order.external_id, order)
+                if key not in existing.feeds:
+                    existing.feeds = (*existing.feeds, key)
         if errors and not succeeded:
             raise SourceError("; ".join(errors))
         return list(orders.values())

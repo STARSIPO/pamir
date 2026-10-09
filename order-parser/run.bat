@@ -7,7 +7,11 @@ cd /d "%~dp0"
 set PYTHONUTF8=1
 set PYTHONIOENCODING=utf-8
 
-if exist ".venv\Scripts\python.exe" goto :venv_ready
+if exist ".venv\Scripts\python.exe" (
+  ".venv\Scripts\python.exe" -m pip --version >nul 2>nul && goto :venv_ready
+  echo Окружение .venv повреждено - пересоздаю...
+  rmdir /s /q ".venv"
+)
 
 set "PY="
 where py >nul 2>nul
@@ -22,6 +26,7 @@ if not defined PY goto :no_python
 echo Создаю виртуальное окружение .venv...
 %PY% -m venv .venv
 if errorlevel 1 goto :venv_fail
+".venv\Scripts\python.exe" -m pip --version >nul 2>nul || goto :venv_fail
 
 :venv_ready
 set "VENV_PY=.venv\Scripts\python.exe"
@@ -42,6 +47,7 @@ if exist ".env" goto :run
 copy ".env.example" ".env" >nul
 echo Создан файл .env из .env.example.
 echo Заполните BOT_TOKEN, ADMIN_ID и, для Telegram-чатов, TG_API_ID, TG_API_HASH, TG_PHONE.
+echo Свой ADMIN_ID можно узнать так: укажите только BOT_TOKEN, запустите и напишите боту /start.
 echo Проверить парсинг без бота: run.bat --dry-run --once
 start "" notepad ".env"
 pause
@@ -60,7 +66,9 @@ pause
 exit /b 1
 
 :venv_fail
-echo Не удалось создать виртуальное окружение .venv
+if exist ".venv" rmdir /s /q ".venv"
+echo Не удалось создать виртуальное окружение .venv с pip.
+echo Переустановите Python с python.org, отметив пункты "pip" и "Add python.exe to PATH".
 pause
 exit /b 1
 

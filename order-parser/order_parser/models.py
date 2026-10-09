@@ -25,6 +25,8 @@ class Order:
     """Верхняя граница бюджета числом, если источник отдаёт её явно."""
     currency: str = ""
     """Валюта budget_value (ISO-код: RUB, USD, EUR...)."""
+    feeds: tuple[str, ...] = field(default=(), repr=False)
+    """Ленты источника (категории/запросы), в которых встретился заказ — для первичной разметки по лентам."""
 
     @property
     def key(self) -> tuple[str, str]:

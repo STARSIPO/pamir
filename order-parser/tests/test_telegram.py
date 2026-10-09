@@ -94,3 +94,29 @@ def test_message_link_uses_active_username_list():
     chat = Channel(id=1, title="x", username=None,
                    usernames=[SimpleNamespace(username="old", active=False), SimpleNamespace(username="new", active=True)])
     assert message_link(chat, 5) == "https://t.me/new/5"
+
+
+@pytest.mark.parametrize(
+    ("text", "budget"),
+    [
+        ("Оплата: 50% предоплата, 50% после сдачи\nБюджет: 30 000 руб", "30 000 руб"),
+        ("Бюджет: договорной, срок 3 дня", "договорная"),
+        ("Нужен бот для автопостинга в 10 ТГ каналов", ""),
+        ("Цена 15к", "15к"),
+        ("Бюджет 10 000 - 15 000 руб", "10 000 - 15 000 руб"),
+        ("Стоимость: от 3000", "3000"),
+    ],
+)
+def test_extract_budget_review_cases(text, budget):
+    assert extract_budget(text) == budget
+
+
+@pytest.mark.parametrize(
+    ("phone", "normalized"),
+    [("+7 (999) 123–45–67", "79991234567"), ("8 999 123 45 67", "79991234567"), ("+380 50 123 4567", "380501234567"),
+     ("123", ""), ("", "")],
+)
+def test_normalize_phone(phone, normalized):
+    from order_parser.sources.telegram import normalize_phone
+
+    assert normalize_phone(phone) == normalized
