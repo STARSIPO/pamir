@@ -347,3 +347,18 @@ def test_exclude_phrase_joined_spelling(tmp_path):
     assert not f.check(order("Fulltime job")).ok
     assert not f.check(order("full-time position")).ok
     assert f.check(order("full timer app")).ok
+
+
+def test_failed_save_keeps_keywords_unchanged(tmp_path, monkeypatch):
+    store = KeywordStore.load(tmp_path / "keywords.yaml")
+    before = list(store.include.words)
+
+    def deny(*args, **kwargs):
+        raise PermissionError("file is locked")
+
+    monkeypatch.setattr("order_parser.filters.os.replace", deny)
+    monkeypatch.setattr("order_parser.filters.time.sleep", lambda s: None)
+    with pytest.raises(PermissionError):
+        store.add_include(["svelte"])
+    assert store.include.words == before  # в памяти ничего не поменялось — повторный /add_kw сработает
+    assert not list(tmp_path.glob(".keywords.*.tmp"))

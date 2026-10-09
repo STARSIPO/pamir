@@ -39,7 +39,15 @@ _MONEY = re.compile(
     re.IGNORECASE,
 )
 _HAS_CURRENCY = re.compile(rf"{_CURRENCY}|[$€£]", re.IGNORECASE)
-_BIG_NUMBER = re.compile(r"\d[\d\s]{2,}\d|\d{3,}")
+_BIG = r"(?:\d{1,3}(?:\s\d{3})+|\d{3,})"
+_BIG_NUMBER = re.compile(rf"{_BIG}(?:\s?[-–—]\s?{_BIG})?")  # «5000», «5 000 - 10 000»
+# почасовая ставка после суммы: с бюджетом проекта её сравнивать нельзя, поэтому пометку сохраняем
+_HOURLY_TAIL = re.compile(r"\s*(?:/\s*(?:час|ч|hr|hour|h)(?![а-яa-z])|в\s+час|за\s+час|per\s+hour)", re.IGNORECASE)
+
+
+def _with_hourly(value: str, match: re.Match[str]) -> str:
+    tail = _HOURLY_TAIL.match(value, match.end())
+    return " ".join((match.group(0) + (tail.group(0) if tail else "")).split())
 
 
 def _budget_lines(text: str, words: str):
@@ -59,14 +67,14 @@ def extract_budget(text: str) -> str:
         for value in _budget_lines(text, words):
             money = _MONEY.search(value)
             if money:
-                return " ".join(money.group(0).split())
+                return _with_hourly(value, money)
             number = _BIG_NUMBER.search(value)
             if number:
-                return " ".join(number.group(0).split())
+                return _with_hourly(value, number)
             negotiable = negotiable or bool(re.search(r"договор", value, re.IGNORECASE))
     for money in _MONEY.finditer(text):
         if _HAS_CURRENCY.search(money.group(0)):
-            return " ".join(money.group(0).split())
+            return _with_hourly(text, money)
     return "договорная" if negotiable else ""
 
 

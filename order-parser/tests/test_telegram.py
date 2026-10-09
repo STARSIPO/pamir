@@ -136,3 +136,26 @@ def test_normalize_phone(phone, normalized):
 )
 def test_extract_budget_round2(text, budget):
     assert extract_budget(text) == budget
+
+
+@pytest.mark.parametrize(
+    ("text", "budget"),
+    [
+        ("Оплата: 500 руб/час", "500 руб/час"),
+        ("Ставка — бюджет 15$ в час", "15$ в час"),
+        ("Бюджет 5000-10000", "5000-10000"),
+        ("Бюджет 5 000 - 10 000", "5 000 - 10 000"),
+        ("Ищу дизайнера, 1000 руб за час", "1000 руб за час"),
+    ],
+)
+def test_extract_budget_hourly_and_ranges(text, budget):
+    assert extract_budget(text) == budget
+
+
+def test_hourly_telegram_budget_not_compared_with_min_budget(tmp_path):
+    from order_parser.filters import KeywordStore, OrderFilter
+
+    chat = Channel(id=1, title="x", username="x")
+    order = message_to_order(msg("Нужен telegram бот\nОплата: 500 руб/час"), chat, None)
+    f = OrderFilter(KeywordStore(tmp_path / "k.yaml"), min_budget=10_000)
+    assert f.check(order).ok

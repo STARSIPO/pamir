@@ -182,6 +182,9 @@ def create_router(admin_id: int) -> Router:
         except KeywordFileError as exc:
             await message.answer(f"⚠️ {html.escape(str(exc))}")
             return
+        except OSError as exc:
+            await message.answer(f"⚠️ Не удалось сохранить keywords.yaml: {html.escape(str(exc))}. Слова не изменены.")
+            return
         skipped = [w for w in words if w not in added]
         text = []
         if added:
@@ -200,6 +203,9 @@ def create_router(admin_id: int) -> Router:
             removed = ctx.keywords.remove_include(words)
         except KeywordFileError as exc:
             await message.answer(f"⚠️ {html.escape(str(exc))}")
+            return
+        except OSError as exc:
+            await message.answer(f"⚠️ Не удалось сохранить keywords.yaml: {html.escape(str(exc))}. Слова не изменены.")
             return
         missing = [w for w in words if w not in removed]
         text = []
