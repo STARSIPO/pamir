@@ -20,6 +20,7 @@ import logging
 import os
 import re
 import tempfile
+import time
 import unicodedata
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -197,10 +198,12 @@ class KeywordStore:
                 self._mtime = mtime
                 self.load_error = f"{exc.__class__.__name__}: {exc}"
 
-    def save(self) -> None:
+    def save(self, include: list[str] | None = None, exclude: list[str] | None = None) -> None:
+        include = self.include.words if include is None else include
+        exclude = self.exclude.words if exclude is None else exclude
         self.path.parent.mkdir(parents=True, exist_ok=True)
         payload = yaml.safe_dump(
-            {"include": self.include.words, "exclude": self.exclude.words},
+            {"include": include, "exclude": exclude},
             allow_unicode=True, sort_keys=False, default_flow_style=False,
         )
         header = (
@@ -216,7 +219,15 @@ class KeywordStore:
         try:
             with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as fh:
                 fh.write(header + payload)
-            os.replace(tmp, self.path)
+            for attempt in range(5):
+                try:
+                    os.replace(tmp, self.path)
+                    break
+                except PermissionError:
+                    # Windows: файл ненадолго открыт антивирусом, облачной синхронизацией или редактором
+                    if attempt == 4:
+                        raise
+                    time.sleep(0.2)
         except BaseException:
             Path(tmp).unlink(missing_ok=True)
             raise
@@ -230,17 +241,22 @@ class KeywordStore:
             )
 
     def add_include(self, words: list[str]) -> list[str]:
+        """Сначала сохраняет файл, потом меняет слова в памяти: при ошибке записи ничего не теряется."""
         self._ensure_writable()
-        added = [w for w in words if self.include.add(w)]
+        updated = KeywordSet(self.include.words, self.include.mode)
+        added = [w for w in words if updated.add(w)]
         if added:
-            self.save()
+            self.save(include=updated.words)
+            self.include = updated
         return added
 
     def remove_include(self, words: list[str]) -> list[str]:
         self._ensure_writable()
-        removed = [w for w in words if self.include.remove(w)]
+        updated = KeywordSet(self.include.words, self.include.mode)
+        removed = [w for w in words if updated.remove(w)]
         if removed:
-            self.save()
+            self.save(include=updated.words)
+            self.include = updated
         return removed
 
 

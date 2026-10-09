@@ -71,6 +71,11 @@ async def capture(names: list[str]) -> int:
 
 
 def main() -> None:
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(errors="replace")  # type: ignore[union-attr]
+        except (AttributeError, ValueError):
+            pass
     names = [n.lower() for n in sys.argv[1:]]
     unknown = set(names) - set(SITE_SOURCES)
     if unknown:

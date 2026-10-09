@@ -332,7 +332,8 @@ async def test_dry_run_once_end_to_end(tmp_path, fixtures, capsys, monkeypatch):
     respx.get(freelancer.API_URL).mock(return_value=httpx.Response(
         200, json=json.loads((fixtures / "freelancer" / "active_reconstructed_2026-08-29.json").read_text(encoding="utf-8"))))
     env = tmp_path / ".env"
-    env.write_text(f"LOGS_DIR={tmp_path / 'logs'}\nSOURCE_HABR=false\nSOURCE_TELEGRAM=false\n", encoding="utf-8")
+    env.write_text(f"LOGS_DIR={tmp_path / 'logs'}\nDB_PATH={tmp_path / 'data' / 'orders.db'}\n"
+                   "SOURCE_HABR=false\nSOURCE_TELEGRAM=false\n", encoding="utf-8")
     cfg = tmp_path / "config.yaml"
     cfg.write_text("freelancer:\n  queries: [react]\n", encoding="utf-8")
     monkeypatch.setattr(HttpSource, "gather_pages", _no_pause(HttpSource.gather_pages))
@@ -458,3 +459,28 @@ async def test_first_login_prompt_until_success(db, tmp_path, monkeypatch):
     assert await app_main.prepare_telegram(settings, config, None, db) is not None
     assert await app_main.prepare_telegram(settings, config, None, db) is not None
     assert calls == [True, True, False]  # пока вход не удался — спрашиваем код; после успеха — нет
+
+
+def test_instance_lock(tmp_path):
+    from order_parser.lock import InstanceLock
+
+    first, second = InstanceLock(tmp_path / "x.lock"), InstanceLock(tmp_path / "x.lock")
+    assert first.acquire()
+    assert not second.acquire()  # второй экземпляр не запустится
+    first.release()
+    assert second.acquire()
+    second.release()
+
+
+async def test_second_instance_refused(tmp_path):
+    from order_parser.lock import InstanceLock
+
+    env = tmp_path / ".env"
+    env.write_text(f"LOGS_DIR={tmp_path / 'logs'}\nDB_PATH={tmp_path / 'orders.db'}\n", encoding="utf-8")
+    held = InstanceLock(tmp_path / "order_parser.lock")
+    assert held.acquire()
+    try:
+        args = app_main.parse_args(["--dry-run", "--env", str(env), "--keywords", str(tmp_path / "k.yaml")])
+        assert await asyncio.wait_for(app_main.run(args), 5) == 2
+    finally:
+        held.release()

@@ -8,8 +8,8 @@ set PYTHONUTF8=1
 set PYTHONIOENCODING=utf-8
 
 if exist ".venv\Scripts\python.exe" (
-  ".venv\Scripts\python.exe" -m pip --version >nul 2>nul && goto :venv_ready
-  echo Окружение .venv повреждено - пересоздаю...
+  ".venv\Scripts\python.exe" -c "import sys; sys.exit(sys.version_info < (3, 11))" >nul 2>nul && ".venv\Scripts\python.exe" -m pip --version >nul 2>nul && goto :venv_ready
+  echo Окружение .venv повреждено или создано старым Python - пересоздаю...
   rmdir /s /q ".venv"
 )
 

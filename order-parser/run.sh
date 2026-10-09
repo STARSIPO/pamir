@@ -4,24 +4,26 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-PY="${PYTHON:-}"
+new_enough() {
+  "$1" -c 'import sys; sys.exit(sys.version_info < (3, 11))' >/dev/null 2>&1
+}
+
+PY=""
+for candidate in ${PYTHON:-} python3 python3.15 python3.14 python3.13 python3.12 python3.11 python; do
+  if command -v "$candidate" >/dev/null 2>&1 && new_enough "$candidate"; then
+    PY="$candidate"
+    break
+  fi
+done
 if [ -z "$PY" ]; then
-  for candidate in python3.13 python3.12 python3.11 python3 python; do
-    if command -v "$candidate" >/dev/null 2>&1 &&
-       "$candidate" -c 'import sys; sys.exit(sys.version_info < (3, 11))' 2>/dev/null; then
-      PY="$candidate"
-      break
-    fi
-  done
-fi
-if [ -z "$PY" ]; then
-  echo "Нужен Python 3.11 или новее. Установите его (например: sudo apt install python3 python3-venv)." >&2
+  echo "Нужен Python 3.11 или новее." >&2
+  echo "Debian/Ubuntu: sudo apt install python3 python3-venv (на Ubuntu 22.04: python3.11 python3.11-venv)." >&2
   exit 1
 fi
 
-# venv без pip остаётся после неудачной попытки (например, не был установлен python3-venv) — пересоздаём
-if [ -d .venv ] && ! .venv/bin/python -m pip --version >/dev/null 2>&1; then
-  echo "Окружение .venv повреждено — пересоздаю..."
+# venv без pip (неудачная прошлая попытка, не был установлен python3-venv) или со старым Python — пересоздаём
+if [ -d .venv ] && { ! new_enough .venv/bin/python || ! .venv/bin/python -m pip --version >/dev/null 2>&1; }; then
+  echo "Окружение .venv повреждено или создано старым Python — пересоздаю..."
   rm -rf .venv
 fi
 if [ ! -x .venv/bin/python ]; then

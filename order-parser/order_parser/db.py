@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -93,7 +94,13 @@ class Database:
     async def connect(self) -> None:
         if self.path != ":memory:":
             Path(self.path).parent.mkdir(parents=True, exist_ok=True)
-        self._conn = await aiosqlite.connect(self.path)
+        connection = aiosqlite.connect(self.path)
+        # Рабочий поток aiosqlite не должен держать процесс, если выход прерван (повторный Ctrl+C):
+        # в aiosqlite 0.22 это connection._thread, в старых версиях — сам объект Connection.
+        worker = getattr(connection, "_thread", connection)
+        if isinstance(worker, threading.Thread):
+            worker.daemon = True
+        self._conn = await connection
         self._conn.row_factory = aiosqlite.Row
         if self.path != ":memory:":
             await self._conn.execute("PRAGMA journal_mode=WAL")

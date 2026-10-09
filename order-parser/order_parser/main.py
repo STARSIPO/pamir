@@ -9,7 +9,8 @@ import logging
 import signal
 import sys
 from datetime import timedelta
-from logging.handlers import RotatingFileHandler
+import queue
+from logging.handlers import QueueHandler, QueueListener, RotatingFileHandler
 import yaml
 
 from order_parser import __version__
@@ -17,6 +18,7 @@ from order_parser.config import AppConfig, Settings, load_app_config, load_setti
 from order_parser.context import AppContext
 from order_parser.db import Database, utcnow
 from order_parser.filters import KeywordStore, OrderFilter
+from order_parser.lock import InstanceLock
 from order_parser.notifier import Notifier, OutMessage
 from order_parser.processor import OrderProcessor
 from order_parser.scheduler import Scheduler
@@ -27,7 +29,13 @@ log = logging.getLogger("order_parser")
 PENDING_WINDOW = timedelta(hours=24)
 
 
+_log_listener: QueueListener | None = None
+
+
 def setup_logging(level: str, logs_dir: str) -> None:
+    """Лог в файл (с ротацией) и в консоль. Запись идёт в отдельном потоке: если консоль Windows
+    «замерла» (выделение мышью), asyncio-цикл не останавливается."""
+    global _log_listener
     for stream in (sys.stdout, sys.stderr):
         with contextlib.suppress(AttributeError, ValueError):
             stream.reconfigure(errors="replace")  # type: ignore[union-attr]
@@ -39,11 +47,41 @@ def setup_logging(level: str, logs_dir: str) -> None:
     file_handler.setFormatter(fmt)
     console = logging.StreamHandler(sys.stderr)
     console.setFormatter(logging.Formatter("%(asctime)s %(levelname)-7s %(message)s", "%H:%M:%S"))
+    if _log_listener is not None:
+        _log_listener.stop()
+        for handler in _log_listener.handlers:
+            handler.close()
+    records: queue.SimpleQueue = queue.SimpleQueue()
+    _log_listener = QueueListener(records, file_handler, console)
+    _log_listener.start()
     root = logging.getLogger()
-    root.handlers[:] = [file_handler, console]
+    root.handlers[:] = [QueueHandler(records)]
     root.setLevel(level.upper())
     for noisy in ("httpx", "httpcore", "telethon", "aiogram.event", "aiosqlite", "asyncio"):
         logging.getLogger(noisy).setLevel(max(logging.WARNING, root.level))
+
+
+def stop_logging() -> None:
+    global _log_listener
+    if _log_listener is not None:
+        _log_listener.stop()
+        _log_listener = None
+
+
+def disable_console_quick_edit() -> None:
+    """Windows: в режиме QuickEdit клик мышью по окну консоли «замораживает» вывод программы."""
+    if sys.platform != "win32":
+        return
+    try:
+        import ctypes
+
+        kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]
+        handle = kernel32.GetStdHandle(-10)  # STD_INPUT_HANDLE
+        mode = ctypes.c_uint32()
+        if kernel32.GetConsoleMode(handle, ctypes.byref(mode)):
+            kernel32.SetConsoleMode(handle, (mode.value & ~0x0040) | 0x0080)  # без QUICK_EDIT, с EXTENDED_FLAGS
+    except Exception:  # noqa: BLE001 — не консоль (перенаправление, IDE) — ничего страшного
+        pass
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -98,10 +136,25 @@ def make_telegram_source(settings: Settings, config: AppConfig, processor: Order
     )
 
 
+def instance_lock(settings: Settings) -> InstanceLock:
+    return InstanceLock(resolve_path(settings.db_path).parent / "order_parser.lock")
+
+
 async def login_only(settings: Settings, config: AppConfig) -> int:
     if not settings.telegram_configured:
         print("Заполните TG_API_ID и TG_API_HASH в .env (см. README: my.telegram.org)")
         return 2
+    lock = instance_lock(settings)
+    if not lock.acquire():
+        print("Парсер уже запущен и использует Telegram-сессию — сначала остановите его, потом выполните --login.")
+        return 2
+    try:
+        return await _login(settings, config)
+    finally:
+        lock.release()
+
+
+async def _login(settings: Settings, config: AppConfig) -> int:
     source = make_telegram_source(settings, config, None, None)
     try:
         await source.login(interactive=True)
@@ -201,6 +254,15 @@ async def run(args: argparse.Namespace) -> int:
         return 2
     site_names, want_telegram = selected_sources(args, settings)
 
+    lock = instance_lock(settings)
+    if not lock.acquire():
+        if not args.once:
+            log.error("Парсер уже запущен (другое окно или задача планировщика) — второй экземпляр не нужен")
+            return 2
+        if want_telegram:
+            log.warning("Основной экземпляр уже работает и держит Telegram-сессию — Telegram в этом цикле пропущен")
+            want_telegram = False
+
     bot = None
     db = Database(":memory:" if dry_run else resolve_path(settings.db_path))
     sources: list = []
@@ -264,16 +326,22 @@ async def run(args: argparse.Namespace) -> int:
                 group.create_task(supervised("Бот", run_bot(bot, ctx)), name="bot")
         return 0
     finally:
-        for source in sources:
-            with contextlib.suppress(Exception):
-                await source.aclose()
-        if telegram is not None:
-            with contextlib.suppress(Exception):
-                await telegram.aclose()
-        if bot is not None:
-            with contextlib.suppress(Exception):
-                await bot.session.close()
-        await db.close()
+        try:
+            for source in sources:
+                with contextlib.suppress(Exception):
+                    await source.aclose()
+            if telegram is not None:
+                with contextlib.suppress(Exception):
+                    await telegram.aclose()
+            if bot is not None:
+                with contextlib.suppress(Exception):
+                    await bot.session.close()
+        finally:
+            # даже если выход прервали повторным Ctrl+C — закрываем базу и снимаем блокировку
+            try:
+                await db.close()
+            finally:
+                lock.release()
 
 
 async def prepare_telegram(settings: Settings, config: AppConfig, processor: OrderProcessor, db: Database):
@@ -389,6 +457,7 @@ def cli(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
     if sys.version_info < (3, 11):
         raise SystemExit("Нужен Python 3.11 или новее")
+    disable_console_quick_edit()
 
     async def main() -> int:
         task = asyncio.current_task()
@@ -403,4 +472,6 @@ def cli(argv: list[str] | None = None) -> None:
     except (KeyboardInterrupt, asyncio.CancelledError):
         print("\nОстановлено.")
         code = 0
+    finally:
+        stop_logging()
     sys.exit(code)
