@@ -1,0 +1,110 @@
+name: order-parser
+
+# Тесты парсера заказов (папка order-parser/) на Windows и Linux,
+# проверка запуска через run.bat / run.sh и информационная «живая» проверка сайтов.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'order-parser/**'
+      - '.github/workflows/order-parser.yml'
+  pull_request:
+    paths:
+      - 'order-parser/**'
+      - '.github/workflows/order-parser.yml'
+  schedule:
+    - cron: '17 6 * * 1' # по понедельникам: не поменяли ли сайты формат
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: order-parser-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    if: github.event_name != 'schedule'
+    name: tests (${{ matrix.os }}, Python ${{ matrix.python }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ['3.11', '3.13']
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: order-parser
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: order-parser/requirements*.txt
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -m pytest -q
+
+  launcher:
+    if: github.event_name != 'schedule'
+    name: launcher (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: order-parser
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: run.sh creates the venv, installs requirements and starts the app
+        if: runner.os == 'Linux'
+        run: |
+          cp .env.example .env
+          ./run.sh --version
+      - name: run.bat creates the venv, installs requirements and starts the app
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          copy .env.example .env
+          call run.bat --version
+
+  live:
+    name: live check (informational)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: order-parser
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: order-parser/requirements*.txt
+      - run: python -m pip install -r requirements-dev.txt
+      # Серверы GitHub — это IP дата-центра: FL.ru (DDoS-Guard) и Kwork (Qrator) могут отвечать 403,
+      # хотя с домашнего IP всё работает. Поэтому проверка информационная и не роняет сборку.
+      - name: one dry-run cycle against the real sites
+        run: python -m order_parser --dry-run --once --sources fl,kwork,freelancer 2>&1 | tee live-dry-run.txt || true
+      - name: save real responses
+        run: python -m order_parser.capture fl kwork freelancer 2>&1 | tee live-capture.txt || true
+      - name: parse the saved responses
+        run: python -m pytest tests/test_live_fixtures.py -v -p no:cacheprovider 2>&1 | tee live-parse.txt || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: live-check
+          path: |
+            order-parser/live-*.txt
+            order-parser/tests/fixtures/live/
+          if-no-files-found: ignore

@@ -38,6 +38,9 @@ Kwork · 09.10 14:32
 
 ## Быстрый старт
 
+0. Скачайте проект: на странице репозитория на GitHub нажмите **Code → Download ZIP**, распакуйте архив
+   и возьмите из него папку `order-parser` (например, в `C:\order-parser`). Или через git:
+   `git clone https://github.com/STARSIPO/pamir.git` — проект лежит в `pamir/order-parser`.
 1. Установите **Python 3.11 или новее**.
    - Windows: <https://www.python.org/downloads/>, при установке отметьте **Add python.exe to PATH**.
    - Linux (Debian/Ubuntu): `sudo apt install python3 python3-venv`.
@@ -300,6 +303,13 @@ run.bat                       # Windows
 Тесты не ходят в сеть. Парсеры FL.ru, Kwork и Habr проверяются на настоящих ответах сайтов, сохранённых
 в `tests/fixtures/`; для Freelancer.com — на ответе, собранном из настоящих данных (откуда и когда взят
 каждый файл — в `tests/fixtures/README.md`).
+
+На GitHub это делается автоматически (вкладка **Actions → order-parser**): при каждом изменении папки
+`order-parser/` тесты запускаются на Windows и Linux (Python 3.11 и 3.13) и проверяется запуск через
+`run.bat` / `run.sh`. Там же есть информационная «живая» проверка — один цикл `--dry-run --once` по
+настоящим сайтам; она повторяется по понедельникам, а её вывод лежит в артефакте `live-check`.
+Серверы GitHub — это IP дата-центра, поэтому FL.ru и Kwork там могут отвечать `403`, хотя с домашнего
+IP работают.
 
 Сайты со временем меняют вёрстку. Чтобы проверить парсеры на свежих ответах со своего ПК:
 
