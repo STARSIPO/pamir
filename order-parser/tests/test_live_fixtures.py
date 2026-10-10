@@ -56,6 +56,19 @@ def parse_live(path: Path):
     pytest.skip(f"неизвестный источник {source}")
 
 
+def _is_empty_listing(path: Path) -> bool:
+    """Корректный ответ без заказов: например, поиск Freelancer.com по редкому слову."""
+    if path.suffix != ".json":
+        return False
+    payload = json.loads(path.read_bytes())
+    if path.parent.name == "freelancer":
+        return payload.get("status") == "success" and (payload.get("result") or {}).get("projects") == []
+    if path.parent.name == "kwork":
+        data = payload.get("data") or {}
+        return payload.get("success") is True and (data.get("pagination") or {}).get("data") == []
+    return False
+
+
 FILES = _files()
 
 
@@ -65,6 +78,8 @@ def test_live_response_parses(path: Path):
     if _status(path) != 200:
         pytest.skip(f"сайт ответил HTTP {_status(path)} — смотрите .meta.txt")
     orders = parse_live(path)
+    if not orders and _is_empty_listing(path):
+        pytest.skip("сайт честно ответил пустым списком (по этому запросу сейчас ничего нет)")
     assert orders, "парсер не нашёл ни одного заказа — возможно, сайт изменил формат"
     for order in orders:
         assert order.external_id and order.title, order
