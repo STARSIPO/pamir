@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>crema. — кофейня specialty-кофе в Кишинёве</title>
+  <meta name="description" content="crema. — уютная городская кофейня: specialty-кофе, свежая выпечка каждое утро и спокойная атмосфера. Концептуальный проект для портфолио.">
+  <meta name="theme-color" content="#F4EFE6">
+  <meta property="og:title" content="crema. — твой кофе, твой момент">
+  <meta property="og:description" content="Specialty-кофе, свежая выпечка и спокойная атмосфера. Концептуальный проект.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="assets/img/hero-1400.webp">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/fonts/cormorant-garamond-cyrillic-500-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/manrope-cyrillic-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css">
+  <script>document.documentElement.classList.add('js');</script>
+  <script src="js/main.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Перейти к содержанию</a>
+
+  <header class="site-header" data-header>
+    <div class="container header-inner">
+      <a class="logo" href="#top" aria-label="crema. — на начало страницы">crema<span class="logo-dot">.</span></a>
+
+      <nav class="nav" aria-label="Основная навигация">
+        <ul class="nav-list">
+          <li><a href="#about">О нас</a></li>
+          <li><a href="#menu">Меню</a></li>
+          <li><a href="#atmosphere">Атмосфера</a></li>
+          <li><a href="#contacts">Контакты</a></li>
+        </ul>
+      </nav>
+
+      <a class="btn btn--small header-cta" href="#contacts">Как добраться</a>
+
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" data-menu-toggle>
+        <span class="menu-toggle-label">Меню</span>
+        <span class="menu-toggle-icon" aria-hidden="true"><span></span><span></span></span>
+      </button>
+    </div>
+
+    <div class="mobile-menu" id="mobile-menu" data-mobile-menu hidden>
+      <nav class="container" aria-label="Мобильная навигация">
+        <ol class="mobile-nav">
+          <li><a href="#about"><span class="mobile-nav-num">01</span>О нас</a></li>
+          <li><a href="#menu"><span class="mobile-nav-num">02</span>Меню</a></li>
+          <li><a href="#atmosphere"><span class="mobile-nav-num">03</span>Атмосфера</a></li>
+          <li><a href="#contacts"><span class="mobile-nav-num">04</span>Контакты</a></li>
+        </ol>
+        <div class="mobile-menu-foot">
+          <a class="btn" href="#contacts">Как добраться</a>
+          <p class="mobile-menu-hours">Ежедневно · 8:00–21:00</p>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- 1. Первый экран -->
+    <section class="hero" id="top" aria-labelledby="hero-title">
+      <div class="container hero-grid">
+        <p class="eyebrow hero-eyebrow reveal">Specialty-кофе и выпечка · Кишинёв</p>
+
+        <h1 class="hero-title" id="hero-title">
+          <span class="hero-line reveal">Твой кофе.</span>
+          <span class="hero-line hero-line--accent reveal" style="--d: 120ms">Твой момент.</span>
+        </h1>
+
+        <figure class="hero-media">
+          <div class="hero-photo">
+            <img src="assets/img/hero-800.webp"
+                 srcset="assets/img/hero-800.webp 800w, assets/img/hero-1400.webp 1400w"
+                 sizes="(min-width: 960px) 40vw, 92vw"
+                 width="1400" height="1750"
+                 alt="Стакан эспрессо с плотной кремой на светлом столе в утреннем солнце, рядом тени от листьев"
+                 fetchpriority="high">
+          </div>
+          <figcaption class="caption"><span>№ 01</span> Эспрессо, восемь утра</figcaption>
+        </figure>
+
+        <div class="hero-text reveal" style="--d: 220ms">
+          <p class="lead">Небольшая кофейня в центре города. Варим specialty-кофе, каждое утро печём круассаны и оставляем вам время — на чашку, разговор или страницу книги.</p>
+          <div class="hero-actions">
+            <a class="btn" href="#menu">Посмотреть меню</a>
+            <p class="hero-status" data-open-status>Ежедневно · 8:00–21:00</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. О кофейне -->
+    <section class="section about" id="about" aria-labelledby="about-title">
+      <div class="container">
+        <header class="section-head reveal">
+          <p class="section-index"><span>01</span> О нас</p>
+          <h2 class="section-title" id="about-title">Место, куда хочется <em>вернуться</em></h2>
+        </header>
+
+        <div class="about-grid">
+          <figure class="about-photo about-photo--main reveal">
+            <div class="about-photo-frame"><img src="assets/img/pourover-900.webp"
+                 srcset="assets/img/pourover-900.webp 900w, assets/img/pourover-1600.webp 1600w"
+                 sizes="(min-width: 960px) 55vw, 92vw"
+                 width="1600" height="1067" loading="lazy"
+                 alt="Бариста заваривает фильтр-кофе в воронке, тонкая струя воды из чайника с гусиным носиком"></div>
+            <figcaption class="caption"><span>№ 02</span> Фильтр дня, медленно</figcaption>
+          </figure>
+          <figure class="about-photo about-photo--small reveal" style="--d: 150ms">
+            <img src="assets/img/croissants-600.webp"
+                 srcset="assets/img/croissants-600.webp 600w, assets/img/croissants-1000.webp 1000w"
+                 sizes="(min-width: 960px) 22vw, 45vw"
+                 width="1000" height="1333" loading="lazy"
+                 alt="Горка свежих румяных круассанов на подносе у витрины">
+            <figcaption class="caption"><span>№ 03</span> Круассаны к 8:00</figcaption>
+          </figure>
+
+          <div class="about-text reveal">
+            <p class="about-lead">Мы&nbsp;любим кофе, в&nbsp;котором слышно, откуда он&nbsp;родом: ягоды Эфиопии, шоколад Бразилии, мягкую сладость Колумбии.</p>
+            <p>Зерно берём у&nbsp;небольших обжарщиков и&nbsp;меняем сорта каждый сезон. Выпечку готовим сами, рано утром, поэтому к&nbsp;открытию в&nbsp;зале пахнет маслом и&nbsp;корицей. Здесь нет спешки: можно занять стол у&nbsp;окна на&nbsp;пару часов, и&nbsp;никто не&nbsp;посмотрит на&nbsp;часы.</p>
+
+            <dl class="facts">
+              <div class="fact">
+                <dt>Зерно</dt>
+                <dd>Свежая обжарка, новые лоты каждый сезон</dd>
+              </div>
+              <div class="fact">
+                <dt>Выпечка</dt>
+                <dd>Печём сами, каждое утро с&nbsp;шести</dd>
+              </div>
+              <div class="fact">
+                <dt>Тишина</dt>
+                <dd>Негромкая музыка, розетки у&nbsp;окна</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Меню -->
+    <section class="section menu" id="menu" aria-labelledby="menu-title">
+      <div class="container">
+        <header class="section-head menu-head reveal">
+          <p class="section-index"><span>02</span> Меню</p>
+          <h2 class="section-title" id="menu-title">Коротко <em>и&nbsp;по&nbsp;делу</em></h2>
+          <p class="menu-note">Цены в&nbsp;молдавских леях. Растительное молоко&nbsp;— +10&nbsp;лей, двойной шот&nbsp;— +15&nbsp;лей.</p>
+        </header>
+
+        <div class="tabs reveal" data-tabs>
+          <div class="tab-list" role="tablist" aria-label="Категории меню" hidden data-tablist>
+            <button class="tab" type="button" role="tab" id="tab-coffee" aria-controls="panel-coffee" aria-selected="true">Кофе</button>
+            <button class="tab" type="button" role="tab" id="tab-drinks" aria-controls="panel-drinks" aria-selected="false" tabindex="-1">Напитки</button>
+            <button class="tab" type="button" role="tab" id="tab-bakery" aria-controls="panel-bakery" aria-selected="false" tabindex="-1">Выпечка</button>
+          </div>
+
+          <div class="tab-panel" id="panel-coffee" role="tabpanel" aria-labelledby="tab-coffee" tabindex="0">
+            <h3 class="panel-title">Кофе</h3>
+            <ul class="menu-list">
+              <li class="menu-item"><span class="menu-name">Эспрессо</span><span class="menu-price">30 лей</span><span class="menu-desc">Сезонный бленд, плотное тело и&nbsp;долгое послевкусие</span></li>
+              <li class="menu-item"><span class="menu-name">Американо</span><span class="menu-price">35 лей</span><span class="menu-desc">Эспрессо и&nbsp;горячая вода, 250&nbsp;мл</span></li>
+              <li class="menu-item"><span class="menu-name">Кортадо</span><span class="menu-price">40 лей</span><span class="menu-desc">Двойной эспрессо с&nbsp;равной долей тёплого молока</span></li>
+              <li class="menu-item"><span class="menu-name">Капучино</span><span class="menu-price">45 лей</span><span class="menu-desc">Бархатная пена и&nbsp;мягкий карамельный вкус, 200&nbsp;мл</span></li>
+              <li class="menu-item"><span class="menu-name">Флэт уайт</span><span class="menu-price">50 лей</span><span class="menu-desc">Двойной ристретто и&nbsp;тонкий слой молока</span></li>
+              <li class="menu-item"><span class="menu-name">Латте</span><span class="menu-price">50 лей</span><span class="menu-desc">Больше молока, меньше горечи, 300&nbsp;мл</span></li>
+              <li class="menu-item"><span class="menu-name">Фильтр V60</span><span class="menu-price">55 лей</span><span class="menu-desc">Моносорт дня, ручная заварка. Спросите, что сегодня в&nbsp;воронке</span></li>
+              <li class="menu-item"><span class="menu-name">Раф с&nbsp;ванилью</span><span class="menu-price">55 лей</span><span class="menu-desc">Эспрессо, сливки и&nbsp;натуральная ваниль</span></li>
+            </ul>
+          </div>
+
+          <div class="tab-panel" id="panel-drinks" role="tabpanel" aria-labelledby="tab-drinks" tabindex="0">
+            <h3 class="panel-title">Напитки</h3>
+            <ul class="menu-list">
+              <li class="menu-item"><span class="menu-name">Матча латте</span><span class="menu-price">60 лей</span><span class="menu-desc">Японская матча, взбитая вручную, на&nbsp;любом молоке</span></li>
+              <li class="menu-item"><span class="menu-name">Какао</span><span class="menu-price">45 лей</span><span class="menu-desc">Тёмный шоколад 70%, без лишней сладости</span></li>
+              <li class="menu-item"><span class="menu-name">Чай масала</span><span class="menu-price">50 лей</span><span class="menu-desc">Чёрный чай, кардамон, корица, имбирь и&nbsp;молоко</span></li>
+              <li class="menu-item"><span class="menu-name">Листовой чай</span><span class="menu-price">35 лей</span><span class="menu-desc">Сенча, улун или травяной сбор, чайник 400&nbsp;мл</span></li>
+              <li class="menu-item"><span class="menu-name">Эспрессо-тоник</span><span class="menu-price">55 лей</span><span class="menu-desc">Тоник, лёд, апельсиновая цедра и&nbsp;шот эспрессо</span></li>
+              <li class="menu-item"><span class="menu-name">Домашний лимонад</span><span class="menu-price">45 лей</span><span class="menu-desc">Лимон, мята и&nbsp;немного мёда</span></li>
+              <li class="menu-item"><span class="menu-name">Апельсиновый фреш</span><span class="menu-price">55 лей</span><span class="menu-desc">Выжимаем при вас, 250&nbsp;мл</span></li>
+            </ul>
+          </div>
+
+          <div class="tab-panel" id="panel-bakery" role="tabpanel" aria-labelledby="tab-bakery" tabindex="0">
+            <h3 class="panel-title">Выпечка</h3>
+            <ul class="menu-list">
+              <li class="menu-item"><span class="menu-name">Круассан</span><span class="menu-price">35 лей</span><span class="menu-desc">Сливочное масло 82%, слоёное тесто, которое мы&nbsp;раскатываем сами</span></li>
+              <li class="menu-item"><span class="menu-name">Миндальный круассан</span><span class="menu-price">45 лей</span><span class="menu-desc">С&nbsp;франжипаном и&nbsp;хрустящими лепестками миндаля</span></li>
+              <li class="menu-item"><span class="menu-name">Пан-о-шоколя</span><span class="menu-price">40 лей</span><span class="menu-desc">Две палочки тёмного шоколада внутри</span></li>
+              <li class="menu-item"><span class="menu-name">Синнабон с&nbsp;кардамоном</span><span class="menu-price">40 лей</span><span class="menu-desc">Мягкое тесто, корица, кардамон и&nbsp;сливочный крем</span></li>
+              <li class="menu-item"><span class="menu-name">Банановый хлеб</span><span class="menu-price">40 лей</span><span class="menu-desc">С&nbsp;грецким орехом, подаём тёплым</span></li>
+              <li class="menu-item"><span class="menu-name">Баскский чизкейк</span><span class="menu-price">60 лей</span><span class="menu-desc">Карамельная корочка и&nbsp;кремовая середина</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Атмосфера -->
+    <section class="section atmosphere" id="atmosphere" aria-labelledby="atmosphere-title">
+      <div class="container">
+        <header class="section-head atmosphere-head reveal">
+          <p class="section-index"><span>03</span> Атмосфера</p>
+          <h2 class="section-title" id="atmosphere-title">Свет из&nbsp;окна, <em>тихие утра</em></h2>
+          <p class="atmosphere-note">Деревянные столы, много дневного света и&nbsp;запах свежей выпечки. Немного о&nbsp;том, как у&nbsp;нас всё устроено.</p>
+        </header>
+
+        <div class="gallery">
+          <figure class="g-item g-a reveal">
+            <img src="assets/img/window-table-800.webp" srcset="assets/img/window-table-800.webp 800w, assets/img/window-table-1400.webp 1400w" sizes="(min-width: 960px) 56vw, 92vw" width="1400" height="933" loading="lazy" alt="Круглый столик у большого окна с френч-прессом, чашками и цветами в горшке">
+          </figure>
+          <figure class="g-item g-b reveal" style="--d: 100ms">
+            <img src="assets/img/window-seat-600.webp" srcset="assets/img/window-seat-600.webp 600w, assets/img/window-seat-1000.webp 1000w" sizes="(min-width: 960px) 40vw, 46vw" width="1000" height="1500" loading="lazy" alt="Деревянный стол у окна: открытый блокнот, ручка и чашка кофе">
+          </figure>
+          <figure class="g-item g-c reveal">
+            <img src="assets/img/croissant-800.webp" srcset="assets/img/croissant-800.webp 800w, assets/img/croissant-1400.webp 1400w" sizes="(min-width: 960px) 32vw, 46vw" width="1400" height="1120" loading="lazy" alt="Два золотистых круассана на тёмном фоне, сверху сыплется сахарная пудра">
+          </figure>
+          <figure class="g-item g-d reveal" style="--d: 100ms">
+            <img src="assets/img/iced-800.webp" srcset="assets/img/iced-800.webp 800w, assets/img/iced-1400.webp 1400w" sizes="(min-width: 960px) 24vw, 46vw" width="1400" height="935" loading="lazy" alt="Высокий стакан холодного кофе, в котором молоко медленно смешивается с эспрессо">
+          </figure>
+          <figure class="g-item g-e reveal" style="--d: 150ms">
+            <img src="assets/img/latte-plants-600.webp" srcset="assets/img/latte-plants-600.webp 600w, assets/img/latte-plants-1000.webp 1000w" sizes="(min-width: 960px) 40vw, 46vw" width="1000" height="1500" loading="lazy" alt="Две чашки латте с рисунком на деревянном срезе среди зелёных растений, вид сверху">
+          </figure>
+          <figure class="g-item g-f reveal">
+            <img src="assets/img/bar-800.webp" srcset="assets/img/bar-800.webp 800w, assets/img/bar-1400.webp 1400w" sizes="(min-width: 960px) 56vw, 92vw" width="1400" height="788" loading="lazy" alt="Барная стойка с кофемашиной, открытыми полками и тёплыми подвесными лампами">
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Контакты -->
+    <section class="section contacts" id="contacts" aria-labelledby="contacts-title">
+      <div class="container">
+        <header class="section-head reveal">
+          <p class="section-index"><span>04</span> Контакты</p>
+          <h2 class="section-title" id="contacts-title">Заходите <em>на&nbsp;чашку</em></h2>
+        </header>
+
+        <div class="contacts-grid">
+          <div class="contact-block reveal">
+            <h3 class="contact-label">Адрес</h3>
+            <address class="contact-address">
+              ул. Примерная, 12<br>
+              Кишинёв, Молдова
+            </address>
+            <p class="contact-hint">Демонстрационный адрес: кофейня crema. — концепт, по&nbsp;этому адресу её&nbsp;нет.</p>
+            <a class="link-arrow" href="https://www.openstreetmap.org/?mlat=47.0245&amp;mlon=28.8323#map=16/47.0245/28.8323" target="_blank" rel="noopener noreferrer">
+              Открыть центр Кишинёва на&nbsp;карте<span class="visually-hidden"> (откроется в новой вкладке)</span>
+              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14"><path d="M3 11 11 3M5 3h6v6" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>
+            </a>
+          </div>
+
+          <div class="contact-block reveal" style="--d: 100ms">
+            <h3 class="contact-label">Часы работы</h3>
+            <dl class="hours">
+              <div><dt>Понедельник — пятница</dt><dd>8:00 – 21:00</dd></div>
+              <div><dt>Суббота — воскресенье</dt><dd>9:00 – 21:00</dd></div>
+            </dl>
+            <p class="contact-status" data-open-status-long aria-live="polite"></p>
+          </div>
+
+          <div class="contact-block reveal" style="--d: 200ms">
+            <h3 class="contact-label">Как добраться</h3>
+            <p class="contact-text">Пять минут пешком от&nbsp;центрального парка. Рядом остановки троллейбусов, велопарковка у&nbsp;входа.</p>
+            <p class="contact-text">Заказ&nbsp;— у&nbsp;стойки, столы не&nbsp;бронируем: место у&nbsp;окна достаётся тому, кто пришёл первым.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p class="footer-logo" aria-hidden="true">crema<span class="logo-dot">.</span></p>
+      <div class="footer-meta">
+        <p>Концептуальный проект для портфолио веб-разработчика. Кофейня, адрес и&nbsp;цены вымышлены.</p>
+        <p>Фотографии — <a href="credits.html">Unsplash, источники</a> · Шрифты — Cormorant Garamond и&nbsp;Manrope (SIL OFL)</p>
+      </div>
+      <a class="link-up" href="#top">Наверх <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>
